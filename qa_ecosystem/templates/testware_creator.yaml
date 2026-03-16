@@ -1,0 +1,77 @@
+agent: testware-creator
+templates:
+  - name: "default"
+    description: "Test plan generation"
+    prompt: |
+      Create a Test Plan document for:
+
+      Project: {project_name}
+      Scope: {scope}
+      Test Levels: {test_levels}
+      Test Types: {test_types}
+      Resources: {resources}
+      Timeline: {timeline}
+      Risks: {risks}
+
+      Generate a complete ISTQB-aligned test plan with all required sections.
+
+  - name: "test-summary-report"
+    description: "Test summary report generation"
+    prompt: |
+      Generate a Test Summary Report for this execution cycle:
+
+      Project/Release: {project_release}
+      Cycle Name: {cycle_name}
+      Execution Metrics: {execution_metrics}
+      Key Defects: {key_defects}
+      Test Coverage Achieved: {coverage_percent}
+      Outstanding Risks: {outstanding_risks}
+
+      Format as a professional stakeholder-ready report.
+
+  - name: "defect-report"
+    description: "Formal defect report generation"
+    prompt: |
+      Generate a formal Defect Report for this bug:
+
+      Title: {defect_title}
+      Environment: {environment}
+      Steps to Reproduce: {steps_to_reproduce}
+      Actual Result: {actual_result}
+      Expected Result: {expected_result}
+      Severity: {severity}
+      Priority: {priority}
+      Attachments: {attachments}
+
+      Produce a complete, formal defect report ready for developer handoff.
+
+  - name: "traceability-matrix"
+    description: "Requirements-to-test traceability matrix"
+    prompt: |
+      Create a Traceability Matrix from the following data:
+
+      Requirements:
+      {requirements}
+
+      Test Cases:
+      {test_cases}
+
+      Execution Status: {execution_status}
+
+      Generate a traceability matrix showing coverage % per requirement and
+      highlight any uncovered requirements.
+
+  - name: "test-closure-report"
+    description: "Test closure report for project archive"
+    prompt: |
+      Generate a Test Closure Report for:
+
+      Project: {project_name}
+      Release Version: {release_version}
+      Test Period: {test_period}
+      Final Metrics: {final_metrics}
+      Deferred Defects: {deferred_defects}
+      Lessons Learned: {lessons_learned}
+      Sign-Off Status: {sign_off_status}
+
+      Produce a complete closure report suitable for audit and project archive.

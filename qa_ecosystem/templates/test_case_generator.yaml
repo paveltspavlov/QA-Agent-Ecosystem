@@ -1,0 +1,80 @@
+agent: test-case-generator
+templates:
+  - name: "default"
+    description: "Comprehensive test case generation from a PBI"
+    prompt: |
+      Generate comprehensive test cases for the following requirement:
+
+      {pbi_content}
+
+      Test Coverage Required:
+      - Positive scenarios
+      - Negative scenarios
+      - Boundary value tests
+      - Edge cases
+
+      Focus Areas: {focus_areas}
+      Priority: {priority}
+      Requirement ID: {requirement_id}
+
+  - name: "technique-specific"
+    description: "Apply a specific ISTQB test design technique"
+    prompt: |
+      Apply {technique} technique to generate test cases for:
+
+      {pbi_content}
+
+      Variables to Test:
+      {variables}
+
+      Expected Partitions/Boundaries: {partitions}
+      Requirement ID: {requirement_id}
+
+  - name: "integration-focused"
+    description: "Integration and system test cases"
+    prompt: |
+      Generate integration and system test cases for:
+
+      {pbi_content}
+
+      Integration Points:
+      {integration_points}
+
+      Focus on:
+      - Data flow between systems
+      - Error handling and resilience
+      - End-to-end workflows
+
+      Requirement ID: {requirement_id}
+
+  - name: "risk-based"
+    description: "Priority and risk-based test case generation"
+    prompt: |
+      Generate {priority} priority test cases for:
+
+      {pbi_content}
+
+      Risk Assessment:
+      - Business Impact: {business_impact}
+      - Technical Complexity: {technical_complexity}
+      - User Impact: {user_impact}
+
+      Critical Scenarios to Cover: {critical_scenarios}
+      Requirement ID: {requirement_id}
+
+  - name: "acceptance-test"
+    description: "Acceptance-level test cases"
+    prompt: |
+      Generate acceptance-level test cases that validate:
+
+      {pbi_content}
+
+      Acceptance Criteria:
+      {acceptance_criteria}
+
+      User Perspective:
+      - Primary user role: {user_role}
+      - User goals: {user_goals}
+
+      Success Definition: {success_definition}
+      Requirement ID: {requirement_id}

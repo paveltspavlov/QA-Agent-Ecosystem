@@ -1,0 +1,96 @@
+agent: regression-optimizer
+templates:
+  - name: "default"
+    description: "Change-based regression suite creation"
+    prompt: |
+      Create a regression test suite for the following changes:
+
+      Changed Functionalities:
+      {changed_functionalities}
+
+      Test Case Data:
+      {test_suite_data}
+
+      Identify:
+      - Directly impacted tests
+      - Integration-dependent tests
+      - Risk-based priority recommendations
+      - Coverage gaps
+
+      Release Date: {release_date}
+      Execution Time Budget: {time_budget}
+
+  - name: "full-optimization"
+    description: "Full regression suite optimization"
+    prompt: |
+      Optimize the complete regression test suite from existing test cases:
+
+      {test_suite_data}
+
+      Scope: Full solution regression
+      Constraints: {constraints}
+
+      Provide:
+      - Optimized test selection
+      - Priority-based grouping
+      - Execution sequence
+      - Coverage assessment
+      - Redundancy elimination recommendations
+
+  - name: "sprint-release"
+    description: "Sprint or release-specific regression"
+    prompt: |
+      Build a regression suite for Sprint/Release {sprint_id}:
+
+      New Features Developed:
+      {new_features}
+
+      Modified Components:
+      {modified_components}
+
+      Test Case Data:
+      {test_suite_data}
+
+      Include:
+      - New feature validation tests
+      - Impacted existing functionality tests
+      - Integration smoke tests
+      - Risk-based prioritization
+
+  - name: "risk-based"
+    description: "Risk-based regression selection"
+    prompt: |
+      Create a risk-based regression suite focusing on high-impact areas:
+
+      High-Risk Areas:
+      {high_risk_areas}
+
+      Test Case Data:
+      {test_suite_data}
+
+      Prioritize:
+      - Business-critical functionality
+      - Recently defect-prone areas
+      - Integration points
+      - Security and compliance tests
+
+      Risk Tolerance: {risk_tolerance}
+
+  - name: "maintenance"
+    description: "Test suite maintenance and cleanup"
+    prompt: |
+      Analyze existing test cases for regression suite maintenance:
+
+      {test_suite_data}
+
+      Identify:
+      - Obsolete or redundant test cases
+      - Tests requiring updates
+      - Coverage overlaps
+      - Missing coverage areas
+
+      Provide recommendations for:
+      - Tests to retire
+      - Tests to merge
+      - Tests to create
+      - Optimized regression suite structure

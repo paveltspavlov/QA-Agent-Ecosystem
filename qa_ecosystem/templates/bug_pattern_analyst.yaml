@@ -1,0 +1,82 @@
+agent: bug-pattern-analyst
+templates:
+  - name: "default"
+    description: "Comprehensive bug report analysis"
+    prompt: |
+      Analyze the attached bug report data:
+
+      {bug_data}
+
+      Provide a complete analysis including:
+      - Defect patterns and clustering
+      - High-risk functionalities
+      - Severity and priority distributions
+      - Root cause categories
+      - Testing focus recommendations
+
+      Date Range: {date_range}
+      Project/Module: {project_module}
+
+  - name: "high-risk-areas"
+    description: "Identify high-risk functionalities from bug data"
+    prompt: |
+      Review these bug reports and identify high-risk functionalities:
+
+      {bug_data}
+
+      Focus on:
+      - Modules with highest defect density
+      - Components with critical/high severity defects
+      - Features with recurring issues
+      - Areas requiring immediate testing attention
+
+      Context: {context}
+
+  - name: "temporal-trends"
+    description: "Analyze bug trends over time"
+    prompt: |
+      Analyze bug trends over time from this data:
+
+      {bug_data}
+
+      Analysis Period: {date_range}
+
+      Identify:
+      - Defect detection trends (increasing/decreasing)
+      - Resolution time patterns
+      - Sprint-over-sprint quality trends
+
+      Provide recommendations based on temporal insights.
+
+  - name: "root-cause"
+    description: "Root cause pattern detection"
+    prompt: |
+      Examine these defects for root cause patterns:
+
+      {bug_data}
+
+      Categorize and analyze root causes such as:
+      - Requirements ambiguity
+      - Design flaws
+      - Implementation errors
+      - Testing gaps
+      - Integration issues
+
+      Recommend process improvements to address common root causes.
+
+  - name: "module-specific"
+    description: "Targeted analysis for specific modules"
+    prompt: |
+      Analyze bug reports specifically for the following modules/features:
+
+      Target Areas: {target_areas}
+
+      {bug_data}
+
+      Provide:
+      - Defect concentration in specified areas
+      - Comparison with other modules
+      - Specific risk assessment for target areas
+      - Focused testing recommendations
+
+      Purpose: {purpose}

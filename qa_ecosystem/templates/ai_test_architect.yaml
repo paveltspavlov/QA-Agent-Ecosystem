@@ -1,0 +1,82 @@
+agent: ai-test-architect
+templates:
+  - name: "default"
+    description: "AI project test strategy design"
+    prompt: |
+      Design a test strategy for this AI project:
+
+      Project Overview: {project_overview}
+      AI Use Case: {ai_use_case}
+      Business Domain: {business_domain}
+      AI Risk Category (EU AI Act): {risk_category}
+      Key Objectives: {objectives}
+
+      Provide:
+      - Recommended test architecture
+      - Risk-based testing focus
+      - Compliance and governance coverage
+      - Data, model, and system testing methods
+      - Long-term monitoring plan
+
+  - name: "regulatory-alignment"
+    description: "Regulatory-aligned testing blueprint"
+    prompt: |
+      Create a regulatory-aligned testing blueprint for this AI component:
+
+      Component Name: {component_name}
+      Regulations Applicable: {regulations}
+      Geographic Scope: {geographic_scope}
+      Intended Functionality: {functionality}
+
+      Describe:
+      - Required testing layers addressing regulatory obligations
+      - Data quality validation controls
+      - Explainability and transparency checks
+      - Ethical governance actions
+
+  - name: "model-performance"
+    description: "AI model performance and risk evaluation"
+    prompt: |
+      Generate a testing strategy focused on model performance and risk assurance:
+
+      Model Type: {model_type}
+      Primary Function: {primary_function}
+      Training Dataset Context: {dataset_context}
+      Known Risks: {known_risks}
+
+      Output:
+      - Targeted validation objectives
+      - Testing approach by model lifecycle phase
+      - Metrics and thresholds to monitor model drift and reliability
+      - Compliance and audit documentation steps
+
+  - name: "enterprise-governance"
+    description: "Enterprise AI quality governance framework"
+    prompt: |
+      Define an AI quality governance and testing framework for enterprise adoption:
+
+      Corporate QA Mandates: {qa_mandates}
+      Multiple AI Systems: {ai_systems}
+      Tooling Constraints: No external MCP servers allowed.
+
+      Deliver:
+      - Unified AI test governance structure
+      - Testing responsibilities and roles matrix
+      - Continuous validation process flow
+      - KPI/OKR-driven metrics for Responsible AI practices
+
+  - name: "continuous-validation"
+    description: "Continuous AI validation and monitoring plan"
+    prompt: |
+      Develop a continuous validation and regression testing plan for an AI-integrated platform:
+
+      System Description: {system_description}
+      AI Components: {ai_components}
+      Integration Points: {integration_points}
+      Objective: Maintain performance, compliance, and ethical alignment over time.
+
+      Include:
+      - Scheduled revalidation and retraining checks
+      - Automated monitoring triggers
+      - Bias and drift metrics to track
+      - Reporting and audit trail strategy

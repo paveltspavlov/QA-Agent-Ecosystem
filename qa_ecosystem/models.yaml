@@ -1,0 +1,127 @@
+# ──────────────────────────────────────────────────────────────────────────────
+# QA Agent Ecosystem — Model Configuration
+# ──────────────────────────────────────────────────────────────────────────────
+# Define model profiles that agents can use.  Each profile specifies a
+# provider, model ID, and optional connection / generation settings.
+#
+# Providers:
+#   claude            — Anthropic Claude via Claude Agent SDK (default)
+#   openai            — OpenAI GPT models via the OpenAI SDK
+#   openai-compatible — Any server exposing the OpenAI Chat Completions API
+#                       (Ollama, LM Studio, vLLM, Together, Groq, etc.)
+#
+# Environment variables for API keys (set before running):
+#   ANTHROPIC_API_KEY  — for claude provider
+#   OPENAI_API_KEY     — for openai provider
+#   LOCAL_API_KEY      — for openai-compatible (often "not-needed" for local)
+# ──────────────────────────────────────────────────────────────────────────────
+
+# ── Role assignments ─────────────────────────────────────────────────────────
+# Map logical roles to profile names.  Every agent uses "default" unless the
+# role mapping or a CLI flag overrides it.
+roles:
+  default: claude-sonnet            # subagents
+  orchestrator: claude-opus         # test-manager
+
+# ── Model profiles ───────────────────────────────────────────────────────────
+
+profiles:
+
+  # ── Anthropic Claude (via Agent SDK) ──────────────────────────────────────
+  claude-sonnet:
+    provider: claude
+    model_id: sonnet                # SDK alias — resolves to latest Sonnet
+    temperature: 0.4
+    max_tokens: 16384
+
+  claude-opus:
+    provider: claude
+    model_id: opus                  # SDK alias — resolves to latest Opus
+    temperature: 0.4
+    max_tokens: 16384
+
+  claude-haiku:
+    provider: claude
+    model_id: haiku
+    temperature: 0.4
+    max_tokens: 8192
+
+  # ── OpenAI ────────────────────────────────────────────────────────────────
+  gpt-4o:
+    provider: openai
+    model_id: gpt-4o
+    api_key_env: OPENAI_API_KEY     # env-var name holding the key
+    temperature: 0.4
+    max_tokens: 16384
+
+  gpt-4o-mini:
+    provider: openai
+    model_id: gpt-4o-mini
+    api_key_env: OPENAI_API_KEY
+    temperature: 0.4
+    max_tokens: 8192
+
+  # ── Ollama (local) ────────────────────────────────────────────────────────
+  ollama-llama3:
+    provider: openai-compatible
+    model_id: llama3.1
+    api_base: http://localhost:11434/v1
+    api_key_env: OLLAMA_API_KEY     # Ollama ignores keys — set to any value
+    api_key_default: "ollama"       # fallback if env-var is unset
+    temperature: 0.4
+    max_tokens: 8192
+
+  ollama-qwen:
+    provider: openai-compatible
+    model_id: qwen2.5
+    api_base: http://localhost:11434/v1
+    api_key_env: OLLAMA_API_KEY
+    api_key_default: "ollama"
+    temperature: 0.4
+    max_tokens: 8192
+
+  ollama-deepseek:
+    provider: openai-compatible
+    model_id: deepseek-r1
+    api_base: http://localhost:11434/v1
+    api_key_env: OLLAMA_API_KEY
+    api_key_default: "ollama"
+    temperature: 0.4
+    max_tokens: 8192
+
+  # ── LM Studio (local) ────────────────────────────────────────────────────
+  lmstudio:
+    provider: openai-compatible
+    model_id: default               # LM Studio serves whatever is loaded
+    api_base: http://localhost:1234/v1
+    api_key_env: LMSTUDIO_API_KEY
+    api_key_default: "lm-studio"
+    temperature: 0.4
+    max_tokens: 8192
+
+  # ── vLLM (local) ─────────────────────────────────────────────────────────
+  vllm-local:
+    provider: openai-compatible
+    model_id: default
+    api_base: http://localhost:8000/v1
+    api_key_env: VLLM_API_KEY
+    api_key_default: "vllm"
+    temperature: 0.4
+    max_tokens: 8192
+
+  # ── Cloud OpenAI-compatible (Together, Groq, etc.) ───────────────────────
+  together-llama:
+    provider: openai-compatible
+    model_id: meta-llama/Meta-Llama-3.1-70B-Instruct-Turbo
+    api_base: https://api.together.xyz/v1
+    api_key_env: TOGETHER_API_KEY
+    temperature: 0.4
+    max_tokens: 8192
+
+  groq-llama:
+    provider: openai-compatible
+    model_id: llama-3.3-70b-versatile
+    api_base: https://api.groq.com/openai/v1
+    api_key_env: GROQ_API_KEY
+    temperature: 0.4
+    max_tokens: 8192

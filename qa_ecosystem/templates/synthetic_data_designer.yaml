@@ -1,0 +1,76 @@
+agent: synthetic-data-designer
+templates:
+  - name: "default"
+    description: "Structured business data generation"
+    prompt: |
+      Design synthetic test data for a business system.
+
+      Domain: {domain}
+      Target Features: {target_features}
+      Data Types Needed: {data_types}
+      Volume: {volume}
+      Constraints: {constraints}
+
+      Provide:
+      - Data model (entities, fields, types, constraints)
+      - Boundary/edge and negative data cases
+      - A small sample dataset (5-10 rows) in CSV-style text
+
+  - name: "ai-ml-testing"
+    description: "Synthetic data for AI/ML testing"
+    prompt: |
+      Create synthetic data for testing this AI/ML use case:
+
+      AI Use Case: {ai_use_case}
+      Input Types: {input_types}
+      Key Risks: {key_risks}
+      Target Behaviors to Probe: {target_behaviors}
+
+      Provide:
+      - Data categories (typical, edge, adversarial)
+      - Schema/structure for the data
+      - Example synthetic records to test the AI behavior
+
+  - name: "api-contract"
+    description: "API integration and contract testing data"
+    prompt: |
+      Define synthetic test data for API integration testing:
+
+      APIs Involved: {api_endpoints}
+      Request/Response Structures: {schemas}
+      Key Scenarios: {scenarios}
+      Environments: {environments}
+
+      Provide:
+      - Synthetic payload schemas with field types and constraints
+      - Positive, boundary, and negative payload examples
+      - A small set of JSON-like request/response samples
+
+  - name: "privacy-safe"
+    description: "Privacy-safe production data replacement"
+    prompt: |
+      I need a privacy-safe synthetic dataset to replace a production dataset:
+
+      Domain: {domain}
+      Original Fields: {original_fields}
+      Sensitive Elements: {sensitive_elements}
+      Intended Testing: {intended_testing}
+
+      Deliver:
+      - Synthetic schema aligned with original structure
+      - Rules for preserving statistical realism without real PII
+      - Example records showing safe but realistic values
+
+  - name: "edge-case-pack"
+    description: "Edge-case and negative data pack"
+    prompt: |
+      Create an edge-case and negative synthetic data pack:
+
+      System/Feature Under Test: {feature_description}
+      Typical Input Fields: {input_fields}
+      Common Failures or Risks: {common_failures}
+
+      Provide:
+      - List of edge cases per field (min/max, malformed, unexpected types)
+      - Combined records that stress multiple edges at once
+      - CSV-like sample with 10-20 high-value edge/negative records

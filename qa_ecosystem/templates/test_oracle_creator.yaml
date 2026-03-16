@@ -1,0 +1,59 @@
+agent: test-oracle-creator
+templates:
+  - name: "default"
+    description: "Oracle for business logic scenarios"
+    prompt: |
+      Generate expected results for this test scenario with complex business logic:
+
+      Scenario: {scenario_description}
+      Business Rules: {business_rules}
+      Test Data: {test_data}
+
+      Provide step-by-step expected results with validation criteria and pass/fail conditions.
+
+  - name: "ai-model-output"
+    description: "Oracle criteria for AI model outputs"
+    prompt: |
+      Create oracle criteria for AI model outputs:
+
+      AI Component: {ai_component}
+      Input Examples: {input_examples}
+      Success Metrics: {success_metrics}
+
+      Define pass/fail thresholds and validation rules for model outputs.
+
+  - name: "api-response"
+    description: "Expected results for API test cases"
+    prompt: |
+      Define expected results for API integration test cases:
+
+      Endpoint: {endpoint}
+      Request Payloads: {request_payloads}
+      Business Rules: {business_rules}
+
+      Provide expected HTTP status codes, response body schemas, error messages,
+      and performance thresholds for each scenario.
+
+  - name: "ui-behavior"
+    description: "Expected results for UI/UX test cases"
+    prompt: |
+      Generate expected results for UI/UX test cases:
+
+      Page/Component: {component_name}
+      User Actions: {user_actions}
+      Business Context: {business_context}
+
+      Define expected UI states, messages, field validations, and navigation
+      outcomes per step.
+
+  - name: "data-integrity"
+    description: "Oracle for data integrity validation"
+    prompt: |
+      Create oracle definitions for data integrity validation:
+
+      Data Entity: {data_entity}
+      Operations: {operations}
+      Constraints: {constraints}
+
+      Provide expected database states, audit log entries, and error handling
+      criteria after each operation.

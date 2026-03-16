@@ -1,0 +1,6 @@
+claude-agent-sdk>=0.1.48
+pyyaml>=6.0
+rich>=13.0
+
+# Optional — needed for OpenAI / local model providers
+# openai>=1.0

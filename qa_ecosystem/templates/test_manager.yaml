@@ -1,0 +1,62 @@
+agent: test-manager
+templates:
+  - name: "default"
+    description: "Full test cycle orchestration"
+    prompt: |
+      Orchestrate a complete test cycle for this project:
+
+      Project Context: {project_context}
+      Scope: {scope}
+      Timeline: {timeline}
+      Team Size: {team_size}
+
+      Break down into subtasks, assign to appropriate agents, and provide
+      sequencing and consolidated results plan.
+
+  - name: "feature-release"
+    description: "Feature release test planning"
+    prompt: |
+      Coordinate testing for this feature release:
+
+      Features: {features}
+      Risk Level: {risk_level}
+      Priorities: {priorities}
+
+      Decompose testing workflow and orchestrate agents for requirements,
+      test cases, data, and strategy.
+
+  - name: "sprint-coordination"
+    description: "Sprint testing coordination"
+    prompt: |
+      Plan and coordinate all QA activities for Sprint {sprint_id}:
+
+      Sprint Goals: {sprint_goals}
+      New Features: {new_features}
+      Bug Fixes: {bug_fixes}
+      Dependencies: {dependencies}
+
+      Assign agent tasks, define sequencing, and deliver a sprint QA plan.
+
+  - name: "risk-driven"
+    description: "Risk-driven test planning for high-stakes releases"
+    prompt: |
+      Create a risk-driven test plan for a high-stakes release:
+
+      Release Scope: {release_scope}
+      Key Risks: {key_risks}
+      Constraints: {constraints}
+
+      Prioritize agent delegation based on risk exposure and deliver a
+      focused test plan with clear priorities.
+
+  - name: "post-release-review"
+    description: "Post-release quality review orchestration"
+    prompt: |
+      Orchestrate a post-release quality review:
+
+      Release Version: {release_version}
+      Observed Issues: {observed_issues}
+      Test Metrics Available: {metrics_available}
+
+      Coordinate Bug Analysis, Test Results Analysis, and Testware Creator
+      to produce a release quality retrospective report.

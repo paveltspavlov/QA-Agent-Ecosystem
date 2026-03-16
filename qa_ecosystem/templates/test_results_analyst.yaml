@@ -1,0 +1,74 @@
+agent: test-results-analyst
+templates:
+  - name: "default"
+    description: "Post-execution sprint analysis"
+    prompt: |
+      Analyze test results from this sprint execution:
+
+      {results_data}
+
+      Provide:
+      - Pass/fail metrics with trend comparison
+      - Failure patterns and root cause hypotheses
+      - Flaky test identification
+      - Recommended immediate actions
+
+  - name: "quality-gate"
+    description: "Release quality gate assessment"
+    prompt: |
+      Assess whether this release meets quality gate criteria:
+
+      Quality Gate Thresholds:
+      - Minimum pass rate: {min_pass_rate}
+      - Maximum critical failures: {max_critical_failures}
+      - Performance benchmarks: {performance_benchmarks}
+
+      Test Results:
+      {results_data}
+
+      Provide go/no-go recommendation with justification and risk summary.
+
+  - name: "flaky-test"
+    description: "Flaky test investigation"
+    prompt: |
+      Identify and analyse flaky tests in this execution dataset:
+
+      {results_data}
+
+      Execution Cycles Available: {execution_cycles}
+
+      Provide:
+      - List of flaky tests with instability frequency
+      - Environmental vs. code-related pattern separation
+      - Prioritized remediation recommendations
+
+  - name: "regression-impact"
+    description: "Regression impact analysis after code changes"
+    prompt: |
+      Analyse regression test results after recent code changes:
+
+      Changed Modules: {changed_modules}
+
+      Test Results:
+      {results_data}
+
+      Identify:
+      - New failures introduced by changes
+      - Previously passing tests now failing
+      - Impact assessment on unrelated modules
+      - Investigation priorities
+
+  - name: "cross-sprint-trend"
+    description: "Quality trend analysis across sprints"
+    prompt: |
+      Perform a quality trend analysis across multiple sprint cycles:
+
+      {results_data}
+
+      Sprint Range: {sprint_range}
+
+      Provide:
+      - Pass rate trends over time
+      - Recurring failure patterns
+      - Quality improvement or regression indicators
+      - Strategic QA improvement recommendations

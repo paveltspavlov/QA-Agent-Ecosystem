@@ -1,0 +1,27 @@
+[build-system]
+requires = ["setuptools>=68.0", "wheel"]
+build-backend = "setuptools.backends._legacy:_Backend"
+
+[project]
+name = "qa-agent-ecosystem"
+version = "1.0.0"
+description = "QA Agent Ecosystem — 10 specialized AI-powered QA agents orchestrated by a Test Manager, built on the Claude Agent SDK"
+requires-python = ">=3.10"
+dependencies = [
+    "claude-agent-sdk>=0.1.48",
+    "pyyaml>=6.0",
+    "rich>=13.0",
+]
+
+[project.optional-dependencies]
+openai = ["openai>=1.0"]
+all = ["openai>=1.0"]
+
+[project.scripts]
+qa-agent = "qa_ecosystem.cli:main"
+
+[tool.setuptools.packages.find]
+include = ["qa_ecosystem*"]
+
+[tool.setuptools.package-data]
+qa_ecosystem = ["models.yaml", "templates/*.yaml"]

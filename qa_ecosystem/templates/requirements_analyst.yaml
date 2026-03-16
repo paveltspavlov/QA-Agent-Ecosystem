@@ -1,0 +1,62 @@
+agent: requirements-analyst
+templates:
+  - name: "default"
+    description: "General requirement analysis for clarity and completeness"
+    prompt: |
+      Analyze the following Product Backlog Item for clarity and completeness:
+
+      {pbi_content}
+
+      List any ambiguities, missing details, or unclear acceptance criteria. Provide clarifying
+      questions categorized by functional, UI/UX, business, technical, and acceptance criteria gaps.
+
+  - name: "ui-focused"
+    description: "UI-focused requirement analysis with visual layout"
+    prompt: |
+      Analyze the requirement and attached visual layout:
+
+      Page or Component Name: {component_name}
+      Requirement Description: {pbi_content}
+      Visual Mockup: {mockup_description}
+
+      Identify unclear or conflicting UI elements and missing details. Provide categorized clarifying
+      questions for UI/UX aspects as well as functional and business ambiguities.
+
+  - name: "technical-task"
+    description: "Technical task analysis for integration risks"
+    prompt: |
+      Review this technical task for clarity and integration risks:
+
+      Task Description: {pbi_content}
+      Dependencies: {dependencies}
+      Expected Behavior: {expected_behavior}
+      Acceptance Criteria: {acceptance_criteria}
+
+      Provide clarifying questions focused on technical, integration, and functional ambiguities.
+
+  - name: "feature-breakdown"
+    description: "Feature-level breakdown analysis"
+    prompt: |
+      Analyze the feature described below:
+
+      Feature Name: {feature_name}
+      Description: {pbi_content}
+      Modules Affected: {modules_affected}
+      Acceptance Criteria: {acceptance_criteria}
+      Mockups: {mockup_description}
+
+      Identify any missing or unclear elements in functionality, business logic, UI, technical
+      details, and acceptance criteria.
+
+  - name: "pre-refinement"
+    description: "Ambiguity identification before backlog refinement"
+    prompt: |
+      Help me identify ambiguities in this backlog item for upcoming refinement:
+
+      Item ID: {requirement_id}
+      Title: {title}
+      Description: {pbi_content}
+      Attachments: {attachments}
+
+      Highlight missing inputs/outputs, undefined roles, confusing conditions, and acceptance
+      criteria gaps. Group clarifying questions by category.
