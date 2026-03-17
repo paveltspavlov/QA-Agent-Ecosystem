@@ -53,6 +53,8 @@ async def run_single_agent(
 
     if profile.is_claude:
         return await _run_claude_single(agent_def, prompt, profile, cwd, max_turns)
+    elif profile.is_anthropic_api:
+        return await _run_anthropic_api(agent_def.prompt, prompt, profile)
     else:
         return await _run_openai(agent_def.prompt, prompt, profile)
 
@@ -78,10 +80,16 @@ async def run_orchestrator(
 
     if profile.is_claude:
         return await _run_claude_orchestrator(manager, prompt, profile, cwd, max_turns)
+    elif profile.is_anthropic_api:
+        console.print(
+            "[yellow]Note: anthropic-api provider runs without tool use or subagent delegation. "
+            "The Test Manager will produce a plan only.[/yellow]\n"
+        )
+        return await _run_anthropic_api(manager.prompt, prompt, profile)
     else:
         console.print(
-            "[yellow]⚠  Non-Claude model selected — running orchestrator without "
-            "tool use or subagent delegation.  The Test Manager will produce a "
+            "[yellow]Note: Non-Claude model selected — running orchestrator without "
+            "tool use or subagent delegation. The Test Manager will produce a "
             "plan but cannot invoke specialist agents.[/yellow]\n"
         )
         return await _run_openai(manager.prompt, prompt, profile)
@@ -133,6 +141,48 @@ async def _stream_claude(prompt: str, options) -> str:
             collected.append(text)
             console.print(Markdown(text))
     return "\n".join(collected)
+
+
+# ═══════════════════════════════════════════════════════════════════════════════
+# Direct Anthropic API path
+# ═══════════════════════════════════════════════════════════════════════════════
+
+async def _run_anthropic_api(system_prompt: str, user_prompt: str, profile: ModelProfile) -> str:
+    """Execute via the Anthropic Messages API directly (no Claude Code CLI required)."""
+    try:
+        import anthropic as anthropic_sdk
+    except ImportError:
+        console.print(
+            "[red]The 'anthropic' package is required for the anthropic-api provider.\n"
+            "Install it with:  pip install anthropic[/red]"
+        )
+        raise SystemExit(1)
+
+    api_key = profile.resolve_api_key()
+    if not api_key:
+        console.print(
+            f"[red]No API key found for profile '{profile.name}'.\n"
+            "Set the ANTHROPIC_API_KEY environment variable.[/red]"
+        )
+        raise SystemExit(1)
+
+    client = anthropic_sdk.AsyncAnthropic(api_key=api_key)
+    console.print(f"[dim]Streaming from Anthropic API: {profile.model_id} ...[/dim]\n")
+
+    collected: list[str] = []
+    async with client.messages.stream(
+        model=profile.model_id,
+        system=system_prompt,
+        messages=[{"role": "user", "content": user_prompt}],
+        temperature=profile.temperature,
+        max_tokens=profile.max_tokens,
+    ) as stream:
+        async for text in stream.text_stream:
+            collected.append(text)
+            console.print(text, end="")
+
+    console.print()
+    return "".join(collected)
 
 
 # ═══════════════════════════════════════════════════════════════════════════════
@@ -209,9 +259,9 @@ def _extract_text(message: object) -> str | None:
 def _print_model_banner(profile: ModelProfile, agent_label: str) -> None:
     """Print a short banner showing which model will be used."""
     provider_tag = {
-        "claude": "☁️  Anthropic Claude",
-        "openai": "☁️  OpenAI",
-        "openai-compatible": "🖥️  Local / Compatible",
+        "claude": "Anthropic Claude",
+        "openai": "OpenAI",
+        "openai-compatible": "Local / Compatible",
     }.get(profile.provider, profile.provider)
 
     info = (
@@ -229,6 +279,4 @@ def _print_model_banner(profile: ModelProfile, agent_label: str) -> None:
 
 def run_sync(coro):
     """Run an async coroutine synchronously (entry point for CLI)."""
-    if sys.platform == "win32":
-        asyncio.set_event_loop_policy(asyncio.WindowsSelectorEventLoopPolicy())
     return asyncio.run(coro)

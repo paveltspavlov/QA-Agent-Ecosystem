@@ -38,6 +38,10 @@ class ModelProfile:
         return self.provider == "claude"
 
     @property
+    def is_anthropic_api(self) -> bool:
+        return self.provider == "anthropic-api"
+
+    @property
     def is_openai(self) -> bool:
         return self.provider in ("openai", "openai-compatible")
 
@@ -47,6 +51,8 @@ class ModelProfile:
             key = os.environ.get(self.api_key_env)
             if key:
                 return key
+        if self.is_anthropic_api:
+            return os.environ.get("ANTHROPIC_API_KEY")
         return self.api_key_default
 
 

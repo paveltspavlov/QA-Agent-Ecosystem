@@ -20,14 +20,36 @@
 # Map logical roles to profile names.  Every agent uses "default" unless the
 # role mapping or a CLI flag overrides it.
 roles:
-  default: claude-sonnet            # subagents
-  orchestrator: claude-opus         # test-manager
+  default: claude-sonnet-api        # subagents
+  orchestrator: claude-opus-api     # test-manager
 
 # ── Model profiles ───────────────────────────────────────────────────────────
 
 profiles:
 
-  # ── Anthropic Claude (via Agent SDK) ──────────────────────────────────────
+  # ── Anthropic Claude (via direct API — no Claude Code CLI needed) ─────────
+  claude-sonnet-api:
+    provider: anthropic-api
+    model_id: claude-sonnet-4-5
+    api_key_env: ANTHROPIC_API_KEY
+    temperature: 0.4
+    max_tokens: 16384
+
+  claude-opus-api:
+    provider: anthropic-api
+    model_id: claude-opus-4-5
+    api_key_env: ANTHROPIC_API_KEY
+    temperature: 0.4
+    max_tokens: 16384
+
+  claude-haiku-api:
+    provider: anthropic-api
+    model_id: claude-haiku-4-5
+    api_key_env: ANTHROPIC_API_KEY
+    temperature: 0.4
+    max_tokens: 8192
+
+  # ── Anthropic Claude (via Agent SDK — requires Claude Code CLI) ────────────
   claude-sonnet:
     provider: claude
     model_id: sonnet                # SDK alias — resolves to latest Sonnet
