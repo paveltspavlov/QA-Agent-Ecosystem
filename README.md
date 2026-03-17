@@ -1,6 +1,6 @@
 # QA Agent Ecosystem
 
-10 specialized AI-powered QA agents orchestrated by a Test Manager, built on the [Claude Agent SDK](https://docs.anthropic.com/en/docs/agents-and-tools/claude-agent-sdk) with multi-provider support.
+10 specialized AI-powered QA agents orchestrated by a Test Manager, with multi-provider support including direct Anthropic API, OpenAI, Ollama, and more.
 
 ## What Is This?
 
@@ -12,7 +12,7 @@ You can run agents individually or let the orchestrator decompose a complex test
 
 - **10 specialized QA agents** with ISTQB-aligned system prompts
 - **50 prompt templates** (5 per agent) for common QA scenarios
-- **Multi-provider support** — Claude, OpenAI, Ollama, LM Studio, vLLM, Groq, Together
+- **Multi-provider support** — Anthropic API, OpenAI, Ollama, LM Studio, vLLM, Groq, Together
 - **CLI tool** (`qa-agent`) for running agents from the terminal
 - **Python API** for programmatic integration
 - **Configurable models** via a single `models.yaml` file
@@ -49,15 +49,25 @@ You can run agents individually or let the orchestrator decompose a complex test
 git clone https://github.com/paveltspavlov/QA-Agent-Ecosystem.git
 cd QA-Agent-Ecosystem
 
-# Install
+# Create and activate a virtual environment
+python -m venv .venv
+.venv\Scripts\activate        # Windows
+source .venv/bin/activate     # Linux/macOS
+
+# Install dependencies
+pip install setuptools
 pip install -e .
 
 # For OpenAI / local model support:
 pip install -e ".[openai]"
 
-# Set your API key
-export ANTHROPIC_API_KEY=sk-ant-...    # Linux/macOS
-set ANTHROPIC_API_KEY=sk-ant-...       # Windows
+# Install the Anthropic SDK (for direct API access — no Claude Code CLI needed)
+pip install anthropic
+
+# Set your Anthropic API key
+set ANTHROPIC_API_KEY=sk-ant-...       # Windows CMD
+$env:ANTHROPIC_API_KEY="sk-ant-..."   # Windows PowerShell
+export ANTHROPIC_API_KEY=sk-ant-...   # Linux/macOS
 
 # Run an agent
 qa-agent run test-case-generator --input examples/sample_pbi.md
@@ -74,7 +84,11 @@ qa-agent orchestrate --input examples/sample_pbi.md
 
 ```bash
 # Install the package (editable mode for development)
+pip install setuptools
 pip install -e .
+
+# Install Anthropic SDK for direct API access (recommended — no Claude Code CLI required)
+pip install anthropic
 
 # If you want OpenAI / local model support too:
 pip install -e ".[openai]"
@@ -83,15 +97,18 @@ pip install -e ".[openai]"
 Set your API key(s) depending on which provider you'll use:
 
 ```bash
-# For Claude (required for Agent SDK path)
-export ANTHROPIC_API_KEY=sk-ant-...    # Linux/macOS
-set ANTHROPIC_API_KEY=sk-ant-...       # Windows
+# For Anthropic Claude (direct API — recommended default)
+set ANTHROPIC_API_KEY=sk-ant-...       # Windows CMD
+$env:ANTHROPIC_API_KEY="sk-ant-..."   # Windows PowerShell
+export ANTHROPIC_API_KEY=sk-ant-...   # Linux/macOS
 
 # For OpenAI (optional)
-export OPENAI_API_KEY=sk-...
+set OPENAI_API_KEY=sk-...
 
-# For Ollama — no key needed, it's ignored
+# For Ollama — no key needed
 ```
+
+> **Note:** Get your Anthropic API key from [console.anthropic.com](https://console.anthropic.com) — you need API credits (not a Claude.ai subscription).
 
 ---
 
@@ -103,7 +120,7 @@ export OPENAI_API_KEY=sk-...
 # See all 10 agents
 qa-agent list-agents
 
-# See all model profiles (Claude, GPT, Ollama, LM Studio, etc.)
+# See all model profiles (Claude API, GPT, Ollama, LM Studio, etc.)
 qa-agent list-models
 
 # See prompt templates for a specific agent
@@ -116,14 +133,17 @@ qa-agent list-templates
 #### 2. Run a Single Agent
 
 ```bash
-# Basic — uses default model (claude-sonnet)
+# Basic — uses default model (claude-sonnet-api via direct Anthropic API)
 qa-agent run test-case-generator --input examples/sample_pbi.md
 
 # Use a specific template
 qa-agent run test-case-generator --input examples/sample_pbi.md --template risk-based
 
-# Override the model to GPT-4o
+# Override to GPT-4o
 qa-agent run test-case-generator --input examples/sample_pbi.md --model gpt-4o
+
+# Use Claude Haiku (faster, cheaper)
+qa-agent run test-case-generator --input examples/sample_pbi.md --model claude-haiku-api
 
 # Use a local Ollama model
 qa-agent run test-case-generator --input examples/sample_pbi.md --model ollama-llama3
@@ -135,16 +155,14 @@ qa-agent run requirements-analyst --input "As a user I want to reset my password
 #### 3. Run the Orchestrator (Test Manager Delegates to Subagents)
 
 ```bash
-# Full orchestration — Test Manager assigns work to specialist agents
+# Full orchestration — Test Manager produces a comprehensive QA plan
 qa-agent orchestrate --input examples/sample_pbi.md
 
-# Orchestrate with a local model (plan-only, no subagent delegation)
+# Orchestrate with a local model
 qa-agent orchestrate --input examples/sample_pbi.md --model ollama-deepseek
 ```
 
-> **Note:** Only the `claude` provider supports tool use and subagent delegation.
-> When you use OpenAI or local models, the orchestrator produces a test plan but
-> cannot actually invoke the 9 specialist agents.
+> **Note:** The `anthropic-api` provider (default) calls the Anthropic Messages API directly and does not require the Claude Code CLI to be installed. Tool use and subagent delegation are not available on this path — the orchestrator produces a detailed test plan. The `claude` provider (via Claude Agent SDK) supports full subagent delegation but requires Claude Code CLI and CLI credits.
 
 #### 4. Run from Python Code
 
@@ -156,13 +174,13 @@ from qa_ecosystem.runner import run_single_agent, run_orchestrator
 result = asyncio.run(run_single_agent(
     agent_name="test-case-generator",
     prompt="Generate test cases for a login feature with MFA",
-    model_override="gpt-4o",  # optional
+    model_override="claude-sonnet-api",  # optional
 ))
 
 # Orchestrator
 result = asyncio.run(run_orchestrator(
     prompt="Full QA strategy for a payment processing module",
-    model_override="claude-opus",  # optional
+    model_override="claude-opus-api",  # optional
 ))
 ```
 
@@ -183,8 +201,8 @@ Edit **`qa_ecosystem/models.yaml`** — this is the single source of truth for a
 
 ```yaml
 roles:
-  default: gpt-4o              # all subagents use GPT-4o
-  orchestrator: claude-opus    # test-manager stays on Claude
+  default: claude-haiku-api    # use Haiku for all subagents (faster/cheaper)
+  orchestrator: claude-opus-api
 ```
 
 #### Add a New Local Model
@@ -210,30 +228,29 @@ qa-agent run bug-pattern-analyst -i bugs.csv --model my-local-mistral
 
 #### Pre-configured Profiles
 
-The following profiles are included out of the box in `models.yaml`:
-
-| Profile | Provider | Model |
-|---------|----------|-------|
-| `claude-sonnet` | Anthropic Claude | Latest Sonnet |
-| `claude-opus` | Anthropic Claude | Latest Opus |
-| `claude-haiku` | Anthropic Claude | Latest Haiku |
-| `gpt-4o` | OpenAI | GPT-4o |
-| `gpt-4o-mini` | OpenAI | GPT-4o Mini |
-| `ollama-llama3` | Ollama (local) | Llama 3.1 |
-| `ollama-qwen` | Ollama (local) | Qwen 2.5 |
-| `ollama-deepseek` | Ollama (local) | DeepSeek R1 |
-| `lmstudio` | LM Studio (local) | Default loaded model |
-| `vllm-local` | vLLM (local) | Default served model |
-| `together-llama` | Together AI | Llama 3.1 70B |
-| `groq-llama` | Groq | Llama 3.3 70B |
+| Profile | Provider | Model | Notes |
+|---------|----------|-------|-------|
+| `claude-sonnet-api` | Anthropic API | claude-sonnet-4-5 | **Default** — no CLI needed |
+| `claude-opus-api` | Anthropic API | claude-opus-4-5 | **Default orchestrator** |
+| `claude-haiku-api` | Anthropic API | claude-haiku-4-5 | Fastest/cheapest Claude |
+| `claude-sonnet` | Claude Agent SDK | Latest Sonnet | Requires Claude Code CLI + credits |
+| `claude-opus` | Claude Agent SDK | Latest Opus | Requires Claude Code CLI + credits |
+| `claude-haiku` | Claude Agent SDK | Latest Haiku | Requires Claude Code CLI + credits |
+| `gpt-4o` | OpenAI | GPT-4o | Requires `pip install openai` |
+| `gpt-4o-mini` | OpenAI | GPT-4o Mini | Requires `pip install openai` |
+| `ollama-llama3` | Ollama (local) | Llama 3.1 | No API key needed |
+| `ollama-qwen` | Ollama (local) | Qwen 2.5 | No API key needed |
+| `ollama-deepseek` | Ollama (local) | DeepSeek R1 | No API key needed |
+| `lmstudio` | LM Studio (local) | Default loaded model | No API key needed |
+| `vllm-local` | vLLM (local) | Default served model | No API key needed |
+| `together-llama` | Together AI | Llama 3.1 70B | Requires `TOGETHER_API_KEY` |
+| `groq-llama` | Groq | Llama 3.3 70B | Requires `GROQ_API_KEY` |
 
 #### Override Config Location
 
-Point to a custom config file via environment variable:
-
 ```bash
+set QA_MODELS_CONFIG=C:\path\to\custom\models.yaml    # Windows
 export QA_MODELS_CONFIG=/path/to/custom/models.yaml   # Linux/macOS
-set QA_MODELS_CONFIG=C:\path\to\custom\models.yaml     # Windows
 qa-agent list-models
 ```
 
@@ -264,14 +281,16 @@ qa-agent list-templates --agent <agent-name>
 
 ### Provider Behavior
 
-| Provider | Tool Use | Subagent Delegation | Best For |
-|----------|----------|-------------------|----------|
-| `claude` | Yes | Yes | Full orchestration, production workflows |
-| `openai` | No | No | Cost-effective drafting, GPT-based analysis |
-| `openai-compatible` | No | No | Local experimentation, privacy, offline use |
+| Provider | Requires | Tool Use | Best For |
+|----------|----------|----------|----------|
+| `anthropic-api` | `ANTHROPIC_API_KEY` + API credits | No | **Recommended default** — works everywhere |
+| `claude` | Claude Code CLI + CLI credits | Yes | Full subagent orchestration |
+| `openai` | `OPENAI_API_KEY` | No | GPT-based analysis |
+| `openai-compatible` | Depends on service | No | Local/offline experimentation |
 
-- **Claude** runs through the Claude Agent SDK with full access to file tools (Read, Write, Edit, Grep, Glob, Bash) and the Agent tool for subagent delegation.
-- **OpenAI / OpenAI-compatible** runs via the OpenAI Chat Completions API. The agent's system prompt is sent as a system message and the user prompt as a user message. Responses are streamed. No tool use or file access is available on this path.
+- **`anthropic-api`** calls the Anthropic Messages API directly using the `anthropic` Python SDK. No Claude Code CLI installation required. This is the recommended provider for most users.
+- **`claude`** runs through the Claude Agent SDK, which spawns a Claude Code CLI subprocess. Supports full tool use and subagent delegation. Requires the Claude Code CLI and separate CLI credits.
+- **OpenAI / OpenAI-compatible** uses the OpenAI Chat Completions API. Streamed responses, no tool use.
 
 ---
 
@@ -282,14 +301,13 @@ QA-Agent-Ecosystem/
 ├── pyproject.toml                     # Package config and dependencies
 ├── requirements.txt                   # Pip fallback
 ├── README.md                          # This file
-├── GUIDE.md                           # Standalone user guide
 ├── qa_ecosystem/
 │   ├── __init__.py                    # Package init
 │   ├── cli.py                         # CLI entry point (qa-agent command)
 │   ├── config.py                      # Tool sets, turn limits, agent names
 │   ├── models.py                      # Model profile loader and resolver
 │   ├── models.yaml                    # Model configuration (edit this!)
-│   ├── runner.py                      # Execution engine (Claude SDK + OpenAI)
+│   ├── runner.py                      # Execution engine (Anthropic API + OpenAI)
 │   ├── agents/
 │   │   ├── __init__.py                # Agent registry
 │   │   ├── test_case_generator.py     # Agent 1
@@ -298,7 +316,7 @@ QA-Agent-Ecosystem/
 │   │   ├── regression_optimizer.py    # Agent 4
 │   │   ├── ai_test_architect.py       # Agent 5
 │   │   ├── synthetic_data_designer.py # Agent 6
-│   │   ├── test_manager.py           # Agent 7 (Orchestrator)
+│   │   ├── test_manager.py            # Agent 7 (Orchestrator)
 │   │   ├── test_oracle_creator.py     # Agent 8
 │   │   ├── test_results_analyst.py    # Agent 9
 │   │   └── testware_creator.py        # Agent 10
