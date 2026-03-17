@@ -28,3 +28,7 @@ Thumbs.db
 
 # Claude Code
 .claude/
+
+# Generated agent outputs (keep folder structure, ignore content)
+outputs/**/*.md
+outputs/manager_instructions.md

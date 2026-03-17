@@ -16,6 +16,8 @@ You can run agents individually or let the orchestrator decompose a complex test
 - **CLI tool** (`qa-agent`) for running agents from the terminal
 - **Python API** for programmatic integration
 - **Configurable models** via a single `models.yaml` file
+- **Automatic result saving** — each agent's output is saved to `outputs/{agent-name}/`
+- **Interactive Q&A** — if an agent asks a question, you can reply directly in the terminal
 
 ### Architecture
 
@@ -376,6 +378,45 @@ qa-agent orchestrate --input examples/sample_pbi.md --template post-release-revi
 
 ---
 
+## Output Files
+
+Every agent run automatically saves its result to the `outputs/` folder.
+
+```
+outputs/
+├── manager_instructions.md        ← all Test Manager delegation plans (appended per session)
+├── test-manager/
+│   └── 2026-03-17_14-30-00.md
+├── test-case-generator/
+│   └── 2026-03-17_14-32-10.md
+├── requirements-analyst/
+│   └── 2026-03-17_14-33-05.md
+└── ...
+```
+
+- Each agent gets its own subfolder
+- Files are named by timestamp so runs never overwrite each other
+- When running the orchestrator, the Test Manager's delegation plan is also appended to `outputs/manager_instructions.md` with a session header
+
+---
+
+## Interactive Mode
+
+When an agent needs clarification, it will pause and prompt you directly in the terminal:
+
+```
+Agent is asking a question. Type your reply (or press Enter to skip):
+> _
+```
+
+- Type your answer and press **Enter** — the agent will continue with your input
+- Press **Enter with no text** to skip and let the agent finish without a reply
+- The loop repeats for as long as the agent keeps asking questions
+
+This works on all non-Claude providers (Anthropic API, OpenAI, LM Studio, Ollama, etc.).
+
+---
+
 ## Configure Models
 
 Edit **`qa_ecosystem/models.yaml`** to change which model is used.
@@ -413,6 +454,19 @@ qa-agent run test-case-generator --input examples/sample_pbi.md --model claude-h
 qa-agent run bug-pattern-analyst --input bugs.csv --model gpt-4o
 qa-agent run requirements-analyst --input story.md --model ollama-llama3
 ```
+
+### Use LM Studio (local, no API key needed)
+
+1. Open LM Studio and load a model from the **My Models** tab
+2. Make sure the local server is running (default: `http://localhost:1234`)
+3. Run any agent with `--model lmstudio`:
+
+```bash
+qa-agent run test-case-generator --input examples/sample_pbi.md --model lmstudio
+```
+
+No API key is required — the profile uses a placeholder automatically.
+To change the port or set a specific model ID, edit the `lmstudio` profile in `models.yaml`.
 
 ### Add a custom local model
 
@@ -490,6 +544,10 @@ QA-Agent-Ecosystem/
 │   │   └── testware_creator.py
 │   └── templates/
 │       └── *.yaml                     # 5 prompt templates per agent (50 total)
+├── outputs/                           # Auto-created on first run
+│   ├── manager_instructions.md        # Test Manager delegation plans
+│   └── {agent-name}/                  # One folder per agent
+│       └── YYYY-MM-DD_HH-MM-SS.md    # Timestamped result files
 └── examples/
     ├── run_single_agent.py
     ├── run_orchestrator.py
