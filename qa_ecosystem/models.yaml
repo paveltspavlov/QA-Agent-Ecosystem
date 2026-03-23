@@ -5,13 +5,16 @@
 # provider, model ID, and optional connection / generation settings.
 #
 # Providers:
-#   claude            — Anthropic Claude via Claude Agent SDK (default)
+#   copilot           — GitHub Copilot SDK (Agent mode, built-in model routing)
+#   anthropic-api     — Anthropic Messages API directly (no Claude Code CLI)
+#   claude            — Anthropic Claude via Claude Agent SDK (requires CLI)
 #   openai            — OpenAI GPT models via the OpenAI SDK
 #   openai-compatible — Any server exposing the OpenAI Chat Completions API
 #                       (Ollama, LM Studio, vLLM, Together, Groq, etc.)
 #
 # Environment variables for API keys (set before running):
-#   ANTHROPIC_API_KEY  — for claude provider
+#   GITHUB_TOKEN       — for copilot provider (or use `gh auth login`)
+#   ANTHROPIC_API_KEY  — for anthropic-api and claude providers
 #   OPENAI_API_KEY     — for openai provider
 #   LOCAL_API_KEY      — for openai-compatible (often "not-needed" for local)
 # ──────────────────────────────────────────────────────────────────────────────
@@ -20,14 +23,41 @@
 # Map logical roles to profile names.  Every agent uses "default" unless the
 # role mapping or a CLI flag overrides it.
 roles:
-  default: claude-sonnet-api        # subagents
-  orchestrator: claude-opus-api     # test-manager
+  default: claude-sonnet-api        # planning subagents (direct API)
+  orchestrator: claude-opus-api     # test-manager (direct API)
+  playwright: copilot-gpt4o        # Playwright execution agents
+  analysis: copilot-claude-sonnet  # analysis agents (coverage, hygiene, security)
 
 # ── Model profiles ───────────────────────────────────────────────────────────
 
 profiles:
 
-  # ── Anthropic Claude (via direct API — no Claude Code CLI needed) ─────────
+  # ── GitHub Copilot (Agent mode) ─────────────────────────────────────────
+  copilot-gpt4o:
+    provider: copilot
+    model_id: gpt-4o
+    temperature: 0.4
+    max_tokens: 16384
+
+  copilot-claude-sonnet:
+    provider: copilot
+    model_id: claude-sonnet-4.5
+    temperature: 0.4
+    max_tokens: 16384
+
+  copilot-o3-mini:
+    provider: copilot
+    model_id: o3-mini
+    temperature: 0.4
+    max_tokens: 16384
+
+  copilot-gemini:
+    provider: copilot
+    model_id: gemini-2.5-pro
+    temperature: 0.4
+    max_tokens: 16384
+
+  # ── Anthropic Claude (via direct API — no Claude Code CLI needed) ───────
   claude-sonnet-api:
     provider: anthropic-api
     model_id: claude-sonnet-4-5
@@ -49,7 +79,7 @@ profiles:
     temperature: 0.4
     max_tokens: 8192
 
-  # ── Anthropic Claude (via Agent SDK — requires Claude Code CLI) ────────────
+  # ── Anthropic Claude (via Agent SDK — requires Claude Code CLI) ─────────
   claude-sonnet:
     provider: claude
     model_id: sonnet                # SDK alias — resolves to latest Sonnet
@@ -72,7 +102,7 @@ profiles:
   gpt-4o:
     provider: openai
     model_id: gpt-4o
-    api_key_env: OPENAI_API_KEY     # env-var name holding the key
+    api_key_env: OPENAI_API_KEY
     temperature: 0.4
     max_tokens: 16384
 
@@ -88,8 +118,8 @@ profiles:
     provider: openai-compatible
     model_id: llama3.1
     api_base: http://localhost:11434/v1
-    api_key_env: OLLAMA_API_KEY     # Ollama ignores keys — set to any value
-    api_key_default: "ollama"       # fallback if env-var is unset
+    api_key_env: OLLAMA_API_KEY
+    api_key_default: "ollama"
     temperature: 0.4
     max_tokens: 8192
 
@@ -114,7 +144,7 @@ profiles:
   # ── LM Studio (local) ────────────────────────────────────────────────────
   lmstudio:
     provider: openai-compatible
-    model_id: default               # LM Studio serves whatever is loaded
+    model_id: default
     api_base: http://localhost:1234/v1
     api_key_env: LMSTUDIO_API_KEY
     api_key_default: "lm-studio"

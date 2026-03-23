@@ -1,0 +1,85 @@
+agent: playwright-test-generator
+templates:
+  - name: "default"
+    description: "Full site exploration and test generation"
+    prompt: |
+      Explore the following website and generate comprehensive Playwright test scripts:
+
+      URL: {url}
+
+      Focus Areas: {focus_areas}
+
+      Requirements:
+      - Navigate all reachable pages and capture key interactions
+      - Generate test scripts using Playwright best practices
+      - Include assertions for page load, element visibility, and navigation
+      - Use resilient selectors (data-testid, role-based, or text-based)
+      - Add meaningful test descriptions and comments
+
+  - name: "page-specific"
+    description: "Generate tests for a single page"
+    prompt: |
+      Generate Playwright tests for a specific page:
+
+      URL: {url}
+      Page Name: {page_name}
+
+      Key Elements to Test:
+      {key_elements}
+
+      Requirements:
+      - Verify all key elements are present and functional
+      - Test interactive elements (clicks, hovers, toggles)
+      - Validate page-specific content and layout
+      - Include both positive and negative interaction scenarios
+
+  - name: "form-validation"
+    description: "Form-focused test generation"
+    prompt: |
+      Generate Playwright tests focused on form validation:
+
+      URL: {url}
+      Form Description: {form_description}
+
+      Validation Rules:
+      {validation_rules}
+
+      Requirements:
+      - Test all form fields with valid and invalid inputs
+      - Verify inline validation messages appear correctly
+      - Test form submission with complete and incomplete data
+      - Check required field enforcement and boundary values
+      - Validate error message content and placement
+
+  - name: "user-journey"
+    description: "End-to-end user journey tests"
+    prompt: |
+      Generate Playwright tests for a complete user journey:
+
+      URL: {url}
+      Journey Description: {journey_description}
+      User Role: {user_role}
+
+      Requirements:
+      - Script the full end-to-end flow from entry to completion
+      - Include setup and teardown steps for test isolation
+      - Assert state transitions at each step of the journey
+      - Handle wait conditions and dynamic content loading
+      - Verify success and failure paths through the journey
+
+  - name: "accessibility"
+    description: "Accessibility-focused test generation"
+    prompt: |
+      Generate Playwright tests focused on accessibility compliance:
+
+      URL: {url}
+      WCAG Level: {wcag_level}
+
+      Focus Areas: {focus_areas}
+
+      Requirements:
+      - Integrate axe-core accessibility scanning via @axe-core/playwright
+      - Test keyboard navigation and focus management
+      - Verify ARIA labels, roles, and semantic HTML structure
+      - Check color contrast and text alternatives for images
+      - Validate screen reader compatibility for key interactions

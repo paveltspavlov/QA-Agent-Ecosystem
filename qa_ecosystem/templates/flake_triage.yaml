@@ -1,0 +1,90 @@
+agent: flake-triage
+templates:
+  - name: "default"
+    description: "Full flaky test diagnosis"
+    prompt: |
+      Perform a full diagnosis of the flaky test.
+
+      Test file: {test_file}
+      Failure log:
+      {failure_log}
+
+      Investigate:
+      - Timing and synchronization issues
+      - Race conditions with network requests
+      - Shared state leakage between tests
+      - Dynamic or unstable selectors
+      - Environment-specific factors
+
+      Provide a root cause analysis with confidence level and a concrete fix recommendation.
+
+  - name: "timing-analysis"
+    description: "Diagnose timing and wait issues"
+    prompt: |
+      Diagnose timing-related flakiness in the following test.
+
+      Test file: {test_file}
+      Timeout errors:
+      {timeout_errors}
+
+      Analyze:
+      - Hardcoded waits and sleep calls
+      - Missing or insufficient explicit waits
+      - Animations or transitions causing timing issues
+      - Page load races where assertions fire too early
+      - Network latency sensitivity
+
+      Recommend specific wait strategies and timeout adjustments for each issue found.
+
+  - name: "network-races"
+    description: "Diagnose network request race conditions"
+    prompt: |
+      Diagnose network-related race conditions in the following test.
+
+      Test file: {test_file}
+      API endpoints involved:
+      {api_endpoints}
+
+      Analyze:
+      - Assertions that depend on API responses without waiting
+      - Concurrent requests that resolve in unpredictable order
+      - Missing request interception or mocking
+      - Retry logic gaps for transient network failures
+
+      Provide specific fixes using request interception, waitForResponse, or mocking strategies.
+
+  - name: "state-leakage"
+    description: "Diagnose shared state issues between tests"
+    prompt: |
+      Diagnose shared state leakage causing test flakiness.
+
+      Test files:
+      {test_files}
+
+      Shared resources:
+      {shared_resources}
+
+      Analyze:
+      - Global variables or singletons modified across tests
+      - Database or storage state not reset between runs
+      - Browser state (cookies, local storage) carrying over
+      - Test execution order dependencies
+
+      Recommend isolation strategies including setup/teardown hooks and fixture scoping.
+
+  - name: "selector-stability"
+    description: "Diagnose dynamic selector problems"
+    prompt: |
+      Diagnose selector stability issues causing test flakiness.
+
+      Test file: {test_file}
+      Failing selectors:
+      {failing_selectors}
+
+      Analyze:
+      - Selectors relying on dynamically generated IDs or classes
+      - Selectors sensitive to DOM structure changes
+      - Selectors matching multiple elements unexpectedly
+      - Selectors broken by lazy loading or conditional rendering
+
+      Recommend stable selector strategies using data-testid attributes, ARIA roles, or text content.

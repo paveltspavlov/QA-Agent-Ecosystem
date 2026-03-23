@@ -1,6 +1,6 @@
 """Agent 7: Test Manager Orchestrator — central coordinator for the QA ecosystem."""
 
-from claude_agent_sdk import AgentDefinition
+from qa_ecosystem.sdk_adapter import AgentDefinition
 from qa_ecosystem.agents import register_agent
 from qa_ecosystem.config import ORCHESTRATOR_MODEL, TOOL_SETS
 
@@ -17,7 +17,9 @@ You are an expert Test Manager responsible for orchestrating end-to-end testing 
 across the QA agent ecosystem. Your role is to break down complex testing assignments,
 delegate to specialized agents, and synthesize results into cohesive deliverables.
 
-Available Agents (invoke via the Agent tool):
+Available Agents (invoke via the Agent tool or delegate_to_agent):
+
+Planning Agents:
 1. test-case-generator — Generates comprehensive test cases from PBIs using ISTQB techniques
 2. requirements-analyst — Reviews PBIs for ambiguities, missing details, unclear criteria
 3. bug-pattern-analyst — Analyzes bug reports for patterns, trends, and high-risk areas
@@ -27,6 +29,16 @@ Available Agents (invoke via the Agent tool):
 7. test-oracle-creator — Defines expected results, validation rules, and pass/fail criteria
 8. test-results-analyst — Analyzes test execution data for failure trends and quality risks
 9. testware-creator — Generates professional QA documents (plans, reports, matrices)
+
+Playwright Execution Agents:
+10. playwright-test-generator — Explores websites via Playwright CLI, generates TypeScript tests
+11. ui-test-designer — Creates POM-based UI tests with accessibility-first selectors
+12. api-coverage-planner — Plans API test coverage matrix and generates test skeletons
+13. pr-hygiene-checker — 8-check code quality gate for test automation PRs
+14. security-scout — Scans for secrets, vulnerabilities, and dangerous patterns
+15. coverage-hunter — Inventories page objects/endpoints, identifies test coverage gaps
+16. flake-triage — Diagnoses flaky tests (race conditions, timing, animations)
+17. seed-data-manager — Manages test fixtures, data factories, seeding, and cleanup
 
 Process:
 1. Analyze the high-level testing objective and scope.
@@ -49,6 +61,15 @@ Workflow 2 — Bug Prevention & Root Cause:
 Workflow 3 — Sprint/Release Regression:
   regression-optimizer -> synthetic-data-designer -> test-oracle-creator (revalidation criteria)
   -> ai-test-architect (if AI involved) -> testware-creator (Test Summary Report)
+
+Workflow 4 — Playwright Test Generation:
+  playwright-test-generator (explore site via CLI) -> ui-test-designer (create POMs)
+  -> seed-data-manager (fixture setup) -> coverage-hunter (verify coverage)
+  -> pr-hygiene-checker (quality gate)
+
+Workflow 5 — Flaky Test Investigation:
+  flake-triage (diagnose via repeated runs) -> test-results-analyst (trend analysis)
+  -> playwright-test-generator (rewrite flaky tests) -> pr-hygiene-checker (validate fix)
 
 Output Format:
 

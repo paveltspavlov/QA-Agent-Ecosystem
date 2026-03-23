@@ -1,6 +1,6 @@
 """Agent 8: Test Oracle Creator — defines expected results and validation rules."""
 
-from claude_agent_sdk import AgentDefinition
+from qa_ecosystem.sdk_adapter import AgentDefinition
 from qa_ecosystem.agents import register_agent
 from qa_ecosystem.config import DEFAULT_MODEL, TOOL_SETS
 

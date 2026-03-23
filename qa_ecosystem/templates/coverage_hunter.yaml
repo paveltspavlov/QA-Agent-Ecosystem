@@ -1,0 +1,86 @@
+agent: coverage-hunter
+templates:
+  - name: "default"
+    description: "Full coverage audit of test suite"
+    prompt: |
+      Perform a full coverage audit of the test suite.
+
+      Test directory: {test_directory}
+      Pages directory: {pages_directory}
+
+      Analyze:
+      - Which pages and components have corresponding tests
+      - Which functionality is tested vs untested
+      - Code paths that lack assertion coverage
+      - Edge cases and boundary conditions not covered
+
+      Produce a coverage matrix and highlight the most critical gaps.
+
+  - name: "page-objects"
+    description: "Page object coverage analysis"
+    prompt: |
+      Analyze page object coverage across the test suite.
+
+      Pages directory: {pages_directory}
+      Test directory: {test_directory}
+
+      For each page object:
+      - List all defined methods and properties
+      - Identify which are used in tests and which are unused
+      - Detect page interactions not captured by any page object
+      - Flag stale page objects referencing removed UI elements
+
+      Provide a coverage percentage per page object and overall recommendations.
+
+  - name: "api-endpoints"
+    description: "API endpoint coverage analysis"
+    prompt: |
+      Analyze API endpoint test coverage.
+
+      API specification: {api_spec}
+      Test directory: {test_directory}
+
+      For each endpoint:
+      - Check if positive and negative test cases exist
+      - Verify status code coverage (2xx, 4xx, 5xx)
+      - Identify missing authentication and authorization tests
+      - Flag endpoints with no test coverage at all
+
+      Produce an endpoint coverage report with prioritized gaps.
+
+  - name: "user-journeys"
+    description: "Critical user journey coverage"
+    prompt: |
+      Evaluate test coverage for critical user journeys.
+
+      Journey list:
+      {journey_list}
+
+      Test directory: {test_directory}
+
+      For each journey:
+      - Map the journey steps to existing tests
+      - Identify steps with no test coverage
+      - Check for end-to-end tests that cover the full journey
+      - Assess whether failure scenarios are tested
+
+      Rank uncovered journeys by business impact and testing effort.
+
+  - name: "gap-prioritization"
+    description: "Risk-ranked gap prioritization"
+    prompt: |
+      Prioritize coverage gaps based on risk criteria.
+
+      Coverage data:
+      {coverage_data}
+
+      Risk criteria:
+      {risk_criteria}
+
+      For each gap:
+      - Assess business impact if the untested area fails
+      - Estimate likelihood of defects based on code complexity
+      - Calculate a risk score combining impact and likelihood
+      - Recommend test types to close each gap
+
+      Produce a ranked list of gaps with estimated effort to address each.

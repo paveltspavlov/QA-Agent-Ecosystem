@@ -2,7 +2,7 @@
 
 from __future__ import annotations
 
-from claude_agent_sdk import AgentDefinition
+from qa_ecosystem.sdk_adapter import AgentDefinition
 
 AGENT_REGISTRY: dict[str, AgentDefinition] = {}
 
@@ -53,4 +53,13 @@ def _ensure_loaded() -> None:
         test_oracle_creator,
         test_results_analyst,
         testware_creator,
+        # Playwright execution agents
+        playwright_test_generator,
+        ui_test_designer,
+        api_coverage_planner,
+        pr_hygiene_checker,
+        security_scout,
+        coverage_hunter,
+        flake_triage,
+        seed_data_manager,
     )

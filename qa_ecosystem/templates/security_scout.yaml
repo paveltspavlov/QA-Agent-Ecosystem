@@ -1,0 +1,81 @@
+agent: security-scout
+templates:
+  - name: "default"
+    description: "Full security scan of test codebase"
+    prompt: |
+      Perform a comprehensive security scan of the test codebase located at {project_root}.
+      Analyze the following files for security vulnerabilities, insecure patterns, and potential attack vectors:
+      {file_paths}
+
+      Check for:
+      - Hardcoded credentials and secrets
+      - Insecure dependencies
+      - Configuration weaknesses
+      - Injection vulnerabilities
+      - Improper error handling that leaks sensitive information
+
+      Provide a prioritized list of findings with severity ratings and remediation steps.
+
+  - name: "secrets-scan"
+    description: "Scan for credentials and API keys only"
+    prompt: |
+      Scan the following files for exposed credentials, API keys, tokens, and secrets:
+      {file_paths}
+
+      Use these known key patterns to guide detection:
+      {known_key_patterns}
+
+      For each finding, report:
+      - File path and line number
+      - Type of secret detected
+      - Risk level if exposed
+      - Recommended remediation (environment variable, vault, etc.)
+
+  - name: "dependency-check"
+    description: "Check dependencies for known vulnerabilities"
+    prompt: |
+      Analyze the project dependencies for known security vulnerabilities.
+
+      Package file: {package_file}
+      Lock file: {lockfile}
+
+      For each dependency:
+      - Check for known CVEs and advisories
+      - Identify outdated packages with security patches available
+      - Flag transitive dependencies with vulnerabilities
+      - Recommend version upgrades or alternative packages
+
+      Produce a summary table sorted by severity.
+
+  - name: "config-audit"
+    description: "Audit configuration files for security issues"
+    prompt: |
+      Audit the following configuration files for security misconfigurations:
+      {config_files}
+
+      Target environment: {environment}
+
+      Check for:
+      - Overly permissive settings
+      - Debug mode enabled in non-development environments
+      - Insecure default values
+      - Missing security headers or protections
+      - Exposed internal endpoints or ports
+
+      Provide a checklist of issues with recommended secure configurations.
+
+  - name: "pre-publish"
+    description: "Pre-publish sanitization checklist"
+    prompt: |
+      Perform a pre-publish sanitization review of the project at {project_root}
+      before publishing to {publish_target}.
+
+      Verify:
+      - No secrets, credentials, or API keys in the codebase
+      - No internal URLs, IPs, or hostnames exposed
+      - No test data containing PII or sensitive information
+      - No debug or development-only code included
+      - All dependencies are from trusted sources
+      - License compliance is satisfied
+
+      Generate a pass/fail checklist with details for any failures.

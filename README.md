@@ -1,390 +1,365 @@
-# QA Agent Ecosystem
+# QA Agent Ecosystem v2.0
 
-10 specialized AI-powered QA agents orchestrated by a Test Manager, with multi-provider support including direct Anthropic API, OpenAI, Ollama, and more.
+18 AI-powered QA agents (10 planning + 8 Playwright execution) with multi-provider model support, orchestrated by a Test Manager. Built on the GitHub Copilot SDK (Agent mode) as the primary provider, with backward compatibility for direct Anthropic API access, Claude Agent SDK, OpenAI, and local models.
 
-## What Is This?
+You can run agents individually or let the Test Manager orchestrator decompose a complex testing task, delegate to specialists in parallel, and consolidate the results.
 
-A Python CLI toolkit that brings AI to your QA workflow. Each agent is a domain expert — one generates test cases, another analyzes bug patterns, another designs synthetic data — and a central **Test Manager** orchestrates them all into end-to-end testing workflows.
+---
 
-You can run agents individually or let the orchestrator decompose a complex testing task, delegate to specialists in parallel, and consolidate the results.
+## What's New in v2.0
 
-### Key Features
+- **GitHub Copilot SDK** -- migrated from Claude Agent SDK to GitHub Copilot SDK (Agent mode) as the primary provider. Claude Agent SDK is retained for backward compatibility.
+- **Anthropic API provider (`anthropic-api`)** -- direct API access to Claude models without the Claude Code CLI.
+- **8 new Playwright execution agents** -- 18 agents total (10 planning + 8 execution).
+- **90 prompt templates** -- up from 50 (5 per agent across 18 agents).
+- **Playwright TypeScript framework scaffold** -- full project structure with Page Object Model pattern, custom fixtures, data factories, and auth caching.
+- **3 new CLI commands** -- `playwright-gen`, `playwright-run`, `playwright-analyze` for end-to-end Playwright workflows from the terminal.
+- **Multi-model support** -- GPT-4o, Claude Sonnet, o3-mini, Gemini 2.5 Pro via Copilot; plus direct Anthropic API, Claude Agent SDK, OpenAI, and local model access.
+- **SDK adapter layer** -- provider-agnostic `AgentDefinition` dataclass so agent modules work with any backend.
+- **Automatic result saving** -- each agent's output is saved to `outputs/{agent-name}/` with timestamped filenames.
+- **Interactive Q&A** -- multi-turn conversation where agents can ask follow-up questions directly in the terminal (supported on `anthropic-api` and `openai` providers).
+- **CLI tool** (`qa-agent`) with 8 subcommands for running agents from the terminal.
+- **Python API** for programmatic integration.
+- **Configurable models** via a single `models.yaml` file.
 
-- **10 specialized QA agents** with ISTQB-aligned system prompts
-- **50 prompt templates** (5 per agent) for common QA scenarios
-- **Multi-provider support** — Anthropic API, OpenAI, Ollama, LM Studio, vLLM, Groq, Together
-- **CLI tool** (`qa-agent`) for running agents from the terminal
-- **Python API** for programmatic integration
-- **Configurable models** via a single `models.yaml` file
-- **Automatic result saving** — each agent's output is saved to `outputs/{agent-name}/`
-- **Interactive Q&A** — if an agent asks a question, you can reply directly in the terminal
+---
 
-### Architecture
+## Architecture
 
 ```
-                          ┌──────────────────┐
-                          │   Test Manager   │
-                          │  (Orchestrator)  │
-                          └────────┬─────────┘
-                                   │
-            ┌──────────┬───────────┼───────────┬──────────┐
-            │          │           │           │          │
-     ┌──────┴──┐ ┌─────┴────┐ ┌───┴────┐ ┌────┴───┐ ┌───┴─────┐
-     │ Test    │ │ Require- │ │ Bug    │ │Regress-│ │   AI    │
-     │ Case   │ │ ments    │ │Pattern │ │  ion   │ │  Test   │
-     │Generator│ │ Analyst  │ │Analyst │ │Optimiz.│ │Architect│
-     └─────────┘ └──────────┘ └────────┘ └────────┘ └─────────┘
-            │          │           │           │          │
-     ┌──────┴──┐ ┌─────┴────┐ ┌───┴────┐ ┌────┴───┐
-     │Synthetic│ │  Test    │ │ Test   │ │Testware│
-     │  Data   │ │ Oracle   │ │Results │ │Creator │
-     │Designer │ │ Creator  │ │Analyst │ │        │
-     └─────────┘ └──────────┘ └────────┘ └────────┘
+                          +--------------------+
+                          |    Test Manager    |
+                          |   (Orchestrator)   |
+                          +---------+----------+
+                                    |
+            +----------+-----------+-----------+----------+
+            |          |           |           |          |
+     +------+---+ +----+-----+ +--+-----+ +---+----+ +--+------+
+     | Test     | | Require- | | Bug    | |Regress-| |   AI    |
+     | Case     | | ments    | |Pattern | |  ion   | |  Test   |
+     | Generator| | Analyst  | |Analyst | |Optimiz.| |Architect|
+     +----------+ +----------+ +--------+ +--------+ +---------+
+            |          |           |           |          |
+     +------+---+ +----+-----+ +--+-----+ +---+----+
+     |Synthetic | |  Test    | | Test   | |Testware|
+     |  Data    | | Oracle   | |Results | |Creator |
+     |Designer  | | Creator  | |Analyst | |        |
+     +----------+ +----------+ +--------+ +--------+
+
+     --- Playwright Execution Agents ---
+
+     playwright-test-generator   ui-test-designer
+     api-coverage-planner        pr-hygiene-checker
+     security-scout              coverage-hunter
+     flake-triage                seed-data-manager
+```
+
+```
+qa_ecosystem/
+├── agents/           # 18 agent definitions (10 planning + 8 execution)
+├── templates/        # 18 YAML files with 90 prompt templates
+├── sdk_adapter.py    # Provider-agnostic AgentDefinition dataclass
+├── runner.py         # Multi-provider execution engine (Copilot, Anthropic API, Claude, OpenAI)
+├── models.py         # Model profile abstraction and resolver
+├── models.yaml       # Model configuration (Copilot, Anthropic API, Claude, OpenAI, local)
+├── config.py         # Tool sets, agent registry, constants
+├── cli.py            # CLI entry point with 8 subcommands
+└── __init__.py
+playwright/           # Playwright TypeScript framework scaffold
+├── playwright.config.ts
+├── pages/            # Page Object Model classes
+├── fixtures/         # Custom test fixtures
+├── helpers/          # Timeouts, env, API helpers
+├── test-data/        # Data factory
+├── auth/             # Auth state caching
+└── tests/            # UI and API test specs
+docs/
+├── QA_CONTEXT.md     # Playwright conventions and patterns
+└── PROMPT_LIBRARY.md # Copy-paste prompts for all 18 agents
+outputs/              # Auto-created on first run
+├── manager_instructions.md   # Test Manager delegation plans
+└── {agent-name}/             # One folder per agent
+    └── YYYY-MM-DD_HH-MM-SS.md  # Timestamped result files
+```
+
+---
+
+## All 18 Agents
+
+| # | Agent | Category | Purpose |
+|---|-------|----------|---------|
+| 1 | `test-case-generator` | Planning | ISTQB test cases from PBIs |
+| 2 | `requirements-analyst` | Planning | PBI ambiguity detection and gap analysis |
+| 3 | `bug-pattern-analyst` | Planning | Bug report pattern and trend analysis |
+| 4 | `regression-optimizer` | Planning | Optimized regression suites |
+| 5 | `ai-test-architect` | Planning | AI/ML test strategy and compliance |
+| 6 | `synthetic-data-designer` | Planning | Privacy-safe test data design |
+| 7 | `test-manager` | Planning | Orchestrator with 5 workflows |
+| 8 | `test-oracle-creator` | Planning | Expected results and validation rules |
+| 9 | `test-results-analyst` | Planning | Test execution analysis and failure trends |
+| 10 | `testware-creator` | Planning | Professional QA documentation |
+| 11 | `playwright-test-generator` | Execution | Generate Playwright TypeScript tests |
+| 12 | `ui-test-designer` | Execution | POM-based UI tests, accessibility selectors |
+| 13 | `api-coverage-planner` | Execution | API test coverage matrix |
+| 14 | `pr-hygiene-checker` | Execution | 8-check code quality gate |
+| 15 | `security-scout` | Execution | Secrets and vulnerability scanning |
+| 16 | `coverage-hunter` | Execution | Test coverage gap analysis |
+| 17 | `flake-triage` | Execution | Flaky test diagnosis and fix |
+| 18 | `seed-data-manager` | Execution | Test data factories and fixtures |
+
+Each agent has **5 prompt templates**. View them with:
+
+```bash
+qa-agent list-templates --agent <agent-name>
 ```
 
 ---
 
 ## Quick Start
 
+### Prerequisites
+
+- Python 3.10+
+- Node.js 18+ (for Playwright)
+- GitHub Copilot subscription (recommended) or Anthropic / OpenAI API key
+
+### Installation
+
 ```bash
-# 1. Clone the repo
+# Clone the repo
 git clone https://github.com/paveltspavlov/QA-Agent-Ecosystem.git
 cd QA-Agent-Ecosystem
 
-# 2. Create and activate a virtual environment
+# Create and activate a virtual environment
 python -m venv .venv
+source .venv/bin/activate          # Linux/macOS
 .venv\Scripts\activate             # Windows CMD
 .venv\Scripts\Activate.ps1         # Windows PowerShell
-source .venv/bin/activate          # Linux/macOS
 
-# 3. Install dependencies
+# Install base dependencies
 pip install setuptools
 pip install -e .
-pip install anthropic               # direct Anthropic API (no CLI needed)
 
-# 4. Set your API key
-set ANTHROPIC_API_KEY=sk-ant-...            # Windows CMD
-$env:ANTHROPIC_API_KEY="sk-ant-..."        # Windows PowerShell
-export ANTHROPIC_API_KEY=sk-ant-...        # Linux/macOS
+# For GitHub Copilot (recommended)
+pip install -e ".[copilot]"
+gh auth login
 
-# 5. Run your first agent
-qa-agent run test-case-generator --input examples/sample_pbi.md
-```
+# For Claude Agent SDK (backward compatibility)
+pip install -e ".[claude]"
 
-> Get your API key at [console.anthropic.com](https://console.anthropic.com) — you need API credits (not a Claude.ai subscription).
-
----
-
-## User Guide
-
-### Setup
-
-```bash
-pip install setuptools
-pip install -e .
+# For direct Anthropic API (no CLI needed)
+pip install -e ".[anthropic]"
 pip install anthropic
 
-# Optional: OpenAI / local model support
+# For OpenAI / local models
 pip install -e ".[openai]"
+
+# Install all providers
+pip install -e ".[all]"
+
+# Set up Playwright (optional)
+cd playwright && npm install && npx playwright install --with-deps
+```
+
+### Set your API key
+
+```bash
+# Anthropic API
+export ANTHROPIC_API_KEY=sk-ant-...        # Linux/macOS
+set ANTHROPIC_API_KEY=sk-ant-...           # Windows CMD
+$env:ANTHROPIC_API_KEY="sk-ant-..."        # Windows PowerShell
+
+# OpenAI
+export OPENAI_API_KEY=sk-...
+```
+
+> Get your Anthropic API key at [console.anthropic.com](https://console.anthropic.com) -- you need API credits (not a Claude.ai subscription).
+
+### Run your first agent
+
+```bash
+qa-agent run test-case-generator --input examples/sample_pbi.md
 ```
 
 ---
 
-### CLI Reference
+## Model Configuration
+
+All model configuration lives in a single file: `qa_ecosystem/models.yaml`.
+
+### Providers
+
+| Provider | Description |
+|----------|-------------|
+| `copilot` | GitHub Copilot SDK (Agent mode) -- GPT-4o, Claude Sonnet, o3-mini, Gemini |
+| `anthropic-api` | Direct Anthropic API -- works everywhere, no CLI needed |
+| `claude` | Anthropic Claude via Claude Agent SDK (backward compatibility) |
+| `openai` | OpenAI GPT models via the OpenAI SDK |
+| `openai-compatible` | Any OpenAI-compatible server -- Ollama, LM Studio, vLLM, Together, Groq |
+
+### Role Mapping
+
+The `roles` section in `models.yaml` maps logical roles to model profiles. Every agent uses the `default` role unless overridden by the role mapping or a CLI flag.
+
+```yaml
+roles:
+  default: claude-sonnet-api       # planning subagents
+  orchestrator: claude-opus-api    # test-manager
+  playwright: copilot-gpt4o       # Playwright execution agents
+  analysis: copilot-claude-sonnet  # analysis agents (coverage, hygiene, security)
+```
+
+### Pre-configured Model Profiles
+
+| Profile | Provider | Model | Notes |
+|---------|----------|-------|-------|
+| `copilot-gpt4o` | GitHub Copilot | GPT-4o | |
+| `copilot-claude-sonnet` | GitHub Copilot | Claude Sonnet 4.5 | |
+| `copilot-o3-mini` | GitHub Copilot | o3-mini | |
+| `copilot-gemini` | GitHub Copilot | Gemini 2.5 Pro | |
+| `claude-sonnet-api` | Anthropic API | claude-sonnet-4-5 | **Default** -- no CLI needed |
+| `claude-opus-api` | Anthropic API | claude-opus-4-5 | **Default orchestrator** |
+| `claude-haiku-api` | Anthropic API | claude-haiku-4-5 | Fastest/cheapest Claude |
+| `claude-sonnet` | Claude Agent SDK | Latest Sonnet | Requires Claude Code CLI + credits |
+| `claude-opus` | Claude Agent SDK | Latest Opus | Requires Claude Code CLI + credits |
+| `claude-haiku` | Claude Agent SDK | Latest Haiku | Requires Claude Code CLI + credits |
+| `gpt-4o` | OpenAI | GPT-4o | Requires `pip install openai` |
+| `gpt-4o-mini` | OpenAI | GPT-4o Mini | Requires `pip install openai` |
+| `ollama-llama3` | Ollama (local) | Llama 3.1 | No API key needed |
+| `ollama-qwen` | Ollama (local) | Qwen 2.5 | No API key needed |
+| `ollama-deepseek` | Ollama (local) | DeepSeek R1 | No API key needed |
+| `lmstudio` | LM Studio (local) | Default loaded model | No API key needed |
+| `vllm-local` | vLLM (local) | Default served model | No API key needed |
+| `together-llama` | Together AI | Llama 3.1 70B | Requires `TOGETHER_API_KEY` |
+| `groq-llama` | Groq | Llama 3.3 70B | Requires `GROQ_API_KEY` |
+
+### Environment Variables
+
+| Provider | Env Variable | How to Set |
+|----------|-------------|------------|
+| copilot | (automatic) | `gh auth login` |
+| anthropic-api | `ANTHROPIC_API_KEY` | `export ANTHROPIC_API_KEY=sk-ant-...` |
+| claude | `ANTHROPIC_API_KEY` | `export ANTHROPIC_API_KEY=sk-ant-...` |
+| openai | `OPENAI_API_KEY` | `export OPENAI_API_KEY=sk-...` |
+| ollama | `OLLAMA_API_KEY` | Set to any value (Ollama ignores keys) |
+
+You can also override the config file location:
 
 ```bash
-qa-agent list-agents                              # show all 10 agents
-qa-agent list-models                              # show all model profiles
-qa-agent list-templates                           # show all 50 templates
-qa-agent list-templates --agent <agent-name>      # templates for one agent
-
-qa-agent run <agent-name> --input <file-or-text>  # run a single agent
-qa-agent orchestrate --input <file-or-text>       # run the full orchestrator
+export QA_MODELS_CONFIG=/path/to/custom/models.yaml
 ```
+
+### Use a different model per run
+
+```bash
+qa-agent run test-case-generator --input examples/sample_pbi.md --model claude-haiku-api
+qa-agent run bug-pattern-analyst --input bugs.csv --model gpt-4o
+qa-agent run requirements-analyst --input story.md --model ollama-llama3
+qa-agent run ui-test-designer --input spec.md --model copilot-gpt4o
+```
+
+### Adding a Custom Model Profile
+
+Add a new entry under `profiles:` in `models.yaml`:
+
+```yaml
+profiles:
+  my-local-mistral:
+    provider: openai-compatible
+    model_id: mistral
+    api_base: http://localhost:11434/v1
+    api_key_default: "ollama"
+    temperature: 0.3
+    max_tokens: 4096
+```
+
+Then use it from the CLI:
+
+```bash
+qa-agent run test-case-generator --input examples/sample_pbi.md --model my-local-mistral
+```
+
+---
+
+## CLI Reference
+
+The `qa-agent` CLI provides 8 subcommands covering discovery, execution, orchestration, and Playwright workflows.
 
 **Common flags:**
-- `--input / -i` — path to a file OR inline text (required)
-- `--template / -t` — template name (default: `default`)
-- `--model / -m` — model profile from `models.yaml` (default: `claude-sonnet-api`)
+- `--input / -i` -- path to a file OR inline text (required for `run` and `orchestrate`)
+- `--template / -t` -- template name (default: `default`)
+- `--model / -m` -- model profile from `models.yaml`
 
----
-
-## Agent Examples
-
-Each agent has 5 templates. The examples below show several per agent.
-Pass `--input` a file path or inline text — the default template works for most cases.
-
----
-
-### 1. test-case-generator
-
-Generates ISTQB-aligned test cases from user stories, features, and tasks.
+### Discovery Commands
 
 ```bash
-# Generate comprehensive test cases from a PBI file
-qa-agent run test-case-generator --input examples/sample_pbi.md
+# List all 18 agents
+qa-agent list-agents
 
-# Generate test cases from inline text
-qa-agent run test-case-generator --input "As a user I want to reset my password via email"
+# List all 90 prompt templates
+qa-agent list-templates
 
-# Risk-based test cases (prioritised by business impact)
-qa-agent run test-case-generator --input examples/sample_pbi.md --template risk-based
+# List templates for a specific agent
+qa-agent list-templates --agent playwright-test-generator
 
-# Integration and system test cases
-qa-agent run test-case-generator --input examples/sample_pbi.md --template integration-focused
+# List all configured model profiles
+qa-agent list-models
+```
 
-# Acceptance-level test cases
-qa-agent run test-case-generator --input examples/sample_pbi.md --template acceptance-test
+### Run a Single Agent
 
-# Apply a specific ISTQB technique (e.g. boundary value analysis)
-qa-agent run test-case-generator --input examples/sample_pbi.md --template technique-specific
+```bash
+# Basic run with default model
+qa-agent run test-case-generator -i requirements.md
+
+# Use a specific template and model
+qa-agent run test-case-generator -i requirements.md -t risk-based -m copilot-gpt4o
+
+# Use a local model
+qa-agent run test-case-generator -i requirements.md -m ollama-llama3
+
+# Pass inline text instead of a file
+qa-agent run requirements-analyst -i "As a user I want to reset my password"
+```
+
+### Orchestrate (Test Manager Delegates to Agents)
+
+```bash
+# Full orchestration -- Test Manager decomposes and delegates
+qa-agent orchestrate -i project_context.md
+
+# Orchestrate with a specific workflow template
+qa-agent orchestrate -i project_context.md -t playwright-gen
+```
+
+### Playwright Commands
+
+```bash
+# Generate Playwright tests from a URL
+qa-agent playwright-gen --url https://myapp.com
+
+# Generate with a specific agent and model
+qa-agent playwright-gen --url https://myapp.com --agent ui-test-designer -m copilot-gpt4o
+
+# Run Playwright tests with optional analysis
+qa-agent playwright-run --project chromium --analyze
+qa-agent playwright-run --project api --reporter json
+
+# Analyze existing test code
+qa-agent playwright-analyze --agent pr-hygiene-checker -i playwright/tests/
+qa-agent playwright-analyze --agent security-scout -i playwright/
+qa-agent playwright-analyze --agent flake-triage -i playwright/tests/ui/login.spec.ts
 ```
 
 ---
 
-### 2. requirements-analyst
-
-Reviews PBIs and user stories for ambiguities, missing details, and unclear acceptance criteria.
-
-```bash
-# Analyse a PBI for clarity and completeness
-qa-agent run requirements-analyst --input examples/sample_pbi.md
-
-# Analyse inline text
-qa-agent run requirements-analyst --input "As an admin I want to manage user roles"
-
-# Identify ambiguities before a backlog refinement session
-qa-agent run requirements-analyst --input examples/sample_pbi.md --template pre-refinement
-
-# Analyse a UI/UX-focused requirement
-qa-agent run requirements-analyst --input examples/sample_pbi.md --template ui-focused
-
-# Review a technical task for integration risks
-qa-agent run requirements-analyst --input examples/sample_pbi.md --template technical-task
-
-# Break down a feature into analysable components
-qa-agent run requirements-analyst --input examples/sample_pbi.md --template feature-breakdown
-```
-
----
-
-### 3. bug-pattern-analyst
-
-Processes bug reports (CSV or plain text) to find patterns, trends, and high-risk areas.
-
-```bash
-# Comprehensive analysis of a bug report file
-qa-agent run bug-pattern-analyst --input bugs.csv
-
-# Analyse inline bug summary
-qa-agent run bug-pattern-analyst --input "Login fails on Safari. Checkout crashes on Android. Password reset email not sent."
-
-# Identify high-risk functionalities from defect data
-qa-agent run bug-pattern-analyst --input bugs.csv --template high-risk-areas
-
-# Analyse defect trends over time
-qa-agent run bug-pattern-analyst --input bugs.csv --template temporal-trends
-
-# Root cause pattern detection
-qa-agent run bug-pattern-analyst --input bugs.csv --template root-cause
-
-# Targeted analysis for a specific module
-qa-agent run bug-pattern-analyst --input bugs.csv --template module-specific
-```
-
----
-
-### 4. regression-optimizer
-
-Analyses test suites and creates optimised regression packs based on changes and risk.
-
-```bash
-# Build a regression suite for recent changes
-qa-agent run regression-optimizer --input tests.csv
-
-# Inline description of what changed
-qa-agent run regression-optimizer --input "Payment module refactored. New checkout flow added. Auth service unchanged."
-
-# Optimise the full regression suite (remove redundancy)
-qa-agent run regression-optimizer --input tests.csv --template full-optimization
-
-# Sprint or release regression pack
-qa-agent run regression-optimizer --input tests.csv --template sprint-release
-
-# Risk-based regression selection
-qa-agent run regression-optimizer --input tests.csv --template risk-based
-
-# Maintenance: identify obsolete and redundant tests
-qa-agent run regression-optimizer --input tests.csv --template maintenance
-```
-
----
-
-### 5. ai-test-architect
-
-Designs test strategies for AI/ML projects with EU AI Act and ISTQB AI principles applied.
-
-```bash
-# Design a test strategy for an AI project
-qa-agent run ai-test-architect --input "AI-powered loan approval system using credit scoring ML model"
-
-# Full strategy from a project description file
-qa-agent run ai-test-architect --input ai_project.md
-
-# Regulatory-aligned testing blueprint (EU AI Act, GDPR, etc.)
-qa-agent run ai-test-architect --input ai_project.md --template regulatory-alignment
-
-# Model performance and risk evaluation
-qa-agent run ai-test-architect --input ai_project.md --template model-performance
-
-# Enterprise AI quality governance framework
-qa-agent run ai-test-architect --input ai_project.md --template enterprise-governance
-
-# Continuous validation and monitoring plan
-qa-agent run ai-test-architect --input ai_project.md --template continuous-validation
-```
-
----
-
-### 6. synthetic-data-designer
-
-Generates privacy-safe, realistic synthetic datasets for testing.
-
-```bash
-# Design structured business test data
-qa-agent run synthetic-data-designer --input "E-commerce order management system with users, products, orders, payments"
-
-# From a spec file
-qa-agent run synthetic-data-designer --input spec.md
-
-# Synthetic data for AI/ML testing
-qa-agent run synthetic-data-designer --input spec.md --template ai-ml-testing
-
-# API contract testing payloads
-qa-agent run synthetic-data-designer --input spec.md --template api-contract
-
-# Privacy-safe replacement for production data
-qa-agent run synthetic-data-designer --input spec.md --template privacy-safe
-
-# Edge-case and negative data pack
-qa-agent run synthetic-data-designer --input spec.md --template edge-case-pack
-```
-
----
-
-### 7. test-oracle-creator
-
-Generates precise expected results, validation rules, and acceptance criteria for test cases.
-
-```bash
-# Generate expected results for a business logic scenario
-qa-agent run test-oracle-creator --input "User with Premium subscription gets 20% discount on orders over $100"
-
-# From a scenarios file
-qa-agent run test-oracle-creator --input scenarios.md
-
-# Oracle criteria for AI model outputs
-qa-agent run test-oracle-creator --input scenarios.md --template ai-model-output
-
-# Expected results for API test cases
-qa-agent run test-oracle-creator --input scenarios.md --template api-response
-
-# Expected results for UI/UX test cases
-qa-agent run test-oracle-creator --input scenarios.md --template ui-behavior
-
-# Data integrity validation oracle
-qa-agent run test-oracle-creator --input scenarios.md --template data-integrity
-```
-
----
-
-### 8. test-results-analyst
-
-Processes test execution data to find failure trends, flaky tests, and coverage gaps.
-
-```bash
-# Analyse sprint test results
-qa-agent run test-results-analyst --input results.csv
-
-# Inline results summary
-qa-agent run test-results-analyst --input "Sprint 12: 340 passed, 18 failed, 5 blocked. Login suite: 3 failures. Payment suite: 15 failures."
-
-# Release quality gate assessment (go/no-go)
-qa-agent run test-results-analyst --input results.csv --template quality-gate
-
-# Flaky test investigation
-qa-agent run test-results-analyst --input results.csv --template flaky-test
-
-# Regression impact after code changes
-qa-agent run test-results-analyst --input results.csv --template regression-impact
-
-# Quality trend analysis across sprints
-qa-agent run test-results-analyst --input results.csv --template cross-sprint-trend
-```
-
----
-
-### 9. testware-creator
-
-Creates professional QA artefacts: test plans, reports, defect reports, traceability matrices.
-
-```bash
-# Generate a test plan
-qa-agent run testware-creator --input "Mobile banking app — Sprint 5 scope: biometric login, transfer limits, statements"
-
-# From a scope file
-qa-agent run testware-creator --input scope.md
-
-# Test summary report for stakeholders
-qa-agent run testware-creator --input scope.md --template test-summary-report
-
-# Formal defect report ready for developer handoff
-qa-agent run testware-creator --input scope.md --template defect-report
-
-# Requirements-to-test traceability matrix
-qa-agent run testware-creator --input scope.md --template traceability-matrix
-
-# Test closure report for project archive
-qa-agent run testware-creator --input scope.md --template test-closure-report
-```
-
----
-
-### 10. test-manager (Orchestrator)
-
-Coordinates end-to-end QA workflows by decomposing tasks and delegating to specialist agents.
-
-```bash
-# Full test cycle orchestration from a PBI file
-qa-agent orchestrate --input examples/sample_pbi.md
-
-# Orchestrate from inline project description
-qa-agent orchestrate --input "Payment processing module — new Stripe integration, refund flow, fraud detection"
-
-# Feature release test planning
-qa-agent orchestrate --input examples/sample_pbi.md --template feature-release
-
-# Sprint testing coordination
-qa-agent orchestrate --input examples/sample_pbi.md --template sprint-coordination
-
-# Risk-driven test planning for a high-stakes release
-qa-agent orchestrate --input examples/sample_pbi.md --template risk-driven
-
-# Post-release quality review
-qa-agent orchestrate --input examples/sample_pbi.md --template post-release-review
-```
-
-> **Note:** The default `anthropic-api` provider calls the Anthropic Messages API directly and produces a comprehensive QA plan. Full subagent delegation (where the Test Manager actually invokes the other 9 agents) requires the `claude` provider via the Claude Agent SDK.
-
----
-
-## Output Files
+## Output & Result Saving
 
 Every agent run automatically saves its result to the `outputs/` folder.
 
 ```
 outputs/
-├── manager_instructions.md        ← all Test Manager delegation plans (appended per session)
+├── manager_instructions.md        <- all Test Manager delegation plans (appended per session)
 ├── test-manager/
 │   └── 2026-03-17_14-30-00.md
 ├── test-case-generator/
@@ -394,100 +369,132 @@ outputs/
 └── ...
 ```
 
-- Each agent gets its own subfolder
-- Files are named by timestamp so runs never overwrite each other
-- When running the orchestrator, the Test Manager's delegation plan is also appended to `outputs/manager_instructions.md` with a session header
+- Each agent gets its own subfolder under `outputs/`.
+- Files are named by timestamp (`YYYY-MM-DD_HH-MM-SS.md`) so runs never overwrite each other.
+- When running the orchestrator, the Test Manager's delegation plan is also appended to `outputs/manager_instructions.md` with a session header.
 
 ---
 
-## Interactive Mode
+## Interactive Q&A
 
-When an agent needs clarification, it will pause and prompt you directly in the terminal:
+When using the `anthropic-api` or `openai` providers, agents support multi-turn conversation. If an agent needs clarification, it will pause and prompt you directly in the terminal:
 
 ```
 Agent is asking a question. Type your reply (or press Enter to skip):
 > _
 ```
 
-- Type your answer and press **Enter** — the agent will continue with your input
-- Press **Enter with no text** to skip and let the agent finish without a reply
-- The loop repeats for as long as the agent keeps asking questions
+- Type your answer and press **Enter** -- the agent will continue with your input.
+- Press **Enter with no text** to skip and let the agent finish without a reply.
+- The loop repeats for as long as the agent keeps asking questions.
 
-This works on all non-Claude providers (Anthropic API, OpenAI, LM Studio, Ollama, etc.).
-
----
-
-## Configure Models
-
-Edit **`qa_ecosystem/models.yaml`** to change which model is used.
-
-### Change the default model
-
-```yaml
-roles:
-  default: claude-haiku-api      # faster and cheaper for subagents
-  orchestrator: claude-opus-api  # more powerful for orchestration
-```
-
-### Pre-configured profiles
-
-| Profile | Provider | Model | Notes |
-|---------|----------|-------|-------|
-| `claude-sonnet-api` | Anthropic API | claude-sonnet-4-5 | **Default** — no CLI needed |
-| `claude-opus-api` | Anthropic API | claude-opus-4-5 | **Default orchestrator** |
-| `claude-haiku-api` | Anthropic API | claude-haiku-4-5 | Fastest/cheapest Claude |
-| `claude-sonnet` | Claude Agent SDK | Latest Sonnet | Requires Claude Code CLI + credits |
-| `claude-opus` | Claude Agent SDK | Latest Opus | Requires Claude Code CLI + credits |
-| `gpt-4o` | OpenAI | GPT-4o | Requires `pip install openai` |
-| `gpt-4o-mini` | OpenAI | GPT-4o Mini | Requires `pip install openai` |
-| `ollama-llama3` | Ollama (local) | Llama 3.1 | No API key needed |
-| `ollama-qwen` | Ollama (local) | Qwen 2.5 | No API key needed |
-| `ollama-deepseek` | Ollama (local) | DeepSeek R1 | No API key needed |
-| `lmstudio` | LM Studio (local) | Default loaded model | No API key needed |
-| `together-llama` | Together AI | Llama 3.1 70B | Requires `TOGETHER_API_KEY` |
-| `groq-llama` | Groq | Llama 3.3 70B | Requires `GROQ_API_KEY` |
-
-### Use a different model per run
-
-```bash
-qa-agent run test-case-generator --input examples/sample_pbi.md --model claude-haiku-api
-qa-agent run bug-pattern-analyst --input bugs.csv --model gpt-4o
-qa-agent run requirements-analyst --input story.md --model ollama-llama3
-```
-
-### Use LM Studio (local, no API key needed)
-
-1. Open LM Studio and load a model from the **My Models** tab
-2. Make sure the local server is running (default: `http://localhost:1234`)
-3. Run any agent with `--model lmstudio`:
-
-```bash
-qa-agent run test-case-generator --input examples/sample_pbi.md --model lmstudio
-```
-
-No API key is required — the profile uses a placeholder automatically.
-To change the port or set a specific model ID, edit the `lmstudio` profile in `models.yaml`.
-
-### Add a custom local model
-
-```yaml
-profiles:
-  my-mistral:
-    provider: openai-compatible
-    model_id: mistral
-    api_base: http://localhost:11434/v1
-    api_key_default: "ollama"
-    temperature: 0.3
-    max_tokens: 4096
-```
-
-```bash
-qa-agent run test-case-generator --input examples/sample_pbi.md --model my-mistral
-```
+This enables a back-and-forth dialogue where agents can request missing context, clarify requirements, or refine their output based on your feedback.
 
 ---
 
-## Run from Python
+## Orchestration Workflows
+
+The Test Manager supports 5 orchestration workflows. When you run `qa-agent orchestrate`, the Test Manager analyzes the objective, selects the appropriate workflow, and delegates to specialist agents.
+
+### Workflow 1 -- New Feature Testing
+
+```
+requirements-analyst -> test-case-generator -> (parallel) synthetic-data-designer + test-oracle-creator
+-> testware-creator (Test Plan) -> Execute -> test-results-analyst -> testware-creator (Test Report)
+```
+
+Covers the full lifecycle from requirement analysis through test design, data preparation, execution, and reporting.
+
+### Workflow 2 -- Bug Prevention and Root Cause
+
+```
+bug-pattern-analyst -> requirements-analyst (spec gaps?) -> test-case-generator (new validations)
+-> regression-optimizer -> testware-creator (Defect Report)
+```
+
+Analyzes bug patterns to find root causes, identifies specification gaps, and strengthens validation coverage.
+
+### Workflow 3 -- Sprint/Release Regression
+
+```
+regression-optimizer -> synthetic-data-designer -> test-oracle-creator (revalidation criteria)
+-> ai-test-architect (if AI involved) -> testware-creator (Test Summary Report)
+```
+
+Builds an optimized regression suite for a sprint or release, with fresh test data and updated pass/fail criteria.
+
+### Workflow 4 -- Playwright Test Generation
+
+```
+playwright-test-generator (explore site via CLI) -> ui-test-designer (create POMs)
+-> seed-data-manager (fixture setup) -> coverage-hunter (verify coverage)
+-> pr-hygiene-checker (quality gate)
+```
+
+End-to-end Playwright automation: discovers pages, generates Page Object Models, sets up test data, verifies coverage, and runs a quality gate.
+
+### Workflow 5 -- Flaky Test Investigation
+
+```
+flake-triage (diagnose via repeated runs) -> test-results-analyst (trend analysis)
+-> playwright-test-generator (rewrite flaky tests) -> pr-hygiene-checker (validate fix)
+```
+
+Diagnoses flaky tests by identifying race conditions and timing issues, rewrites the tests, and validates the fix.
+
+---
+
+## Playwright Framework
+
+The `playwright/` directory contains a TypeScript framework scaffold following production best practices.
+
+### Key Patterns
+
+- **Selector strategy** -- `getByRole` first, then `getByTestId`, never CSS/XPath unless unavoidable.
+- **No hardcoded sleeps** -- named timeouts and `waitFor` conditions instead of `page.waitForTimeout()`.
+- **Auth caching** -- authentication state is cached via a setup project so tests skip the login flow.
+- **TestData factory** -- generates unique per-run data to avoid collisions between parallel workers.
+- **Page Object Model** -- every page has a class in `pages/` encapsulating selectors and actions.
+
+### Directory Layout
+
+```
+playwright/
+├── playwright.config.ts    # Projects: chromium, firefox, webkit, api, mobile
+├── pages/                  # Page Object Model classes
+├── fixtures/               # Custom test fixtures (authenticated page, API client)
+├── helpers/                # Timeout constants, env config, API helpers
+├── test-data/              # Data factory for unique test data
+├── auth/                   # Cached auth state (.auth/ in .gitignore)
+└── tests/
+    ├── ui/                 # UI end-to-end tests
+    └── api/                # API integration tests
+```
+
+---
+
+## Provider Behavior
+
+| Provider | Tool Use | Subagent Delegation | Best For |
+|----------|----------|---------------------|----------|
+| `copilot` | Yes | Yes | Full orchestration, Playwright agents, multi-model |
+| `anthropic-api` | No | No | **Recommended** -- works everywhere, no CLI needed |
+| `claude` | Yes | Yes | Full orchestration, backward compatibility |
+| `openai` | No | No | Cost-effective drafting, GPT-based analysis |
+| `openai-compatible` | No | No | Local experimentation, privacy, offline use |
+
+- **Copilot** runs through the GitHub Copilot SDK with full tool access and subagent delegation. Supports routing to GPT-4o, Claude Sonnet, o3-mini, and Gemini within a single session.
+- **Anthropic API** calls the Anthropic Messages API directly. No CLI or external tools needed -- just set `ANTHROPIC_API_KEY`. Supports interactive Q&A.
+- **Claude** runs through the Claude Agent SDK with full access to file tools (Read, Write, Edit, Grep, Glob, Bash) and the Agent tool for subagent delegation.
+- **OpenAI / OpenAI-compatible** runs via the OpenAI Chat Completions API. The agent's system prompt is sent as a system message and the user prompt as a user message. Responses are streamed. Supports interactive Q&A.
+
+> **Note:** Full subagent delegation (where the Test Manager actually invokes the other agents) requires the `copilot` or `claude` provider. The `anthropic-api` and `openai` providers produce comprehensive QA plans but do not have tool access for live delegation.
+
+---
+
+## Python API
+
+You can also use the ecosystem programmatically:
 
 ```python
 import asyncio
@@ -497,62 +504,29 @@ from qa_ecosystem.runner import run_single_agent, run_orchestrator
 result = asyncio.run(run_single_agent(
     agent_name="test-case-generator",
     prompt="Generate test cases for a login feature with MFA",
+    model_override="copilot-gpt4o",
 ))
 
 # Orchestrator
 result = asyncio.run(run_orchestrator(
     prompt="Full QA strategy for a payment processing module",
+    model_override="claude-opus-api",
 ))
 ```
 
 ---
 
-## Provider Behavior
+## Extending the Ecosystem
 
-| Provider | Requires | Best For |
-|----------|----------|----------|
-| `anthropic-api` | `ANTHROPIC_API_KEY` + API credits | **Recommended** — works everywhere, no CLI needed |
-| `claude` | Claude Code CLI + CLI credits | Full subagent delegation |
-| `openai` | `OPENAI_API_KEY` | GPT-based analysis |
-| `openai-compatible` | Depends on service | Local/offline use |
+To add a new agent:
 
----
+1. **Create the agent module** at `qa_ecosystem/agents/my_agent.py` following the existing pattern. Import `AgentDefinition` from `qa_ecosystem.sdk_adapter`, define `AGENT_NAME`, `DESCRIPTION`, `SYSTEM_PROMPT`, build an `AgentDefinition`, and call `register_agent()`.
 
-## Project Structure
+2. **Create the template file** at `qa_ecosystem/templates/my_agent.yaml` with 5 prompt templates.
 
-```
-QA-Agent-Ecosystem/
-├── pyproject.toml
-├── requirements.txt
-├── README.md
-├── qa_ecosystem/
-│   ├── cli.py                         # CLI entry point (qa-agent command)
-│   ├── config.py                      # Tool sets, turn limits, agent names
-│   ├── models.py                      # Model profile loader and resolver
-│   ├── models.yaml                    # Model configuration (edit this!)
-│   ├── runner.py                      # Execution engine
-│   ├── agents/
-│   │   ├── test_case_generator.py
-│   │   ├── requirements_analyst.py
-│   │   ├── bug_pattern_analyst.py
-│   │   ├── regression_optimizer.py
-│   │   ├── ai_test_architect.py
-│   │   ├── synthetic_data_designer.py
-│   │   ├── test_manager.py            # Orchestrator
-│   │   ├── test_oracle_creator.py
-│   │   ├── test_results_analyst.py
-│   │   └── testware_creator.py
-│   └── templates/
-│       └── *.yaml                     # 5 prompt templates per agent (50 total)
-├── outputs/                           # Auto-created on first run
-│   ├── manager_instructions.md        # Test Manager delegation plans
-│   └── {agent-name}/                  # One folder per agent
-│       └── YYYY-MM-DD_HH-MM-SS.md    # Timestamped result files
-└── examples/
-    ├── run_single_agent.py
-    ├── run_orchestrator.py
-    └── sample_pbi.md                  # Sample input for testing
-```
+3. **Register the agent name** by adding it to the `AGENT_NAMES` list in `qa_ecosystem/config.py`. If it is a Playwright agent, also add it to `PLAYWRIGHT_AGENT_NAMES`.
+
+4. **Add the import** in `qa_ecosystem/agents/__init__.py` inside the `_ensure_loaded()` function so the agent self-registers on startup.
 
 ---
 

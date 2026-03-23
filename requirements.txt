@@ -1,6 +1,13 @@
-claude-agent-sdk>=0.1.48
 pyyaml>=6.0
 rich>=13.0
 
-# Optional — needed for OpenAI / local model providers
+# Provider SDKs — install one or more based on your setup:
+
+# GitHub Copilot (recommended — Agent mode with multi-model access)
+# github-copilot-sdk>=0.1.0
+
+# Anthropic Claude (backward compatibility)
+# claude-agent-sdk>=0.1.48
+
+# OpenAI / local models (Ollama, LM Studio, vLLM, Together, Groq)
 # openai>=1.0

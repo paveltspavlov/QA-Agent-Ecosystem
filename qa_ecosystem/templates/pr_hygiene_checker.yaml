@@ -1,0 +1,93 @@
+agent: pr-hygiene-checker
+templates:
+  - name: "default"
+    description: "Full 8-check quality gate"
+    prompt: |
+      Perform a full 8-check quality gate on the following test files:
+
+      File Paths:
+      {file_paths}
+
+      Project Root: {project_root}
+
+      Quality Checks:
+      1. Selector resilience (no brittle CSS or XPath selectors)
+      2. Assertion completeness (meaningful assertions per test)
+      3. Test isolation (no shared mutable state between tests)
+      4. Naming conventions (descriptive file and test names)
+      5. No hardcoded waits (use explicit wait conditions instead)
+      6. Proper cleanup (teardown and data reset after tests)
+      7. No skipped tests without justification
+      8. Consistent structure and formatting
+
+  - name: "selector-audit"
+    description: "Selector quality audit only"
+    prompt: |
+      Audit selector quality in the following test files:
+
+      File Paths:
+      {file_paths}
+
+      Selector Standard:
+      {selector_standard}
+
+      Requirements:
+      - Flag brittle selectors (auto-generated IDs, deep CSS paths, XPath indexes)
+      - Recommend data-testid or role-based selector replacements
+      - Score selector resilience on a per-file basis
+      - Identify selectors likely to break on minor UI changes
+      - Provide a prioritized list of selectors to refactor
+
+  - name: "assertion-audit"
+    description: "Assertion completeness check"
+    prompt: |
+      Audit assertion completeness in the following test files:
+
+      File Paths:
+      {file_paths}
+
+      Assertion Patterns:
+      {assertion_patterns}
+
+      Requirements:
+      - Identify tests with no assertions or only trivial checks
+      - Flag tests that assert on implementation details rather than behavior
+      - Check for missing negative assertions and error-state validation
+      - Verify assertions cover the full scope of each test description
+      - Recommend additional assertions to improve coverage confidence
+
+  - name: "isolation-check"
+    description: "Test independence verification"
+    prompt: |
+      Verify test independence and isolation in the following files:
+
+      File Paths:
+      {file_paths}
+
+      Shared State Patterns:
+      {shared_state_patterns}
+
+      Requirements:
+      - Detect shared mutable state across tests (global variables, fixtures)
+      - Identify order-dependent tests that fail when run in isolation
+      - Flag tests that rely on side effects from previous tests
+      - Check for proper setup and teardown of test data
+      - Recommend refactoring to achieve full test independence
+
+  - name: "naming-conventions"
+    description: "File and test naming standards"
+    prompt: |
+      Audit file and test naming conventions:
+
+      File Paths:
+      {file_paths}
+
+      Naming Rules:
+      {naming_rules}
+
+      Requirements:
+      - Verify file names follow the project naming standard
+      - Check test descriptions are clear, specific, and behavior-focused
+      - Flag generic names such as test1, testA, or unnamed tests
+      - Ensure describe and it blocks form readable sentences
+      - Provide renaming suggestions for non-compliant entries

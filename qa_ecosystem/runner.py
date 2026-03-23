@@ -1,13 +1,14 @@
-"""Core execution logic — bridges CLI to Claude Agent SDK **and** OpenAI-compatible providers.
+"""Core execution logic — multi-provider execution engine.
 
 Execution paths
 ───────────────
-• **Claude provider** → ``claude_agent_sdk.query()`` with full tool & subagent support.
-• **OpenAI / OpenAI-compatible provider** → ``openai.AsyncOpenAI`` chat completions.
-  Tools and subagent orchestration are *not* available on this path; the agent's
-  system prompt is sent as a system message and the user prompt as a user message.
-  This is ideal for cost-effective drafting, local experimentation, or when the
-  full Agent SDK tool-use is not required.
+• **Copilot SDK provider** → ``copilot.CopilotClient`` sessions with full tool
+  & subagent support via custom ``@define_tool``.
+• **Claude Agent SDK provider** → ``claude_agent_sdk`` with Agent tool delegation.
+• **Anthropic API provider** → ``anthropic.AsyncAnthropic`` streaming messages
+  with multi-turn conversation support (no tool use).
+• **OpenAI / OpenAI-compatible provider** → ``openai.AsyncOpenAI`` chat completions
+  with multi-turn conversation support (no tool use).
 """
 
 from __future__ import annotations
@@ -78,7 +79,9 @@ async def run_single_agent(
 
     _print_model_banner(profile, agent_name)
 
-    if profile.is_claude:
+    if profile.is_copilot:
+        result = await _run_copilot_single(agent_def, prompt, profile, cwd, max_turns)
+    elif profile.is_claude:
         result = await _run_claude_single(agent_def, prompt, profile, cwd, max_turns)
     elif profile.is_anthropic_api:
         result = await _run_anthropic_api(agent_def.prompt, prompt, profile)
@@ -97,18 +100,20 @@ async def run_orchestrator(
 ) -> str:
     """Run the Test Manager orchestrator.
 
-    When the resolved model is a Claude profile the full subagent delegation
-    pipeline is used.  For non-Claude profiles the orchestrator runs as a
-    simple chat completion (no tool use / subagent delegation).
+    When the resolved model is a Copilot or Claude profile the full subagent
+    delegation pipeline is used.  For other profiles the orchestrator runs as
+    a simple chat completion (no tool use / subagent delegation).
     """
-    from qa_ecosystem.agents import get_agent, get_all_agents
+    from qa_ecosystem.agents import get_agent
 
     manager = get_agent("test-manager")
     profile = resolve_model(cli_override=model_override, agent_role="orchestrator")
 
     _print_model_banner(profile, "test-manager (orchestrator)")
 
-    if profile.is_claude:
+    if profile.is_copilot:
+        result = await _run_copilot_orchestrator(manager, prompt, profile, cwd, max_turns)
+    elif profile.is_claude:
         result = await _run_claude_orchestrator(manager, prompt, profile, cwd, max_turns)
     elif profile.is_anthropic_api:
         console.print(
@@ -118,7 +123,7 @@ async def run_orchestrator(
         result = await _run_anthropic_api(manager.prompt, prompt, profile)
     else:
         console.print(
-            "[yellow]Note: Non-Claude model selected — running orchestrator without "
+            "[yellow]Note: Non-agentic model selected — running orchestrator without "
             "tool use or subagent delegation. The Test Manager will produce a "
             "plan but cannot invoke specialist agents.[/yellow]\n"
         )
@@ -130,11 +135,226 @@ async def run_orchestrator(
 
 
 # ═══════════════════════════════════════════════════════════════════════════════
-# Claude Agent SDK path
+# GitHub Copilot SDK path
+# ═══════════════════════════════════════════════════════════════════════════════
+
+async def _run_copilot_single(agent_def, prompt, profile: ModelProfile, cwd, max_turns) -> str:
+    """Execute a single agent via the GitHub Copilot SDK."""
+    try:
+        from copilot import CopilotClient
+    except ImportError:
+        console.print(
+            "[red]The 'github-copilot-sdk' package is required for copilot models.\n"
+            "Install it with:  pip install github-copilot-sdk[/red]"
+        )
+        raise SystemExit(1)
+
+    client = CopilotClient()
+    await client.start()
+
+    try:
+        session = await client.create_session({
+            "model": profile.model_id,
+            "system_prompt": agent_def.prompt,
+            "tools": _resolve_copilot_tools(agent_def.tools or []),
+            "cwd": cwd or ".",
+            "temperature": profile.temperature,
+            "max_tokens": profile.max_tokens,
+        })
+
+        collected: list[str] = []
+        done = asyncio.Event()
+
+        def on_event(event):
+            etype = getattr(event, "type", None)
+            etype_val = etype.value if hasattr(etype, "value") else str(etype)
+            if etype_val == "assistant.message_delta":
+                delta = getattr(event.data, "delta_content", "") or ""
+                if delta:
+                    collected.append(delta)
+                    console.print(delta, end="")
+            elif etype_val == "assistant.message":
+                content = getattr(event.data, "content", "")
+                if content and not collected:
+                    collected.append(content)
+                    console.print(Markdown(content))
+            elif etype_val in ("session.idle", "session.end"):
+                done.set()
+
+        session.on(on_event)
+        await session.send(prompt)
+
+        try:
+            await asyncio.wait_for(done.wait(), timeout=300)
+        except asyncio.TimeoutError:
+            console.print("\n[yellow]Session timed out after 5 minutes.[/yellow]")
+
+        await session.disconnect()
+    finally:
+        await client.stop()
+
+    console.print()
+    return "".join(collected)
+
+
+async def _run_copilot_orchestrator(manager, prompt, profile: ModelProfile, cwd, max_turns) -> str:
+    """Execute the orchestrator via the GitHub Copilot SDK with delegation support."""
+    try:
+        from copilot import CopilotClient, define_tool
+    except ImportError:
+        console.print(
+            "[red]The 'github-copilot-sdk' package is required for copilot models.\n"
+            "Install it with:  pip install github-copilot-sdk[/red]"
+        )
+        raise SystemExit(1)
+
+    client = CopilotClient()
+    await client.start()
+
+    try:
+        delegate_tool = _build_delegate_tool(client, profile)
+
+        tools = _resolve_copilot_tools(manager.tools or [])
+        tools.append(delegate_tool)
+
+        session = await client.create_session({
+            "model": profile.model_id,
+            "system_prompt": manager.prompt,
+            "tools": tools,
+            "cwd": cwd or ".",
+            "temperature": profile.temperature,
+            "max_tokens": profile.max_tokens,
+        })
+
+        collected: list[str] = []
+        done = asyncio.Event()
+
+        def on_event(event):
+            etype = getattr(event, "type", None)
+            etype_val = etype.value if hasattr(etype, "value") else str(etype)
+            if etype_val == "assistant.message_delta":
+                delta = getattr(event.data, "delta_content", "") or ""
+                if delta:
+                    collected.append(delta)
+                    console.print(delta, end="")
+            elif etype_val == "assistant.message":
+                content = getattr(event.data, "content", "")
+                if content and not collected:
+                    collected.append(content)
+                    console.print(Markdown(content))
+            elif etype_val in ("session.idle", "session.end"):
+                done.set()
+
+        session.on(on_event)
+        await session.send(prompt)
+
+        try:
+            await asyncio.wait_for(done.wait(), timeout=600)
+        except asyncio.TimeoutError:
+            console.print("\n[yellow]Orchestrator session timed out after 10 minutes.[/yellow]")
+
+        await session.disconnect()
+    finally:
+        await client.stop()
+
+    console.print()
+    return "".join(collected)
+
+
+def _build_delegate_tool(client, profile: ModelProfile):
+    """Build a custom tool that delegates tasks to specialist agents."""
+    try:
+        from copilot import define_tool
+        from pydantic import BaseModel, Field
+    except ImportError:
+        return None
+
+    class DelegateParams(BaseModel):
+        agent_name: str = Field(description="Name of the specialist agent to invoke")
+        task_prompt: str = Field(description="The task/prompt to send to the specialist agent")
+
+    @define_tool(
+        description=(
+            "Delegate a task to a specialist QA agent. Available agents: "
+            "test-case-generator, requirements-analyst, bug-pattern-analyst, "
+            "regression-optimizer, ai-test-architect, synthetic-data-designer, "
+            "test-oracle-creator, test-results-analyst, testware-creator, "
+            "playwright-test-generator, ui-test-designer, api-coverage-planner, "
+            "pr-hygiene-checker, security-scout, coverage-hunter, flake-triage, "
+            "seed-data-manager"
+        )
+    )
+    async def delegate_to_agent(params: DelegateParams) -> str:
+        from qa_ecosystem.agents import get_agent
+
+        agent_def = get_agent(params.agent_name)
+        sub_profile = resolve_model(agent_role="default")
+
+        console.print(
+            f"\n[dim]-> Delegating to {params.agent_name} "
+            f"(model: {sub_profile.model_id})...[/dim]\n"
+        )
+
+        child_session = await client.create_session({
+            "model": sub_profile.model_id,
+            "system_prompt": agent_def.prompt,
+            "tools": _resolve_copilot_tools(agent_def.tools or []),
+            "temperature": sub_profile.temperature,
+            "max_tokens": sub_profile.max_tokens,
+        })
+
+        child_collected: list[str] = []
+        child_done = asyncio.Event()
+
+        def on_child_event(event):
+            etype = getattr(event, "type", None)
+            etype_val = etype.value if hasattr(etype, "value") else str(etype)
+            if etype_val == "assistant.message_delta":
+                delta = getattr(event.data, "delta_content", "") or ""
+                if delta:
+                    child_collected.append(delta)
+            elif etype_val == "assistant.message":
+                content = getattr(event.data, "content", "")
+                if content:
+                    child_collected.append(content)
+            elif etype_val in ("session.idle", "session.end"):
+                child_done.set()
+
+        child_session.on(on_child_event)
+        await child_session.send(params.task_prompt)
+
+        try:
+            await asyncio.wait_for(child_done.wait(), timeout=300)
+        except asyncio.TimeoutError:
+            child_collected.append("\n[Subagent timed out after 5 minutes]")
+
+        await child_session.disconnect()
+
+        result = "".join(child_collected)
+        console.print(f"[dim]<- {params.agent_name} returned {len(result)} chars[/dim]\n")
+        return result
+
+    return delegate_to_agent
+
+
+def _resolve_copilot_tools(tool_names: list[str]) -> list:
+    """Map abstract tool-set names to Copilot SDK tool identifiers."""
+    return [t for t in tool_names if t != "Agent"]
+
+
+# ═══════════════════════════════════════════════════════════════════════════════
+# Claude Agent SDK path (backward compatibility)
 # ═══════════════════════════════════════════════════════════════════════════════
 
 async def _run_claude_single(agent_def, prompt, profile: ModelProfile, cwd, max_turns) -> str:
-    from claude_agent_sdk import ClaudeAgentOptions, query
+    try:
+        from claude_agent_sdk import ClaudeAgentOptions, query
+    except ImportError:
+        console.print(
+            "[red]The 'claude-agent-sdk' package is required for claude models.\n"
+            "Install it with:  pip install claude-agent-sdk[/red]"
+        )
+        raise SystemExit(1)
 
     options = ClaudeAgentOptions(
         system_prompt=agent_def.prompt,
@@ -149,7 +369,14 @@ async def _run_claude_single(agent_def, prompt, profile: ModelProfile, cwd, max_
 
 async def _run_claude_orchestrator(manager, prompt, profile: ModelProfile, cwd, max_turns) -> str:
     from qa_ecosystem.agents import get_all_agents
-    from claude_agent_sdk import ClaudeAgentOptions, query
+    try:
+        from claude_agent_sdk import ClaudeAgentOptions, query
+    except ImportError:
+        console.print(
+            "[red]The 'claude-agent-sdk' package is required for claude models.\n"
+            "Install it with:  pip install claude-agent-sdk[/red]"
+        )
+        raise SystemExit(1)
 
     subagents = get_all_agents()
 
@@ -264,7 +491,7 @@ async def _run_openai(system_prompt: str, user_prompt: str, profile: ModelProfil
 
     client = AsyncOpenAI(**client_kwargs)
 
-    console.print(f"[dim]Streaming from {profile.provider}:{profile.model_id} …[/dim]\n")
+    console.print(f"[dim]Streaming from {profile.provider}:{profile.model_id} ...[/dim]\n")
 
     messages: list[dict] = [
         {"role": "system", "content": system_prompt},
@@ -310,7 +537,6 @@ async def _run_openai(system_prompt: str, user_prompt: str, profile: ModelProfil
 
 def _has_question(text: str) -> bool:
     """Return True if the agent's response ends with a question."""
-    # Check the last non-empty line for a question mark
     lines = [l.strip() for l in text.strip().splitlines() if l.strip()]
     if not lines:
         return False
@@ -343,7 +569,9 @@ def _extract_text(message: object) -> str | None:
 def _print_model_banner(profile: ModelProfile, agent_label: str) -> None:
     """Print a short banner showing which model will be used."""
     provider_tag = {
-        "claude": "Anthropic Claude",
+        "copilot": "GitHub Copilot",
+        "claude": "Anthropic Claude (Agent SDK)",
+        "anthropic-api": "Anthropic API (direct)",
         "openai": "OpenAI",
         "openai-compatible": "Local / Compatible",
     }.get(profile.provider, profile.provider)
@@ -363,4 +591,6 @@ def _print_model_banner(profile: ModelProfile, agent_label: str) -> None:
 
 def run_sync(coro):
     """Run an async coroutine synchronously (entry point for CLI)."""
+    if sys.platform == "win32":
+        asyncio.set_event_loop_policy(asyncio.WindowsSelectorEventLoopPolicy())
     return asyncio.run(coro)

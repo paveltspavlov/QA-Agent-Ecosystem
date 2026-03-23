@@ -1,0 +1,97 @@
+agent: ui-test-designer
+templates:
+  - name: "default"
+    description: "Full POM generation from existing page"
+    prompt: |
+      Generate a complete Page Object Model and UI test design for:
+
+      Page Description: {page_description}
+      URL: {url}
+
+      Key Interactions:
+      {key_interactions}
+
+      Requirements:
+      - Create POM classes with well-named selectors and action methods
+      - Define reusable page components and shared utilities
+      - Generate test cases that exercise all key interactions
+      - Follow the single-responsibility principle per page object
+      - Include helper methods for common workflows
+
+  - name: "component-test"
+    description: "Isolated component test design"
+    prompt: |
+      Design isolated UI component tests for:
+
+      Component Name: {component_name}
+      Component Behavior: {component_behavior}
+
+      States:
+      {states}
+
+      Requirements:
+      - Test each component state in isolation
+      - Verify props, events, and rendering behavior
+      - Include snapshot or visual comparison assertions
+      - Test edge cases such as empty data, overflow, and loading
+      - Validate component interaction callbacks and outputs
+
+  - name: "visual-regression"
+    description: "Screenshot comparison tests"
+    prompt: |
+      Design visual regression tests using screenshot comparison:
+
+      Pages:
+      {pages}
+
+      Viewports:
+      {viewports}
+
+      Pixel Threshold: {threshold}
+
+      Requirements:
+      - Capture baseline screenshots for each page and viewport combination
+      - Define acceptable pixel difference thresholds per component
+      - Handle dynamic content masking for dates, avatars, and ads
+      - Include both full-page and element-level screenshot comparisons
+      - Provide clear failure reporting with diff images
+
+  - name: "responsive"
+    description: "Multi-viewport responsive tests"
+    prompt: |
+      Design responsive UI tests across multiple viewports:
+
+      URL: {url}
+
+      Breakpoints:
+      {breakpoints}
+
+      Critical Elements:
+      {critical_elements}
+
+      Requirements:
+      - Verify layout adapts correctly at each breakpoint
+      - Test navigation menu behavior (hamburger, collapse, expand)
+      - Validate critical elements remain visible and functional
+      - Check touch target sizes on mobile viewports
+      - Assert correct image and media scaling behavior
+
+  - name: "auth-flows"
+    description: "Authentication flow tests"
+    prompt: |
+      Design UI tests for authentication flows:
+
+      Auth Type: {auth_type}
+
+      Roles:
+      {roles}
+
+      Protected Routes:
+      {protected_routes}
+
+      Requirements:
+      - Test login, logout, and session expiration flows
+      - Verify role-based access to protected routes
+      - Test unauthorized access redirects and error messages
+      - Validate token refresh and remember-me functionality
+      - Include multi-factor authentication steps if applicable

@@ -1,0 +1,98 @@
+agent: api-coverage-planner
+templates:
+  - name: "default"
+    description: "Full API coverage plan"
+    prompt: |
+      Generate a comprehensive API test coverage plan:
+
+      API Specification: {api_spec}
+      Base URL: {base_url}
+      Auth Method: {auth_method}
+
+      Requirements:
+      - Map all endpoints with supported HTTP methods
+      - Define positive and negative test cases per endpoint
+      - Include authentication and authorization scenarios
+      - Plan data-driven tests for request body variations
+      - Prioritize coverage by business criticality and risk
+
+  - name: "endpoint-matrix"
+    description: "Coverage matrix for specific endpoints"
+    prompt: |
+      Build an endpoint coverage matrix for targeted API testing:
+
+      Endpoints:
+      {endpoints}
+
+      Methods:
+      {methods}
+
+      Auth Levels:
+      {auth_levels}
+
+      Requirements:
+      - Create a matrix of endpoint, method, and auth level combinations
+      - Identify required and optional parameters per combination
+      - Define expected status codes for each scenario
+      - Include boundary and edge-case inputs for each parameter
+      - Mark coverage gaps and untested combinations
+
+  - name: "auth-scenarios"
+    description: "Authentication test scenarios"
+    prompt: |
+      Generate API authentication and authorization test scenarios:
+
+      Auth Type: {auth_type}
+      Token Specification: {token_spec}
+
+      Roles:
+      {roles}
+
+      Requirements:
+      - Test valid and invalid credential combinations
+      - Verify token lifecycle (creation, refresh, expiration, revocation)
+      - Test role-based endpoint access for each defined role
+      - Include brute-force and rate-limiting scenarios
+      - Validate error responses for unauthorized and forbidden requests
+
+  - name: "error-handling"
+    description: "Error response test cases"
+    prompt: |
+      Generate test cases focused on API error handling:
+
+      Endpoints:
+      {endpoints}
+
+      Error Codes:
+      {error_codes}
+
+      Error Formats:
+      {error_formats}
+
+      Requirements:
+      - Test each endpoint for all expected error codes
+      - Verify error response body matches the defined format
+      - Include malformed request payloads and missing fields
+      - Test server error conditions and timeout behavior
+      - Validate error messages are informative but do not leak internals
+
+  - name: "performance-baseline"
+    description: "Response time threshold tests"
+    prompt: |
+      Generate API performance baseline test cases:
+
+      Endpoints:
+      {endpoints}
+
+      SLA Thresholds:
+      {sla_thresholds}
+
+      Load Conditions:
+      {load_conditions}
+
+      Requirements:
+      - Define response time thresholds per endpoint and method
+      - Create baseline measurements under normal load conditions
+      - Plan incremental load tests up to specified conditions
+      - Include throughput and concurrent-user scenarios
+      - Identify endpoints at risk of exceeding SLA thresholds

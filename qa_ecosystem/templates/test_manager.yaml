@@ -60,3 +60,39 @@ templates:
 
       Coordinate Bug Analysis, Test Results Analysis, and Testware Creator
       to produce a release quality retrospective report.
+
+  - name: "playwright-gen"
+    description: "Orchestrate Playwright test generation for a web application"
+    prompt: |
+      Orchestrate end-to-end Playwright test generation for:
+
+      Target URL: {target_url}
+      Application Type: {app_type}
+      Key User Flows: {user_flows}
+      Output Directory: {output_dir}
+
+      Execute Workflow 4 — Playwright Test Generation:
+      1. playwright-test-generator: Explore the site, generate initial tests
+      2. ui-test-designer: Create page object models for the generated tests
+      3. seed-data-manager: Design test data factories and fixtures
+      4. coverage-hunter: Verify coverage of the generated test suite
+      5. pr-hygiene-checker: Quality gate on the final test code
+
+      Consolidate results into a complete, runnable test suite.
+
+  - name: "flake-investigation"
+    description: "Orchestrate investigation and fix of flaky tests"
+    prompt: |
+      Investigate and resolve flaky tests:
+
+      Flaky Test Files: {test_files}
+      Failure Patterns: {failure_patterns}
+      CI Logs: {ci_logs}
+
+      Execute Workflow 5 — Flaky Test Investigation:
+      1. flake-triage: Diagnose root causes via repeated runs
+      2. test-results-analyst: Analyze historical failure trends
+      3. playwright-test-generator: Rewrite flaky tests with stable patterns
+      4. pr-hygiene-checker: Validate the fixed tests pass quality checks
+
+      Deliver a diagnosis report and fixed test files.

@@ -34,6 +34,10 @@ class ModelProfile:
     # -- convenience --------------------------------------------------------
 
     @property
+    def is_copilot(self) -> bool:
+        return self.provider == "copilot"
+
+    @property
     def is_claude(self) -> bool:
         return self.provider == "claude"
 
@@ -44,6 +48,17 @@ class ModelProfile:
     @property
     def is_openai(self) -> bool:
         return self.provider in ("openai", "openai-compatible")
+
+    def to_copilot_provider(self) -> dict | None:
+        """Convert to Copilot SDK BYOK provider config.  Returns None for copilot-native models."""
+        if self.is_copilot:
+            return None  # Use Copilot's built-in model routing
+        if self.is_claude:
+            return {"type": "anthropic", "api_key": self.resolve_api_key()}
+        cfg: dict = {"type": "openai", "api_key": self.resolve_api_key() or ""}
+        if self.api_base:
+            cfg["base_url"] = self.api_base
+        return cfg
 
     def resolve_api_key(self) -> str | None:
         """Return the API key from the environment, falling back to default."""

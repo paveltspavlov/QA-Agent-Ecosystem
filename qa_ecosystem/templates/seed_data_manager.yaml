@@ -1,0 +1,104 @@
+agent: seed-data-manager
+templates:
+  - name: "default"
+    description: "Full test data management plan"
+    prompt: |
+      Create a comprehensive test data management plan.
+
+      Data requirements:
+      {data_requirements}
+
+      Test scenarios:
+      {test_scenarios}
+
+      Cover:
+      - Data creation strategies for each scenario
+      - Factory functions and builder patterns needed
+      - Fixture definitions and scoping
+      - Data cleanup and isolation approach
+      - Environment-specific data considerations
+
+      Produce an actionable plan with code examples and implementation order.
+
+  - name: "factory-design"
+    description: "Design test data factory functions"
+    prompt: |
+      Design test data factory functions for the following entity types.
+
+      Entity types:
+      {entity_types}
+
+      Field specifications:
+      {field_specs}
+
+      For each entity:
+      - Define a factory function with sensible defaults
+      - Support field overrides for test-specific variations
+      - Handle relationships and foreign key dependencies
+      - Include trait or variant support for common configurations
+      - Ensure generated data is realistic and valid
+
+      Provide complete factory implementations ready for use in tests.
+
+  - name: "fixture-setup"
+    description: "Design Playwright fixture definitions"
+    prompt: |
+      Design Playwright fixture definitions for the test suite.
+
+      Fixture requirements:
+      {fixture_requirements}
+
+      Test context:
+      {test_context}
+
+      For each fixture:
+      - Define the fixture with proper scoping (test, worker, or global)
+      - Implement setup and teardown logic
+      - Handle dependencies between fixtures
+      - Support parameterization where needed
+      - Ensure thread safety for parallel execution
+
+      Provide complete fixture code compatible with Playwright test runner.
+
+  - name: "auth-state"
+    description: "Design auth state caching strategy"
+    prompt: |
+      Design an authentication state caching strategy for the test suite.
+
+      Authentication flow:
+      {auth_flow}
+
+      Roles:
+      {roles}
+
+      Session storage approach:
+      {session_storage}
+
+      Design:
+      - A storageState-based caching mechanism for each role
+      - Global setup to authenticate once and reuse across tests
+      - Token refresh handling for long-running test suites
+      - Isolation between roles to prevent state contamination
+      - Fallback logic when cached state expires
+
+      Provide implementation code for the auth setup and per-role fixtures.
+
+  - name: "cleanup-strategy"
+    description: "Design test data cleanup routines"
+    prompt: |
+      Design test data cleanup routines for the test suite.
+
+      Data sources:
+      {data_sources}
+
+      Cleanup constraints:
+      {cleanup_constraints}
+
+      Design:
+      - Per-test cleanup hooks to remove created data
+      - Batch cleanup for test suite teardown
+      - Orphan data detection and removal
+      - Cleanup ordering to respect foreign key constraints
+      - Idempotent cleanup that handles partial test failures
+
+      Provide cleanup implementation code with error handling and logging.

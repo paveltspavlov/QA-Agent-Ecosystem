@@ -26,6 +26,8 @@ TOOL_SETS: dict[str, list[str]] = {
     "read_write": ["Read", "Grep", "Glob", "Write", "Edit"],
     "full": ["Read", "Grep", "Glob", "Write", "Edit", "Bash"],
     "orchestrator": ["Read", "Grep", "Glob", "Write", "Edit", "Bash", "Agent"],
+    # Playwright execution agents — Bash is used to run `npx playwright` commands
+    "playwright_full": ["Read", "Grep", "Glob", "Write", "Edit", "Bash"],
 }
 
 # Permission mode for agents that write files
@@ -35,10 +37,14 @@ DEFAULT_PERMISSION_MODE = "acceptEdits"
 MAX_TURNS_SINGLE = 25
 MAX_TURNS_ORCHESTRATED = 50
 
+# Max delegation depth to prevent infinite recursion in orchestration
+MAX_DELEGATION_DEPTH = 3
+
 # ---------------------------------------------------------------------------
 # Agent names (for CLI validation)
 # ---------------------------------------------------------------------------
 AGENT_NAMES = [
+    # Planning agents (original 10)
     "test-case-generator",
     "requirements-analyst",
     "bug-pattern-analyst",
@@ -49,4 +55,25 @@ AGENT_NAMES = [
     "test-oracle-creator",
     "test-results-analyst",
     "testware-creator",
+    # Playwright execution agents (new 8)
+    "playwright-test-generator",
+    "ui-test-designer",
+    "api-coverage-planner",
+    "pr-hygiene-checker",
+    "security-scout",
+    "coverage-hunter",
+    "flake-triage",
+    "seed-data-manager",
+]
+
+# Playwright-specific agent names (for CLI filtering)
+PLAYWRIGHT_AGENT_NAMES = [
+    "playwright-test-generator",
+    "ui-test-designer",
+    "api-coverage-planner",
+    "pr-hygiene-checker",
+    "security-scout",
+    "coverage-hunter",
+    "flake-triage",
+    "seed-data-manager",
 ]

@@ -1,6 +1,6 @@
 """Agent 6: Synthetic Test Data Designer — generates privacy-safe test datasets."""
 
-from claude_agent_sdk import AgentDefinition
+from qa_ecosystem.sdk_adapter import AgentDefinition
 from qa_ecosystem.agents import register_agent
 from qa_ecosystem.config import DEFAULT_MODEL, TOOL_SETS
 

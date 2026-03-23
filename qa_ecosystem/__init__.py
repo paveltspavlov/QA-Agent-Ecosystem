@@ -1,3 +1,3 @@
-"""QA Agent Ecosystem — AI-powered QA agents built on the Claude Agent SDK."""
+"""QA Agent Ecosystem — AI-powered QA agents with Playwright test automation, built on GitHub Copilot SDK."""
 
-__version__ = "1.0.0"
+__version__ = "2.0.0"
