@@ -232,14 +232,14 @@ async def _run_copilot_single(agent_def, prompt, profile: ModelProfile, cwd, max
     await client.start()
 
     try:
-        session = await client.create_session({
-            "model": profile.model_id,
-            "system_prompt": agent_def.prompt,
-            "tools": _resolve_copilot_tools(agent_def.tools or []),
-            "cwd": cwd or ".",
-            "temperature": profile.temperature,
-            "max_tokens": profile.max_tokens,
-        })
+        session = await client.create_session(
+            model=profile.model_id,
+            system_prompt=agent_def.prompt,
+            tools=_resolve_copilot_tools(agent_def.tools or []),
+            cwd=cwd or ".",
+            temperature=profile.temperature,
+            max_tokens=profile.max_tokens,
+        )
 
         collected: list[str] = []
         done = asyncio.Event()
@@ -298,14 +298,14 @@ async def _run_copilot_orchestrator(manager, prompt, profile: ModelProfile, cwd,
         tools.append(delegate_tool)
         tools.append(human_input_tool)
 
-        session = await client.create_session({
-            "model": profile.model_id,
-            "system_prompt": manager.prompt,
-            "tools": tools,
-            "cwd": cwd or ".",
-            "temperature": profile.temperature,
-            "max_tokens": profile.max_tokens,
-        })
+        session = await client.create_session(
+            model=profile.model_id,
+            system_prompt=manager.prompt,
+            tools=tools,
+            cwd=cwd or ".",
+            temperature=profile.temperature,
+            max_tokens=profile.max_tokens,
+        )
 
         collected: list[str] = []
         done = asyncio.Event()
@@ -414,13 +414,13 @@ def _build_delegate_tool(client, profile: ModelProfile, resume_from=None):
                     child_done: asyncio.Event = asyncio.Event()
                     child_collected: list[str] = []
 
-                    child_session = await client.create_session({
-                        "model": sub_profile.model_id,
-                        "system_prompt": agent_def.prompt,
-                        "tools": _resolve_copilot_tools(agent_def.tools or []),
-                        "temperature": sub_profile.temperature,
-                        "max_tokens": sub_profile.max_tokens,
-                    })
+                    child_session = await client.create_session(
+                        model=sub_profile.model_id,
+                        system_prompt=agent_def.prompt,
+                        tools=_resolve_copilot_tools(agent_def.tools or []),
+                        temperature=sub_profile.temperature,
+                        max_tokens=sub_profile.max_tokens,
+                    )
 
                     def on_child_event(event):
                         etype = getattr(event, "type", None)
