@@ -142,6 +142,9 @@ def cmd_run(args: argparse.Namespace) -> None:
             bug_data=raw_input,
             test_suite_data=raw_input,
             results_data=raw_input,
+            url=raw_input,
+            target_url=raw_input,
+            focus_areas="all pages, forms, and user journeys",
         )
     except (KeyError, FileNotFoundError):
         prompt = raw_input
@@ -234,7 +237,9 @@ def cmd_playwright_gen(args: argparse.Namespace) -> None:
 
 def cmd_playwright_run(args: argparse.Namespace) -> None:
     """Execute Playwright tests and optionally analyze results."""
-    pw_cmd = ["npx", "playwright", "test"]
+    import shutil
+    npx = shutil.which("npx") or "npx"
+    pw_cmd = [npx, "playwright", "test"]
 
     if args.project:
         pw_cmd += ["--project", args.project]
@@ -413,8 +418,10 @@ def cmd_doctor(_args: argparse.Namespace) -> None:
 
     # 4. Playwright
     try:
+        import shutil
+        npx = shutil.which("npx") or "npx"
         result = subprocess.run(
-            ["npx", "playwright", "--version"],
+            [npx, "playwright", "--version"],
             capture_output=True, text=True, timeout=15, cwd="playwright"
         )
         pw_ok = result.returncode == 0
@@ -679,6 +686,14 @@ def build_parser() -> argparse.ArgumentParser:
 
 
 def main() -> None:
+    # Force UTF-8 on Windows where the default console encoding (cp1252) can't
+    # encode Unicode characters used in help text (e.g. →).
+    if sys.stdout.encoding and sys.stdout.encoding.lower() != "utf-8":
+        try:
+            sys.stdout.reconfigure(encoding="utf-8", errors="replace")
+        except AttributeError:
+            pass  # Python < 3.7 fallback — best-effort
+
     import qa_ecosystem.runner as _runner
 
     parser = build_parser()
