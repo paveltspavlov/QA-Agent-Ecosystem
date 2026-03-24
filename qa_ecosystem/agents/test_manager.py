@@ -119,6 +119,82 @@ Workflow 10 — Full Test Health Audit:
   -> pr-hygiene-checker (quality gate on the full test codebase)
   -> testware-creator (Test Health Report: flaky inventory, gap map, suite recommendation)
 
+Workflow 11 — Cross-Browser Compatibility Testing:
+  Input required: app URL + list of features or test files to verify cross-browser
+  ui-test-designer (configure multi-browser matrix in playwright.config.ts: chromium, firefox, webkit)
+  -> playwright-test-generator (generate or adapt tests to run across all browser projects)
+  -> coverage-hunter (verify all key user paths are exercised in every browser project)
+  -> testware-creator (Cross-Browser Compatibility Report: per-browser results, failures, screenshots)
+
+Workflow 12 — Responsive & Mobile Testing:
+  Input required: app URL + breakpoints to verify (default: 375px mobile, 768px tablet, 1280px desktop)
+  ui-test-designer (configure viewport sizes, add responsive test variants)
+  -> playwright-test-generator (generate viewport-specific scenarios and screenshot comparisons)
+  -> coverage-hunter (verify all pages tested at every breakpoint)
+  -> testware-creator (Responsive Testing Report: per-viewport screenshots, layout issues, deviations)
+
+Workflow 13 — AI/ML Feature Testing:
+  Input required: AI feature requirements + model/algorithm description
+  requirements-analyst (identify non-determinism risks, bias scenarios, compliance requirements)
+  -> request_human_input (clarify acceptable model behavior thresholds and compliance constraints)
+  -> ai-test-architect (design strategy: bias checks, drift detection, adversarial inputs, compliance)
+  -> test-case-generator (generate test cases for AI-specific scenarios and edge cases)
+  -> synthetic-data-designer (create adversarial, boundary, and bias-probe input datasets)
+  -> testware-creator (AI Test Strategy Document with compliance checklist)
+
+Workflow 14 — Release Sign-off / Go-Live Checklist:
+  Input required: release version + scope of changes + app URL
+  requirements-analyst (verify all requirements in scope have associated test coverage)
+  -> regression-optimizer (identify and run risk-prioritized regression subset)
+  -> security-scout (final security scan: secrets, unsafe patterns, staging URLs)
+  -> coverage-hunter (confirm coverage meets defined threshold for release)
+  -> pr-hygiene-checker (final quality gate on the test suite)
+  -> testware-creator (Release Sign-off Report: gate results, pass/fail verdict, stakeholder summary)
+
+Workflow 15 — End-to-End User Journey Mapping & Automation:
+  Input required: user persona descriptions + app URL + key business flows
+  requirements-analyst (extract user journeys and acceptance criteria from personas/requirements)
+  -> playwright-test-generator (explore app, map actual navigation flows and interactions)
+  -> ui-test-designer (implement full E2E journey tests with POM coverage per persona)
+  -> seed-data-manager (set up journey-specific test data and teardown helpers)
+  -> coverage-hunter (verify every journey step is covered by at least one test)
+  -> testware-creator (User Journey Test Catalogue with persona-flow-test mapping)
+
+Workflow 16 — Test Data Cleanup & Maintenance:
+  Input required: test data directory path (fixtures, factories, seed files)
+  coverage-hunter (audit existing fixtures: identify stale, duplicate, or incomplete datasets)
+  -> seed-data-manager (remove stale fixtures, consolidate duplicates, refresh outdated values)
+  -> synthetic-data-designer (redesign data sets that no longer cover current requirements)
+  -> testware-creator (Data Maintenance Report: what changed, updated factory catalogue)
+
+Workflow 17 — Exploratory Testing Session Planner:
+  Input required: feature or release scope + known risk areas
+  requirements-analyst (identify ambiguous, high-risk, or poorly-specified areas)
+  -> bug-pattern-analyst (review historical bugs in this area to guide exploration priorities)
+  -> test-oracle-creator (define expected behavior and pass/fail criteria for exploratory sessions)
+  -> testware-creator (Exploratory Testing Charters: session goals, time boxes, risk areas, heuristics)
+
+Workflow 18 — PR / Code Review QA Gate:
+  Input required: PR diff path or modified test file paths
+  pr-hygiene-checker (8-check quality gate: selector hygiene, waiting strategy, structure, naming)
+  -> security-scout (quick security scan of changed files for secrets and unsafe patterns)
+  -> coverage-hunter (coverage delta: identify new code paths lacking test coverage)
+  -> flake-triage (flake risk assessment of new or modified tests)
+  -> testware-creator (PR QA Gate Report: pass/fail verdict per check, actionable feedback)
+
+Workflow 19 — Post-Deployment Smoke Verification:
+  Input required: deployed app URL + environment name (staging/production) + smoke scope
+  playwright-test-generator (identify or generate critical smoke tests for key user paths)
+  -> coverage-hunter (verify smoke suite covers all critical paths and entry points)
+  -> testware-creator (Smoke Verification Report: pass/fail per path, environment details, issues)
+
+Workflow 20 — Requirements Traceability Audit:
+  Input required: requirements document + existing test directory
+  requirements-analyst (catalogue all requirements, user stories, and acceptance criteria)
+  -> coverage-hunter (map existing test files to requirements, identify uncovered items)
+  -> test-case-generator (generate missing test cases for requirements with no coverage)
+  -> testware-creator (Traceability Matrix: Requirement ID <-> Test Case IDs <-> Coverage %)
+
 Output Format:
 
 Test Orchestration Plan

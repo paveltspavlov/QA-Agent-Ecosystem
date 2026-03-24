@@ -8,7 +8,7 @@ You can run agents individually or let the Test Manager orchestrator decompose a
 
 ## What's New in v2.0
 
-- **10 orchestration workflows** -- 5 planning workflows + 5 new Playwright-focused workflows (UI mockup comparison, API coverage, security audit, test data bootstrap, test health audit).
+- **20 orchestration workflows** -- covering new feature testing, bug analysis, regression, Playwright automation, mockup comparison, API coverage, security audit, cross-browser, responsive, AI/ML, release sign-off, user journey mapping, data maintenance, exploratory testing, PR gate, smoke verification, traceability audit, and more.
 - **Human-in-the-loop pause** -- the Test Manager can pause mid-workflow on Copilot to present requirements-analyst findings and wait for updated requirements before continuing.
 - **GitHub Copilot SDK** -- migrated from Claude Agent SDK to GitHub Copilot SDK (Agent mode) as the primary provider. Claude Agent SDK is retained for backward compatibility.
 - **Anthropic API provider (`anthropic-api`)** -- direct API access to Claude models without the Claude Code CLI.
@@ -96,7 +96,7 @@ outputs/              # Auto-created on first run
 | 4 | `regression-optimizer` | Planning | Optimized regression suites |
 | 5 | `ai-test-architect` | Planning | AI/ML test strategy and compliance |
 | 6 | `synthetic-data-designer` | Planning | Privacy-safe test data design |
-| 7 | `test-manager` | Planning | Orchestrator with 10 workflows |
+| 7 | `test-manager` | Planning | Orchestrator with 20 workflows |
 | 8 | `test-oracle-creator` | Planning | Expected results and validation rules |
 | 9 | `test-results-analyst` | Planning | Test execution analysis and failure trends |
 | 10 | `testware-creator` | Planning | Professional QA documentation |
@@ -396,7 +396,7 @@ This enables a back-and-forth dialogue where agents can request missing context,
 
 ## Orchestration Workflows
 
-The Test Manager supports 10 orchestration workflows. When you run `qa-agent orchestrate`, the Test Manager analyzes the objective, selects the appropriate workflow, and delegates to specialist agents.
+The Test Manager supports 20 orchestration workflows. When you run `qa-agent orchestrate`, the Test Manager analyzes the objective, selects the appropriate workflow, and delegates to specialist agents.
 
 > **Copilot users:** the Test Manager will pause mid-workflow and prompt you for input when requirements need clarification (after the `requirements-analyst` step). Type your updated requirements in the terminal and press Enter to continue.
 
@@ -760,6 +760,332 @@ App URL: https://myapp.com
 Recent CI failure rate: [e.g., "~15% of runs have at least one failure"]
 Known problem areas: [e.g., "Checkout flow, anything touching date pickers"]
 Desired outcome: prioritized action list + lean regression suite recommendation
+```
+
+---
+
+### Workflow 11 -- Cross-Browser Compatibility Testing
+
+**When to use:** Verifying that features work correctly across Chromium, Firefox, and WebKit before a release.
+
+```
+ui-test-designer  (configure multi-browser matrix: chromium, firefox, webkit)
+  -> playwright-test-generator  (generate or adapt tests for all browser projects)
+  -> coverage-hunter  (verify all key user paths run in every browser)
+  -> testware-creator  (Cross-Browser Compatibility Report: per-browser results, failures)
+```
+
+**CLI command:**
+```bash
+qa-agent orchestrate -i cross_browser_task.md -m copilot-gpt4o
+```
+
+**Prompt template:**
+```
+Run Workflow 11 — Cross-Browser Compatibility Testing.
+
+App URL: https://myapp.com
+Features to verify: [e.g., "Login, Dashboard, Checkout, File Upload"]
+Existing test path: playwright/tests/
+Browsers: chromium, firefox, webkit
+Known browser-specific issues: [e.g., "File input behaves differently on webkit"]
+```
+
+---
+
+### Workflow 12 -- Responsive & Mobile Testing
+
+**When to use:** Verifying layout and interactions at multiple viewport sizes before shipping a UI change.
+
+```
+ui-test-designer  (configure viewport sizes: 375px mobile, 768px tablet, 1280px desktop)
+  -> playwright-test-generator  (generate viewport-specific scenarios and screenshot comparisons)
+  -> coverage-hunter  (verify all pages tested at every breakpoint)
+  -> testware-creator  (Responsive Testing Report: per-viewport screenshots, layout issues)
+```
+
+**CLI command:**
+```bash
+qa-agent orchestrate -i responsive_task.md -m copilot-gpt4o
+```
+
+**Prompt template:**
+```
+Run Workflow 12 — Responsive & Mobile Testing.
+
+App URL: https://myapp.com
+Pages to test: [e.g., "Landing page, Product listing, Cart, Checkout"]
+Viewports: 375x812 (mobile), 768x1024 (tablet), 1280x800 (desktop)
+Design breakpoints defined at: [e.g., "375px, 768px, 1280px"]
+Known responsive issues: [e.g., "Navigation collapses incorrectly on tablet"]
+```
+
+---
+
+### Workflow 13 -- AI/ML Feature Testing
+
+**When to use:** Testing features that use machine learning models, AI-generated content, recommendations, or classification systems.
+
+```
+requirements-analyst  (identify non-determinism risks, bias scenarios, compliance requirements)
+  -> request_human_input  (clarify acceptable thresholds and compliance constraints)
+  -> ai-test-architect  (design strategy: bias checks, drift detection, adversarial inputs)
+  -> test-case-generator  (generate AI-specific test cases including edge cases)
+  -> synthetic-data-designer  (create adversarial, boundary, and bias-probe datasets)
+  -> testware-creator  (AI Test Strategy Document with compliance checklist)
+```
+
+**CLI command:**
+```bash
+qa-agent orchestrate -i ai_feature_task.md -m copilot-gpt4o
+```
+
+**Prompt template:**
+```
+Run Workflow 13 — AI/ML Feature Testing.
+
+Feature: [e.g., "Product recommendation engine", "Sentiment classifier", "Resume screening AI"]
+Model type: [e.g., "Collaborative filtering", "LLM-based", "Binary classifier"]
+Non-determinism handling: [e.g., "Results may vary by ±5% across runs — use similarity threshold"]
+Bias risks: [e.g., "Must not discriminate by gender or age in recommendations"]
+Compliance: [e.g., "GDPR, EU AI Act — explainability required"]
+Acceptable accuracy threshold: [e.g., "≥ 90% precision on test set"]
+```
+
+---
+
+### Workflow 14 -- Release Sign-off / Go-Live Checklist
+
+**When to use:** Final QA gate before deploying to production. Runs all checks and produces a stakeholder-ready sign-off document.
+
+```
+requirements-analyst  (verify all in-scope requirements have test coverage)
+  -> regression-optimizer  (run risk-prioritized regression subset)
+  -> security-scout  (final scan: secrets, unsafe patterns, staging URLs)
+  -> coverage-hunter  (confirm coverage meets release threshold)
+  -> pr-hygiene-checker  (final quality gate on the test suite)
+  -> testware-creator  (Release Sign-off Report: gate results, pass/fail verdict)
+```
+
+**CLI command:**
+```bash
+qa-agent orchestrate -i release_signoff_task.md -m copilot-gpt4o
+```
+
+**Prompt template:**
+```
+Run Workflow 14 — Release Sign-off / Go-Live Checklist.
+
+Release version: v[X.Y.Z]
+App URL (staging): https://staging.myapp.com
+Scope of changes: [e.g., "New checkout flow, updated user profile, payment gateway upgrade"]
+Requirements in scope: [PBI-101, PBI-102, PBI-103]
+Coverage threshold: [e.g., "≥ 80% of in-scope requirements must have passing tests"]
+Regression suite path: playwright/tests/
+Sign-off approvers: [e.g., "QA Lead, Product Owner"]
+```
+
+---
+
+### Workflow 15 -- End-to-End User Journey Mapping & Automation
+
+**When to use:** Automating full business flows from a user's perspective — from first interaction to goal completion.
+
+```
+requirements-analyst  (extract user journeys and acceptance criteria from personas)
+  -> playwright-test-generator  (explore app, map actual navigation flows)
+  -> ui-test-designer  (implement E2E journey tests with full POM coverage per persona)
+  -> seed-data-manager  (set up journey-specific test data and teardown helpers)
+  -> coverage-hunter  (verify every journey step is covered)
+  -> testware-creator  (User Journey Test Catalogue with persona-flow-test mapping)
+```
+
+**CLI command:**
+```bash
+qa-agent orchestrate -i user_journey_task.md -m copilot-gpt4o
+```
+
+**Prompt template:**
+```
+Run Workflow 15 — End-to-End User Journey Mapping & Automation.
+
+App URL: https://myapp.com
+User personas:
+  - Guest: browses products, adds to cart, checks out as guest
+  - Registered user: logs in, purchases, views order history
+  - Admin: manages products, views sales reports
+
+Key business flows to automate:
+  1. Guest checkout (browse → cart → payment → confirmation)
+  2. Registered user repeat purchase
+  3. Admin product catalogue management
+
+Auth credentials: [test credentials per persona]
+Playwright project path: playwright/
+```
+
+---
+
+### Workflow 16 -- Test Data Cleanup & Maintenance
+
+**When to use:** When fixtures are stale, factories produce collisions, or test data no longer reflects the current data model.
+
+```
+coverage-hunter  (audit fixtures: identify stale, duplicate, or incomplete datasets)
+  -> seed-data-manager  (remove stale fixtures, consolidate duplicates, refresh values)
+  -> synthetic-data-designer  (redesign datasets that no longer cover current requirements)
+  -> testware-creator  (Data Maintenance Report: what changed, updated factory catalogue)
+```
+
+**CLI command:**
+```bash
+qa-agent orchestrate -i data_cleanup_task.md -m copilot-gpt4o
+```
+
+**Prompt template:**
+```
+Run Workflow 16 — Test Data Cleanup & Maintenance.
+
+Test data path: playwright/test-data/
+Fixtures path: playwright/fixtures/
+Known issues:
+  - [e.g., "User factory produces duplicate emails causing test collisions"]
+  - [e.g., "Order fixtures reference deleted product IDs"]
+  - [e.g., "Auth fixtures expire after 7 days — need refresh"]
+Current data model changes: [brief description of schema changes since last update]
+```
+
+---
+
+### Workflow 17 -- Exploratory Testing Session Planner
+
+**When to use:** Preparing a structured exploratory testing effort for a new feature, release, or high-risk area.
+
+```
+requirements-analyst  (identify ambiguous, high-risk, or poorly-specified areas)
+  -> bug-pattern-analyst  (review historical bugs to guide exploration priorities)
+  -> test-oracle-creator  (define expected behavior and pass/fail criteria for explorers)
+  -> testware-creator  (Exploratory Testing Charters: goals, time boxes, risk areas, heuristics)
+```
+
+**CLI command:**
+```bash
+qa-agent orchestrate -i exploratory_task.md -m copilot-gpt4o
+```
+
+**Prompt template:**
+```
+Run Workflow 17 — Exploratory Testing Session Planner.
+
+Feature / area to explore: [e.g., "New payment flow with 3DS authentication"]
+Release date: [date]
+Session budget: [e.g., "3 testers × 2 hours each"]
+Known risk areas: [e.g., "3DS redirect timing, declined card handling, currency edge cases"]
+Historical bugs in this area: [describe or attach bug reports]
+Tester experience level: [e.g., "1 senior, 2 mid-level"]
+```
+
+---
+
+### Workflow 18 -- PR / Code Review QA Gate
+
+**When to use:** Before merging a PR that contains test code changes — get a structured pass/fail verdict across hygiene, security, coverage, and flake risk.
+
+```
+pr-hygiene-checker  (8-check quality gate: selectors, waiting, structure, naming)
+  -> security-scout  (scan changed files for secrets and unsafe patterns)
+  -> coverage-hunter  (coverage delta: new code paths without test coverage)
+  -> flake-triage  (flake risk assessment of new or modified tests)
+  -> testware-creator  (PR QA Gate Report: pass/fail per check, actionable feedback)
+```
+
+**CLI command:**
+```bash
+qa-agent orchestrate -i pr_gate_task.md -m copilot-gpt4o
+# or use the dedicated shortcut:
+qa-agent playwright-analyze --agent pr-hygiene-checker -i playwright/tests/
+```
+
+**Prompt template:**
+```
+Run Workflow 18 — PR / Code Review QA Gate.
+
+PR branch: [branch name]
+Changed test files:
+  - playwright/tests/ui/checkout.spec.ts  (modified)
+  - playwright/pages/checkout.page.ts  (new)
+  - playwright/fixtures/order.fixture.ts  (new)
+Changed source files: [optional — list if you want coverage delta analysis]
+PR description: [paste PR title and summary]
+```
+
+---
+
+### Workflow 19 -- Post-Deployment Smoke Verification
+
+**When to use:** Immediately after deploying to staging or production — verify the critical paths are working before announcing the release.
+
+```
+playwright-test-generator  (identify or generate critical smoke tests for key paths)
+  -> coverage-hunter  (verify smoke suite covers all critical entry points)
+  -> testware-creator  (Smoke Verification Report: pass/fail per path, environment, issues)
+```
+
+**CLI command:**
+```bash
+qa-agent orchestrate -i smoke_task.md -m copilot-gpt4o
+# or run the smoke suite directly:
+qa-agent playwright-run --project chromium --grep "@smoke" --analyze
+```
+
+**Prompt template:**
+```
+Run Workflow 19 — Post-Deployment Smoke Verification.
+
+Environment: [staging | production]
+App URL: https://staging.myapp.com
+Deployed version: v[X.Y.Z]
+Critical paths to verify:
+  - Homepage loads
+  - User can log in
+  - [Key feature 1] is accessible
+  - [Key feature 2] completes successfully
+Existing smoke suite path: playwright/tests/  (tag: @smoke)
+Maximum acceptable run time: [e.g., "10 minutes"]
+```
+
+---
+
+### Workflow 20 -- Requirements Traceability Audit
+
+**When to use:** Ensuring every requirement has at least one test case, identifying coverage gaps before a sign-off or audit.
+
+```
+requirements-analyst  (catalogue all requirements, user stories, and acceptance criteria)
+  -> coverage-hunter  (map existing tests to requirements, identify uncovered items)
+  -> test-case-generator  (generate missing test cases for uncovered requirements)
+  -> testware-creator  (Traceability Matrix: Requirement ID <-> Test Case IDs <-> Coverage %)
+```
+
+**CLI command:**
+```bash
+qa-agent orchestrate -i traceability_task.md -m copilot-gpt4o
+```
+
+**Prompt template:**
+```
+Run Workflow 20 — Requirements Traceability Audit.
+
+Requirements document: requirements/pbi-backlog.md
+  (or list requirements inline:)
+  - REQ-001: User can register with email and password
+  - REQ-002: User receives a confirmation email after registration
+  - REQ-003: User can log in with registered credentials
+  - REQ-004: User can reset password via email link
+
+Existing test directory: playwright/tests/
+Desired output: Traceability Matrix showing which tests cover which requirements,
+and a list of requirements with zero test coverage.
 ```
 
 ---
