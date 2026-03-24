@@ -213,9 +213,11 @@ async def _run_copilot_orchestrator(manager, prompt, profile: ModelProfile, cwd,
 
     try:
         delegate_tool = _build_delegate_tool(client, profile)
+        human_input_tool = _build_human_input_tool()
 
         tools = _resolve_copilot_tools(manager.tools or [])
         tools.append(delegate_tool)
+        tools.append(human_input_tool)
 
         session = await client.create_session({
             "model": profile.model_id,
@@ -335,6 +337,38 @@ def _build_delegate_tool(client, profile: ModelProfile):
         return result
 
     return delegate_to_agent
+
+
+def _build_human_input_tool():
+    """Build a tool that pauses the orchestrator and prompts the user for input."""
+    try:
+        from copilot import define_tool
+        from pydantic import BaseModel, Field
+    except ImportError:
+        return None
+
+    class HumanInputParams(BaseModel):
+        message: str = Field(description="Message or findings to display to the user before asking for input")
+
+    @define_tool(
+        description=(
+            "Pause the workflow and present findings or questions to the human operator, "
+            "then wait for their reply before continuing. Use this after requirements-analyst "
+            "returns its ambiguity report so the user can provide updated or clarified requirements."
+        )
+    )
+    async def request_human_input(params: HumanInputParams) -> str:
+        console.print(
+            Panel(
+                params.message,
+                title="[bold yellow]Agent is asking for input[/bold yellow]",
+                border_style="yellow",
+            )
+        )
+        reply = await _prompt_user()
+        return reply or "(no reply provided)"
+
+    return request_human_input
 
 
 def _resolve_copilot_tools(tool_names: list[str]) -> list:
