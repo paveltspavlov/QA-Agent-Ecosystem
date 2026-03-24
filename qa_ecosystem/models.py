@@ -13,6 +13,12 @@ from typing import Any
 
 import yaml
 
+try:
+    from dotenv import load_dotenv
+    load_dotenv()
+except ImportError:
+    pass
+
 # ---------------------------------------------------------------------------
 # Data classes
 # ---------------------------------------------------------------------------
