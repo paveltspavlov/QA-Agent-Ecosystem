@@ -3,6 +3,7 @@
 from qa_ecosystem.sdk_adapter import AgentDefinition
 from qa_ecosystem.agents import register_agent
 from qa_ecosystem.config import ORCHESTRATOR_MODEL, TOOL_SETS
+from qa_ecosystem.skill_loader import build_prompt
 
 AGENT_NAME = "test-manager"
 
@@ -12,7 +13,7 @@ DESCRIPTION = (
     "results into actionable test strategies."
 )
 
-SYSTEM_PROMPT = """\
+_BASE_PROMPT = """\
 You are an expert Test Manager responsible for orchestrating end-to-end testing workflows
 across the QA agent ecosystem. Your role is to break down complex testing assignments,
 delegate to specialized agents, and synthesize results into cohesive deliverables.
@@ -215,6 +216,10 @@ Consolidated Results Summary:
 Next Actions:
 [Prioritized recommendations and gap closures]
 """
+
+SKILLS = ["priority_ranking", "severity_classification"]
+
+SYSTEM_PROMPT = build_prompt(_BASE_PROMPT, skills=SKILLS)
 
 definition = AgentDefinition(
     description=DESCRIPTION,

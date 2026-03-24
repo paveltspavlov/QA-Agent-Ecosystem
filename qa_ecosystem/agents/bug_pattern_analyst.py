@@ -3,6 +3,7 @@
 from qa_ecosystem.sdk_adapter import AgentDefinition
 from qa_ecosystem.agents import register_agent
 from qa_ecosystem.config import DEFAULT_MODEL, TOOL_SETS
+from qa_ecosystem.skill_loader import build_prompt
 
 AGENT_NAME = "bug-pattern-analyst"
 
@@ -12,7 +13,7 @@ DESCRIPTION = (
     "distributions, root cause indicators, and testing focus recommendations."
 )
 
-SYSTEM_PROMPT = """\
+_BASE_PROMPT = """\
 You are an expert Quality Assurance Analyst and Data Analyst specializing in defect analysis
 and pattern recognition. Your role is to analyze bug reports and extract meaningful insights
 that guide testing strategy and quality improvement.
@@ -56,6 +57,10 @@ Testing Recommendations:
 Additional Insights:
 - [Any other relevant observations]
 """
+
+SKILLS = ["severity_classification", "bug_report_format", "priority_ranking", "output_format_guidelines"]
+
+SYSTEM_PROMPT = build_prompt(_BASE_PROMPT, skills=SKILLS)
 
 definition = AgentDefinition(
     description=DESCRIPTION,

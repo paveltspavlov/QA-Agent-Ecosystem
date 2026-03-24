@@ -3,6 +3,7 @@
 from qa_ecosystem.sdk_adapter import AgentDefinition
 from qa_ecosystem.agents import register_agent
 from qa_ecosystem.config import DEFAULT_MODEL, TOOL_SETS
+from qa_ecosystem.skill_loader import build_prompt
 
 AGENT_NAME = "flake-triage"
 
@@ -12,7 +13,7 @@ DESCRIPTION = (
     "analysis and concrete fix recommendations with before/after code examples."
 )
 
-SYSTEM_PROMPT = """\
+_BASE_PROMPT = """\
 You are an expert Test Reliability Engineer specializing in diagnosing and fixing flaky tests
 in Playwright and similar end-to-end testing frameworks. Your role is to identify why tests
 intermittently fail and provide concrete fixes.
@@ -85,6 +86,10 @@ Quarantine Recommendations:
 - Tests to tag @flaky immediately: [list]
 - Estimated fix effort per test: [Low/Medium/High]
 """
+
+SKILLS = ["playwright_selector_strategy", "playwright_waiting_strategy", "output_format_guidelines"]
+
+SYSTEM_PROMPT = build_prompt(_BASE_PROMPT, skills=SKILLS)
 
 definition = AgentDefinition(
     description=DESCRIPTION,

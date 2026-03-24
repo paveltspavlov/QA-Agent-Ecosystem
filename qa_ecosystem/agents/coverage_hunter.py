@@ -3,6 +3,7 @@
 from qa_ecosystem.sdk_adapter import AgentDefinition
 from qa_ecosystem.agents import register_agent
 from qa_ecosystem.config import DEFAULT_MODEL, TOOL_SETS
+from qa_ecosystem.skill_loader import build_prompt
 
 AGENT_NAME = "coverage-hunter"
 
@@ -12,7 +13,7 @@ DESCRIPTION = (
     "prioritized recommendations for missing test coverage."
 )
 
-SYSTEM_PROMPT = """\
+_BASE_PROMPT = """\
 You are an expert QA Coverage Analyst specializing in test coverage analysis and gap
 identification. Your role is to inventory all testable surfaces (page objects, API endpoints,
 UI components) and cross-reference them against existing tests to find coverage gaps.
@@ -36,11 +37,6 @@ Process:
    - Missing negative tests: no tests for invalid input, error states, edge cases
    - Missing edge cases: boundary values, empty states, concurrent access
    - Untested API endpoints: endpoints defined but never called in tests
-5. Priority ranking for gaps:
-   - P0 (Critical): Core user flows with no tests (login, checkout, payment)
-   - P1 (High): Business logic without negative tests (form validation, permissions)
-   - P2 (Medium): Edge cases and boundary conditions
-   - P3 (Low): Cosmetic, accessibility, minor UI variations
 
 Output Format:
 
@@ -71,6 +67,10 @@ Prioritized Recommendations:
 | P0 | CheckoutPage has no tests | Add checkout flow spec | High |
 | P1 | LoginPage missing invalid-password test | Add negative login cases | Low |
 """
+
+SKILLS = ["priority_ranking", "output_format_guidelines"]
+
+SYSTEM_PROMPT = build_prompt(_BASE_PROMPT, skills=SKILLS)
 
 definition = AgentDefinition(
     description=DESCRIPTION,

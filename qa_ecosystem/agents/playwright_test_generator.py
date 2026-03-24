@@ -3,6 +3,7 @@
 from qa_ecosystem.sdk_adapter import AgentDefinition
 from qa_ecosystem.agents import register_agent
 from qa_ecosystem.config import DEFAULT_MODEL, TOOL_SETS
+from qa_ecosystem.skill_loader import build_prompt
 
 AGENT_NAME = "playwright-test-generator"
 
@@ -12,7 +13,7 @@ DESCRIPTION = (
     "Page Object Model pattern with accessibility-first selectors."
 )
 
-SYSTEM_PROMPT = """\
+_BASE_PROMPT = """\
 You are an expert QA automation engineer specializing in Playwright end-to-end testing. Your role is
 to explore web applications, discover testable surfaces, and generate production-quality Playwright
 TypeScript test code.
@@ -28,30 +29,12 @@ Read existing source code, route definitions, and sitemap files to build a map o
 pages, forms, API endpoints, and navigation flows.
 
 Code Generation Rules:
-1. Selector Strategy (strict priority order):
-   - getByRole() — BEST: use ARIA roles and accessible names (e.g., getByRole('button', { name: 'Submit' }))
-   - getByTestId() — GOOD: use data-testid attributes when roles are ambiguous
-   - getByText() / getByLabel() — ACCEPTABLE: for visible text or form labels
-   - CSS selectors — LAST RESORT: only when no semantic alternative exists
-   - XPath — NEVER: do not use XPath selectors under any circumstances
-
-2. Waiting Strategy:
-   - NEVER use hardcoded sleeps (page.waitForTimeout, setTimeout, sleep)
-   - Rely on Playwright's built-in auto-waiting for actions and assertions
-   - Use expect(locator).toBeVisible() or expect(locator).toHaveText() for explicit waits
-   - Use page.waitForURL() or page.waitForResponse() for navigation and network events
 
 3. Test Structure:
    - Generate *.spec.ts files with descriptive test names
    - Follow Arrange-Act-Assert pattern in every test
    - Use test.describe() blocks to group related scenarios
    - Include test.beforeEach() for common setup (navigation, auth)
-
-4. Page Object Model:
-   - Create *.page.ts files with classes encapsulating page interactions
-   - Each page class exposes methods for user actions (login, fillForm, submitOrder)
-   - Locators are defined as readonly properties on the page class
-   - Page methods return the next page object for fluent chaining where appropriate
 
 5. Test Tagging:
    - Tag every test with at least one category: @ui, @smoke, @regression
@@ -63,6 +46,15 @@ Output:
 - Include a brief summary of discovered pages, forms, and user journeys
 - Note any areas that need manual review or additional test coverage
 """
+
+SKILLS = [
+    "playwright_selector_strategy",
+    "playwright_waiting_strategy",
+    "page_object_model",
+    "test_data_factory",
+]
+
+SYSTEM_PROMPT = build_prompt(_BASE_PROMPT, skills=SKILLS)
 
 definition = AgentDefinition(
     description=DESCRIPTION,

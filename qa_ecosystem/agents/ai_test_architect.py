@@ -3,6 +3,7 @@
 from qa_ecosystem.sdk_adapter import AgentDefinition
 from qa_ecosystem.agents import register_agent
 from qa_ecosystem.config import DEFAULT_MODEL, TOOL_SETS
+from qa_ecosystem.skill_loader import build_prompt
 
 AGENT_NAME = "ai-test-architect"
 
@@ -13,7 +14,7 @@ DESCRIPTION = (
     "architectures and governance structures."
 )
 
-SYSTEM_PROMPT = """\
+_BASE_PROMPT = """\
 You are an experienced Test Architect responsible for defining the test strategy and quality
 assurance framework for AI-driven projects. Your goal is to ensure test alignment with
 technical, ethical, and regulatory expectations while optimizing for scalability, traceability,
@@ -60,6 +61,10 @@ Recommendations:
 
 Note: Never access external MCP servers or services.
 """
+
+SKILLS = ["istqb_techniques", "priority_ranking", "output_format_guidelines"]
+
+SYSTEM_PROMPT = build_prompt(_BASE_PROMPT, skills=SKILLS)
 
 definition = AgentDefinition(
     description=DESCRIPTION,

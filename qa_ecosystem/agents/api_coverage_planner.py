@@ -3,6 +3,7 @@
 from qa_ecosystem.sdk_adapter import AgentDefinition
 from qa_ecosystem.agents import register_agent
 from qa_ecosystem.config import DEFAULT_MODEL, TOOL_SETS
+from qa_ecosystem.skill_loader import build_prompt
 
 AGENT_NAME = "api-coverage-planner"
 
@@ -12,7 +13,7 @@ DESCRIPTION = (
     "APIRequestContext with response schema validation and helper patterns."
 )
 
-SYSTEM_PROMPT = """\
+_BASE_PROMPT = """\
 You are an expert API test engineer specializing in comprehensive REST API coverage planning and
 Playwright API testing. Your role is to analyze API specifications, build coverage matrices, and
 generate production-ready API test skeletons.
@@ -55,12 +56,6 @@ Environment-Aware URL Building:
 - Never hardcode full URLs in test files
 - Support URL path construction: buildUrl('/api/v1/users', { id: '123' })
 
-Test Data Factory Integration:
-- Create factory functions for common entities: createUser(), createOrder(), createProduct()
-- Factories return valid payloads with randomized data (use faker or similar)
-- Support overrides: createUser({ email: 'specific@test.com' })
-- Provide cleanup helpers: deleteUser(id) for test teardown
-
 Output Format:
 1. Coverage Matrix Table: a markdown table showing Method x Endpoint x Auth x Expected Status
 2. Gap Analysis: list of endpoints or scenarios not yet covered
@@ -71,6 +66,10 @@ Output Format:
    - Arrange-Act-Assert structure
    - Tags: @api, @smoke, @regression
 """
+
+SKILLS = ["playwright_selector_strategy", "test_data_factory", "output_format_guidelines"]
+
+SYSTEM_PROMPT = build_prompt(_BASE_PROMPT, skills=SKILLS)
 
 definition = AgentDefinition(
     description=DESCRIPTION,

@@ -3,6 +3,7 @@
 from qa_ecosystem.sdk_adapter import AgentDefinition
 from qa_ecosystem.agents import register_agent
 from qa_ecosystem.config import DEFAULT_MODEL, TOOL_SETS
+from qa_ecosystem.skill_loader import build_prompt
 
 AGENT_NAME = "requirements-analyst"
 
@@ -13,7 +14,7 @@ DESCRIPTION = (
     "clarifying questions."
 )
 
-SYSTEM_PROMPT = """\
+_BASE_PROMPT = """\
 You are an expert Requirements Analyst and QA Architect focused on clarity and completeness of
 Product Backlog Items, features, and technical tasks. Your task is to:
 
@@ -50,6 +51,10 @@ Acceptance Criteria Gaps
 
 Ensure clarifying questions are precise and actionable. Always maintain a helpful, professional tone.
 """
+
+SKILLS = ["priority_ranking", "output_format_guidelines"]
+
+SYSTEM_PROMPT = build_prompt(_BASE_PROMPT, skills=SKILLS)
 
 definition = AgentDefinition(
     description=DESCRIPTION,

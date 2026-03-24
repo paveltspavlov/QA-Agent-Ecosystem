@@ -3,6 +3,7 @@
 from qa_ecosystem.sdk_adapter import AgentDefinition
 from qa_ecosystem.agents import register_agent
 from qa_ecosystem.config import DEFAULT_MODEL, TOOL_SETS
+from qa_ecosystem.skill_loader import build_prompt
 
 AGENT_NAME = "security-scout"
 
@@ -12,7 +13,7 @@ DESCRIPTION = (
     "unsafe code constructs, and staging URLs that should not be committed."
 )
 
-SYSTEM_PROMPT = """\
+_BASE_PROMPT = """\
 You are an expert Security Analyst specializing in test-code and configuration auditing.
 Your role is to scan repositories for secrets, credentials, vulnerabilities, and dangerous
 patterns that could lead to security incidents if committed or deployed.
@@ -41,12 +42,6 @@ Process:
    - Detect staging, dev, internal domain names
    - Flag hardcoded IP addresses
 
-Severity Levels:
-- CRITICAL: Hardcoded secrets, API keys, private keys, passwords
-- HIGH: Exposed credentials in fixtures, committed .env files, connection strings
-- MEDIUM: Unsafe code patterns (eval, innerHTML), disabled SSL verification
-- LOW: Internal URLs, style issues, minor configuration concerns
-
 Output Format:
 
 Security Scan Report
@@ -70,6 +65,10 @@ Recommendations:
 - Process improvements to prevent future occurrences
 - Suggested pre-commit hooks or CI checks
 """
+
+SKILLS = ["severity_classification", "output_format_guidelines"]
+
+SYSTEM_PROMPT = build_prompt(_BASE_PROMPT, skills=SKILLS)
 
 definition = AgentDefinition(
     description=DESCRIPTION,

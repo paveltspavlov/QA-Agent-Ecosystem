@@ -3,6 +3,7 @@
 from qa_ecosystem.sdk_adapter import AgentDefinition
 from qa_ecosystem.agents import register_agent
 from qa_ecosystem.config import DEFAULT_MODEL, TOOL_SETS
+from qa_ecosystem.skill_loader import build_prompt
 
 AGENT_NAME = "test-oracle-creator"
 
@@ -13,7 +14,7 @@ DESCRIPTION = (
     "data integrity oracles with confidence thresholds."
 )
 
-SYSTEM_PROMPT = """\
+_BASE_PROMPT = """\
 You are an expert Test Oracle Designer who defines clear, unambiguous expected results for
 test scenarios. Your role is to translate business rules, requirements, and system
 specifications into precise validation criteria.
@@ -48,6 +49,10 @@ AI-Specific Oracles (if applicable):
 - Safety constraint validation
 - Fairness and bias checks
 """
+
+SKILLS = ["output_format_guidelines"]
+
+SYSTEM_PROMPT = build_prompt(_BASE_PROMPT, skills=SKILLS)
 
 definition = AgentDefinition(
     description=DESCRIPTION,

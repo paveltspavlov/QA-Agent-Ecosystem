@@ -3,6 +3,7 @@
 from qa_ecosystem.sdk_adapter import AgentDefinition
 from qa_ecosystem.agents import register_agent
 from qa_ecosystem.config import DEFAULT_MODEL, TOOL_SETS
+from qa_ecosystem.skill_loader import build_prompt
 
 AGENT_NAME = "ui-test-designer"
 
@@ -12,7 +13,7 @@ DESCRIPTION = (
     "and multi-browser configuration."
 )
 
-SYSTEM_PROMPT = """\
+_BASE_PROMPT = """\
 You are a senior UI test automation architect specializing in Playwright TypeScript. Your role is to
 design and implement robust, maintainable UI test suites using the Page Object Model pattern and
 Playwright best practices.
@@ -22,42 +23,6 @@ Use the Bash tool to run Playwright commands such as:
 - `npx playwright test --project=chromium` — run against a specific browser
 - `npx playwright test --ui` — launch the interactive UI mode
 - `npx playwright codegen <url>` — generate code from recorded interactions
-
-Page Object Model Architecture:
-1. BasePage (base.page.ts):
-   - Constructor accepts Page instance
-   - Navigation helpers: goto(path), waitForPageLoad()
-   - Screenshot helpers: takeScreenshot(name)
-   - Common assertions: expectTitle(title), expectUrl(pattern)
-   - Shared utility methods: scrollToElement(locator), waitForNetworkIdle()
-
-2. Feature Pages (e.g., login.page.ts, dashboard.page.ts):
-   - Extend BasePage
-   - Define page-specific locators as readonly properties
-   - Expose user-action methods (fillLoginForm, submitSearch, selectFilterOption)
-   - Return next page object from navigation actions for fluent chaining
-
-3. Component Objects (e.g., header.component.ts, modal.component.ts):
-   - Encapsulate reusable UI components shared across pages
-   - Accept a parent locator scope to avoid selector collisions
-
-Selector Hierarchy (strict priority):
-- getByRole() — BEST: ARIA roles with accessible names (getByRole('button', { name: 'Save' }))
-- getByTestId() — GOOD: data-testid attributes for elements without clear roles
-- getByText() / getByLabel() — ACCEPTABLE: for visible text content or form labels
-- CSS selectors — AVOID: only when no semantic selector is available
-- XPath — NEVER: do not use XPath under any circumstances
-
-Custom Fixtures:
-- Create fixtures in *.fixture.ts files extending base test
-- Auth fixture: log in once, save storageState, reuse across tests
-- Database fixture: seed/teardown test data per suite
-- Example: export const test = base.extend<{ authenticatedPage: Page }>({ ... })
-
-Auth State Caching:
-- Use global setup to authenticate and save state to .auth/user.json
-- Reference storageState in playwright.config.ts per project
-- Separate auth states for different user roles (admin, viewer, editor)
 
 Multi-Browser Configuration:
 - Configure projects in playwright.config.ts for chromium, firefox, webkit
@@ -104,6 +69,15 @@ Output:
 - Notes on any accessibility concerns discovered during test design
 - When performing mockup comparison: a structured deviation list ready for bug report generation
 """
+
+SKILLS = [
+    "playwright_selector_strategy",
+    "playwright_waiting_strategy",
+    "page_object_model",
+    "auth_state_caching",
+]
+
+SYSTEM_PROMPT = build_prompt(_BASE_PROMPT, skills=SKILLS)
 
 definition = AgentDefinition(
     description=DESCRIPTION,

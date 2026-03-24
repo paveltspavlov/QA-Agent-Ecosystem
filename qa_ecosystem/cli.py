@@ -487,6 +487,30 @@ def cmd_list_workflows(_args: argparse.Namespace) -> None:
     console.print("\n[dim]Run: qa-agent orchestrate -i <input> -t <workflow-template>[/dim]\n")
 
 
+def cmd_list_skills(_args: argparse.Namespace) -> None:
+    """Print all available shared skills."""
+    from qa_ecosystem.skill_loader import list_skills, load_skill
+
+    skills = list_skills()
+    if not skills:
+        console.print("[yellow]No skills found in qa_ecosystem/skills/[/yellow]")
+        return
+
+    table = Table(title=f"QA Agent Ecosystem — Shared Skills ({len(skills)})")
+    table.add_column("Skill Name", style="cyan", no_wrap=True)
+    table.add_column("Preview (first 120 chars)", style="white")
+
+    for name in skills:
+        try:
+            preview = load_skill(name)[:120].replace("\n", " ")
+        except Exception:
+            preview = "(error loading skill)"
+        table.add_row(name, preview)
+
+    console.print(table)
+    console.print(f"\n[dim]Skills directory: qa_ecosystem/skills/[/dim]\n")
+
+
 def cmd_chain(args: argparse.Namespace) -> None:
     """Execute a linear agent sequence, piping each output as input to the next."""
     from qa_ecosystem.runner import run_chain, run_sync
@@ -635,6 +659,9 @@ def build_parser() -> argparse.ArgumentParser:
     # --- doctor ---
     sub.add_parser("doctor", help="Validate configuration, API keys, gh auth, and Playwright")
 
+    # --- list-skills ---
+    sub.add_parser("list-skills", help="List all available shared prompt skill fragments")
+
     # --- list-workflows ---
     sub.add_parser("list-workflows", help="List all 20 orchestration workflows")
 
@@ -680,6 +707,7 @@ def main() -> None:
         "playwright-analyze": cmd_playwright_analyze,
         "init": cmd_init,
         "doctor": cmd_doctor,
+        "list-skills": cmd_list_skills,
         "list-workflows": cmd_list_workflows,
         "chain": cmd_chain,
     }

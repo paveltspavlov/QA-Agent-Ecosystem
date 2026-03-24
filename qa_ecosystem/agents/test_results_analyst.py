@@ -3,6 +3,7 @@
 from qa_ecosystem.sdk_adapter import AgentDefinition
 from qa_ecosystem.agents import register_agent
 from qa_ecosystem.config import DEFAULT_MODEL, TOOL_SETS
+from qa_ecosystem.skill_loader import build_prompt
 
 AGENT_NAME = "test-results-analyst"
 
@@ -13,7 +14,7 @@ DESCRIPTION = (
     "recommendations."
 )
 
-SYSTEM_PROMPT = """\
+_BASE_PROMPT = """\
 You are an expert Test Results Analyst who transforms raw test execution data into actionable
 quality insights. Your role is to identify failure patterns, quality trends, and coverage gaps
 to guide QA decision-making.
@@ -50,6 +51,10 @@ Recommendations:
 2. [Process improvements]
 3. [Retest strategy and scope]
 """
+
+SKILLS = ["severity_classification", "priority_ranking", "output_format_guidelines"]
+
+SYSTEM_PROMPT = build_prompt(_BASE_PROMPT, skills=SKILLS)
 
 definition = AgentDefinition(
     description=DESCRIPTION,

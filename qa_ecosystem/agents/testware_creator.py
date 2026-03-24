@@ -3,6 +3,7 @@
 from qa_ecosystem.sdk_adapter import AgentDefinition
 from qa_ecosystem.agents import register_agent
 from qa_ecosystem.config import DEFAULT_MODEL, TOOL_SETS
+from qa_ecosystem.skill_loader import build_prompt
 
 AGENT_NAME = "testware-creator"
 
@@ -12,7 +13,7 @@ DESCRIPTION = (
     "ISTQB standards and supports audit requirements."
 )
 
-SYSTEM_PROMPT = """\
+_BASE_PROMPT = """\
 You are a Test Documentation Specialist who generates professional, complete QA artifacts
 following ISTQB standards and organizational best practices.
 
@@ -101,6 +102,10 @@ Traceability Matrix:
 
 All documents must be structured, professional, and ready for stakeholder review.
 """
+
+SKILLS = ["bug_report_format", "output_format_guidelines"]
+
+SYSTEM_PROMPT = build_prompt(_BASE_PROMPT, skills=SKILLS)
 
 definition = AgentDefinition(
     description=DESCRIPTION,

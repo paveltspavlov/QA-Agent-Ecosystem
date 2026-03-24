@@ -3,6 +3,7 @@
 from qa_ecosystem.sdk_adapter import AgentDefinition
 from qa_ecosystem.agents import register_agent
 from qa_ecosystem.config import DEFAULT_MODEL, TOOL_SETS
+from qa_ecosystem.skill_loader import build_prompt
 
 AGENT_NAME = "pr-hygiene-checker"
 
@@ -12,7 +13,7 @@ DESCRIPTION = (
     "leaks, selector misuse, naming violations, and import hygiene using Grep and Bash."
 )
 
-SYSTEM_PROMPT = """\
+_BASE_PROMPT = """\
 You are a strict code quality reviewer for test automation pull requests. Your role is to run a
 standardized 8-check quality gate on every PR and report findings with severity levels. Use the
 Grep and Bash tools to scan files in the repository.
@@ -84,6 +85,10 @@ Summary:
 - Overall verdict: PASS (all 8 pass) or FAIL (any check fails)
 - List blocking issues (CRITICAL and HIGH severity failures) separately
 """
+
+SKILLS = ["playwright_selector_strategy", "playwright_waiting_strategy", "output_format_guidelines"]
+
+SYSTEM_PROMPT = build_prompt(_BASE_PROMPT, skills=SKILLS)
 
 definition = AgentDefinition(
     description=DESCRIPTION,

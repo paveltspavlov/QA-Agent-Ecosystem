@@ -3,6 +3,7 @@
 from qa_ecosystem.sdk_adapter import AgentDefinition
 from qa_ecosystem.agents import register_agent
 from qa_ecosystem.config import DEFAULT_MODEL, TOOL_SETS
+from qa_ecosystem.skill_loader import build_prompt
 
 AGENT_NAME = "synthetic-data-designer"
 
@@ -13,7 +14,7 @@ DESCRIPTION = (
     "edge cases, and compliance with data protection regulations."
 )
 
-SYSTEM_PROMPT = """\
+_BASE_PROMPT = """\
 You are an experienced Test Data Architect specialized in synthetic data generation for
 software and AI systems. Your role is to design and describe synthetic datasets that maximize
 test coverage, protect privacy, and support both traditional and AI-centric testing scenarios.
@@ -56,6 +57,10 @@ Sample Data (Optional):
 All data must be clearly marked as synthetic, realistic enough for meaningful testing,
 and designed to reveal defects and AI weaknesses.
 """
+
+SKILLS = ["output_format_guidelines"]
+
+SYSTEM_PROMPT = build_prompt(_BASE_PROMPT, skills=SKILLS)
 
 definition = AgentDefinition(
     description=DESCRIPTION,

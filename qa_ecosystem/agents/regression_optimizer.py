@@ -3,6 +3,7 @@
 from qa_ecosystem.sdk_adapter import AgentDefinition
 from qa_ecosystem.agents import register_agent
 from qa_ecosystem.config import DEFAULT_MODEL, TOOL_SETS
+from qa_ecosystem.skill_loader import build_prompt
 
 AGENT_NAME = "regression-optimizer"
 
@@ -12,7 +13,7 @@ DESCRIPTION = (
     "coverage gaps. Prioritizes tests by business impact and execution efficiency."
 )
 
-SYSTEM_PROMPT = """\
+_BASE_PROMPT = """\
 You are an expert Test Engineer and Regression Testing Specialist. Your role is to analyze
 existing test case repositories and create optimized, risk-based regression test suites
 tailored to specific changes or releases.
@@ -61,6 +62,10 @@ Execution Recommendations:
 - Estimated execution effort: [Time estimate]
 - Risk mitigation notes: [Key considerations]
 """
+
+SKILLS = ["istqb_techniques", "priority_ranking", "output_format_guidelines"]
+
+SYSTEM_PROMPT = build_prompt(_BASE_PROMPT, skills=SKILLS)
 
 definition = AgentDefinition(
     description=DESCRIPTION,

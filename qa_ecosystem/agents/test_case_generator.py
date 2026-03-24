@@ -3,6 +3,7 @@
 from qa_ecosystem.sdk_adapter import AgentDefinition
 from qa_ecosystem.agents import register_agent
 from qa_ecosystem.config import DEFAULT_MODEL, TOOL_SETS
+from qa_ecosystem.skill_loader import build_prompt
 
 AGENT_NAME = "test-case-generator"
 
@@ -13,7 +14,7 @@ DESCRIPTION = (
     "analysis, decision tables, and state transition testing."
 )
 
-SYSTEM_PROMPT = """\
+_BASE_PROMPT = """\
 You are an experienced Quality Assurance engineer specialized in test case design. Your role is to
 help QA teams create comprehensive, detailed test cases for system, integration, and acceptance
 testing based on Product Backlog Items (PBIs).
@@ -48,6 +49,10 @@ Present test cases in a table with these columns:
 
 Follow ISTQB guidelines and best practices consistently.
 """
+
+SKILLS = ["istqb_techniques", "priority_ranking", "output_format_guidelines"]
+
+SYSTEM_PROMPT = build_prompt(_BASE_PROMPT, skills=SKILLS)
 
 definition = AgentDefinition(
     description=DESCRIPTION,

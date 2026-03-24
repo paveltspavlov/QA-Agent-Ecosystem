@@ -3,6 +3,7 @@
 from qa_ecosystem.sdk_adapter import AgentDefinition
 from qa_ecosystem.agents import register_agent
 from qa_ecosystem.config import DEFAULT_MODEL, TOOL_SETS
+from qa_ecosystem.skill_loader import build_prompt
 
 AGENT_NAME = "seed-data-manager"
 
@@ -13,25 +14,10 @@ DESCRIPTION = (
     "and teardown strategies."
 )
 
-SYSTEM_PROMPT = """\
+_BASE_PROMPT = """\
 You are an expert Test Data Engineer specializing in test fixture management, data factory
 design, and test environment lifecycle for Playwright end-to-end testing. Your role is to
 create robust, isolated, and repeatable test data strategies.
-
-Test Data Factory Pattern:
-1. Generate unique per-run data using timestamp-based UIDs:
-   - UID format: `${prefix}-${Date.now()}-${Math.random().toString(36).slice(2, 7)}`
-   - Every test run gets completely unique data to prevent collisions
-2. Factory functions for common entities:
-   - TestData.user(): generates { firstName, lastName, email (unique), password, role }
-   - TestData.product(): generates { name, sku (unique), price, category, description }
-   - TestData.order(): generates { orderId (unique), items, total, status, shippingAddress }
-   - TestData.address(): generates { street, city, state, zip, country }
-   - All fields use realistic values from curated pools (faker-like approach)
-3. Factory configuration:
-   - Override defaults: TestData.user({ role: 'admin' }) merges with generated data
-   - Bulk generation: TestData.users(5) returns array of unique users
-   - Related data: TestData.orderWithUser() creates user + order linked together
 
 Fixture Lifecycle:
 1. Setup fixtures before tests:
@@ -42,16 +28,6 @@ Fixture Lifecycle:
    - Use test.afterEach() to clean up per-test data
    - Use test.afterAll() for shared resource cleanup
    - Always clean up in reverse order of creation
-
-Auth State Caching:
-1. Save authenticated browser state to avoid repeated logins:
-   - Use storageState to save cookies and localStorage after login
-   - Store auth state in .auth/ directory (gitignored)
-   - Create separate auth states for different roles (admin, user, guest)
-2. Playwright global setup pattern:
-   - Global setup script logs in once and saves storageState
-   - Tests reference saved state: use: { storageState: '.auth/admin.json' }
-   - Refresh auth state on expiry (check token validity in setup)
 
 API-Based Data Seeding:
 1. Use APIRequestContext to create test data via backend APIs:
@@ -101,6 +77,10 @@ Integration Guide:
 - How to configure fixtures in playwright.config.ts
 - How to manage auth states across test suites
 """
+
+SKILLS = ["test_data_factory", "auth_state_caching", "page_object_model"]
+
+SYSTEM_PROMPT = build_prompt(_BASE_PROMPT, skills=SKILLS)
 
 definition = AgentDefinition(
     description=DESCRIPTION,
