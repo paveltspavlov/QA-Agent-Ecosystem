@@ -217,6 +217,11 @@ async def run_chain(
 # GitHub Copilot SDK path
 # ═══════════════════════════════════════════════════════════════════════════════
 
+def _on_permission_request_copilot(request) -> bool:
+    """Handle permission requests from Copilot SDK tools. Always approve."""
+    return True
+
+
 async def _run_copilot_single(agent_def, prompt, profile: ModelProfile, cwd, max_turns) -> str:
     """Execute a single agent via the GitHub Copilot SDK."""
     try:
@@ -234,11 +239,8 @@ async def _run_copilot_single(agent_def, prompt, profile: ModelProfile, cwd, max
     try:
         session = await client.create_session(
             model=profile.model_id,
-            system_prompt=agent_def.prompt,
-            tools=_resolve_copilot_tools(agent_def.tools or []),
-            cwd=cwd or ".",
-            temperature=profile.temperature,
-            max_tokens=profile.max_tokens,
+            tools=[],
+            on_permission_request=_on_permission_request_copilot,
         )
 
         collected: list[str] = []
@@ -261,7 +263,8 @@ async def _run_copilot_single(agent_def, prompt, profile: ModelProfile, cwd, max
                 done.set()
 
         session.on(on_event)
-        await session.send(prompt)
+        combined_message = f"{agent_def.prompt}\n\n{prompt}"
+        await session.send(combined_message)
 
         try:
             await asyncio.wait_for(done.wait(), timeout=300)
@@ -300,11 +303,8 @@ async def _run_copilot_orchestrator(manager, prompt, profile: ModelProfile, cwd,
 
         session = await client.create_session(
             model=profile.model_id,
-            system_prompt=manager.prompt,
-            tools=tools,
-            cwd=cwd or ".",
-            temperature=profile.temperature,
-            max_tokens=profile.max_tokens,
+            tools=[],
+            on_permission_request=_on_permission_request_copilot,
         )
 
         collected: list[str] = []
@@ -327,7 +327,8 @@ async def _run_copilot_orchestrator(manager, prompt, profile: ModelProfile, cwd,
                 done.set()
 
         session.on(on_event)
-        await session.send(prompt)
+        combined_message = f"{manager.prompt}\n\n{prompt}"
+        await session.send(combined_message)
 
         try:
             await asyncio.wait_for(done.wait(), timeout=600)
@@ -416,10 +417,8 @@ def _build_delegate_tool(client, profile: ModelProfile, resume_from=None):
 
                     child_session = await client.create_session(
                         model=sub_profile.model_id,
-                        system_prompt=agent_def.prompt,
-                        tools=_resolve_copilot_tools(agent_def.tools or []),
-                        temperature=sub_profile.temperature,
-                        max_tokens=sub_profile.max_tokens,
+                        tools=[],
+                        on_permission_request=_on_permission_request_copilot,
                     )
 
                     def on_child_event(event):
@@ -437,7 +436,8 @@ def _build_delegate_tool(client, profile: ModelProfile, resume_from=None):
                             child_done.set()
 
                     child_session.on(on_child_event)
-                    await child_session.send(params.task_prompt)
+                    combined_task_message = f"{agent_def.prompt}\n\n{params.task_prompt}"
+                    await child_session.send(combined_task_message)
 
                     try:
                         await asyncio.wait_for(child_done.wait(), timeout=300)
