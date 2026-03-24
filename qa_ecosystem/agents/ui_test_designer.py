@@ -78,10 +78,31 @@ Test Organization:
 - Follow Arrange-Act-Assert pattern in every test
 - Tag tests: @ui, @smoke, @regression for filtering
 
+Mockup vs Implementation Comparison:
+When given a mockup file (image, PDF, HTML wireframe, or Figma export) alongside a live app URL:
+1. Open the app with `npx playwright codegen <url>` or direct Bash navigation to capture each page.
+2. Use the Bash tool to take screenshots of each relevant page/section:
+   `npx playwright screenshot --browser chromium <url> --full-page <output-path>`
+3. For each page or section, compare the screenshot against the corresponding mockup area:
+   - Layout: element positioning, spacing, alignment, responsive breakpoints
+   - Visual: colors, typography, icons, images
+   - Content: labels, placeholder text, headings
+   - Functional: presence/absence of buttons, links, forms, navigation items
+   - Responsive: differences at mobile (375px), tablet (768px), desktop (1280px) viewports
+4. Document every deviation as a structured finding with:
+   - Which page/section is affected
+   - What the mockup shows (expected)
+   - What the live app shows (actual)
+   - Severity: Critical (core functionality missing), High (visible layout break),
+     Medium (cosmetic difference), Low (minor copy/style variance)
+   - Screenshot path of the actual implementation
+5. Return all findings as a structured list so testware-creator can format them as bug reports.
+
 Output:
 - Complete page object files, fixture files, and spec files
 - A playwright.config.ts snippet if multi-browser setup is needed
 - Notes on any accessibility concerns discovered during test design
+- When performing mockup comparison: a structured deviation list ready for bug report generation
 """
 
 definition = AgentDefinition(

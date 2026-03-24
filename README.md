@@ -8,6 +8,8 @@ You can run agents individually or let the Test Manager orchestrator decompose a
 
 ## What's New in v2.0
 
+- **10 orchestration workflows** -- 5 planning workflows + 5 new Playwright-focused workflows (UI mockup comparison, API coverage, security audit, test data bootstrap, test health audit).
+- **Human-in-the-loop pause** -- the Test Manager can pause mid-workflow on Copilot to present requirements-analyst findings and wait for updated requirements before continuing.
 - **GitHub Copilot SDK** -- migrated from Claude Agent SDK to GitHub Copilot SDK (Agent mode) as the primary provider. Claude Agent SDK is retained for backward compatibility.
 - **Anthropic API provider (`anthropic-api`)** -- direct API access to Claude models without the Claude Code CLI.
 - **8 new Playwright execution agents** -- 18 agents total (10 planning + 8 execution).
@@ -94,7 +96,7 @@ outputs/              # Auto-created on first run
 | 4 | `regression-optimizer` | Planning | Optimized regression suites |
 | 5 | `ai-test-architect` | Planning | AI/ML test strategy and compliance |
 | 6 | `synthetic-data-designer` | Planning | Privacy-safe test data design |
-| 7 | `test-manager` | Planning | Orchestrator with 5 workflows |
+| 7 | `test-manager` | Planning | Orchestrator with 10 workflows |
 | 8 | `test-oracle-creator` | Planning | Expected results and validation rules |
 | 9 | `test-results-analyst` | Planning | Test execution analysis and failure trends |
 | 10 | `testware-creator` | Planning | Professional QA documentation |
@@ -394,53 +396,371 @@ This enables a back-and-forth dialogue where agents can request missing context,
 
 ## Orchestration Workflows
 
-The Test Manager supports 5 orchestration workflows. When you run `qa-agent orchestrate`, the Test Manager analyzes the objective, selects the appropriate workflow, and delegates to specialist agents.
+The Test Manager supports 10 orchestration workflows. When you run `qa-agent orchestrate`, the Test Manager analyzes the objective, selects the appropriate workflow, and delegates to specialist agents.
+
+> **Copilot users:** the Test Manager will pause mid-workflow and prompt you for input when requirements need clarification (after the `requirements-analyst` step). Type your updated requirements in the terminal and press Enter to continue.
+
+---
 
 ### Workflow 1 -- New Feature Testing
 
+**When to use:** Starting QA for a brand-new feature from a PBI or user story.
+
 ```
-requirements-analyst -> test-case-generator -> (parallel) synthetic-data-designer + test-oracle-creator
--> testware-creator (Test Plan) -> Execute -> test-results-analyst -> testware-creator (Test Report)
+requirements-analyst
+  -> request_human_input  (present ambiguities, wait for updated requirements)
+  -> test-case-generator
+  -> synthetic-data-designer + test-oracle-creator  (parallel)
+  -> testware-creator (Test Plan)
+  -> Execute
+  -> test-results-analyst
+  -> testware-creator (Test Report)
 ```
 
-Covers the full lifecycle from requirement analysis through test design, data preparation, execution, and reporting.
+**CLI command:**
+```bash
+qa-agent orchestrate -i feature_requirements.md -m copilot-gpt4o
+```
+
+**Prompt template** (contents of `feature_requirements.md`):
+```
+Run Workflow 1 — New Feature Testing.
+
+Feature: [Feature name, e.g., "User Password Reset with Email OTP"]
+
+Requirements:
+- [Requirement 1]
+- [Requirement 2]
+- [Acceptance criteria]
+
+App URL: https://myapp.com
+Tech stack: [e.g., React frontend, Node.js REST API, PostgreSQL]
+```
+
+---
 
 ### Workflow 2 -- Bug Prevention and Root Cause
 
+**When to use:** After a bug cluster or production incident — find the root cause and close the coverage gap.
+
 ```
-bug-pattern-analyst -> requirements-analyst (spec gaps?) -> test-case-generator (new validations)
--> regression-optimizer -> testware-creator (Defect Report)
+bug-pattern-analyst
+  -> requirements-analyst  (spec gaps?)
+  -> test-case-generator  (new validations)
+  -> regression-optimizer
+  -> testware-creator (Defect Report)
 ```
 
-Analyzes bug patterns to find root causes, identifies specification gaps, and strengthens validation coverage.
+**CLI command:**
+```bash
+qa-agent orchestrate -i bug_reports.md -m copilot-gpt4o
+```
+
+**Prompt template:**
+```
+Run Workflow 2 — Bug Prevention and Root Cause.
+
+Bug reports / incident summary:
+- [Bug 1: short description, date, severity]
+- [Bug 2: ...]
+
+Affected module: [e.g., "Checkout flow"]
+Linked requirements: [PBI-123, PBI-124]
+```
+
+---
 
 ### Workflow 3 -- Sprint/Release Regression
 
+**When to use:** End of sprint or before a release — build an optimized regression suite.
+
 ```
-regression-optimizer -> synthetic-data-designer -> test-oracle-creator (revalidation criteria)
--> ai-test-architect (if AI involved) -> testware-creator (Test Summary Report)
+regression-optimizer
+  -> synthetic-data-designer
+  -> test-oracle-creator  (revalidation criteria)
+  -> ai-test-architect  (if AI features are involved)
+  -> testware-creator (Test Summary Report)
 ```
 
-Builds an optimized regression suite for a sprint or release, with fresh test data and updated pass/fail criteria.
+**CLI command:**
+```bash
+qa-agent orchestrate -i sprint_context.md -m copilot-gpt4o
+```
+
+**Prompt template:**
+```
+Run Workflow 3 — Sprint Regression.
+
+Sprint: [Sprint number / release name]
+Changed modules: [e.g., "Payments, User Profile, Notifications"]
+Existing test suite path: playwright/tests/
+Risk areas: [e.g., "Payment gateway integration, session expiry"]
+Contains AI features: [yes/no — if yes, describe the AI component]
+```
+
+---
 
 ### Workflow 4 -- Playwright Test Generation
 
+**When to use:** Automating a web app from scratch or adding automation to a new section.
+
 ```
-playwright-test-generator (explore site via CLI) -> ui-test-designer (create POMs)
--> seed-data-manager (fixture setup) -> coverage-hunter (verify coverage)
--> pr-hygiene-checker (quality gate)
+playwright-test-generator  (explore site via CLI, discover pages and user journeys)
+  -> ui-test-designer  (create Page Object Model classes)
+  -> seed-data-manager  (set up fixtures and data factories)
+  -> coverage-hunter  (verify coverage against requirements)
+  -> pr-hygiene-checker  (quality gate before commit)
 ```
 
-End-to-end Playwright automation: discovers pages, generates Page Object Models, sets up test data, verifies coverage, and runs a quality gate.
+**CLI command:**
+```bash
+qa-agent orchestrate -i playwright_task.md -m copilot-gpt4o
+# or use the dedicated shortcut:
+qa-agent playwright-gen --url https://myapp.com -m copilot-gpt4o
+```
+
+**Prompt template:**
+```
+Run Workflow 4 — Playwright Test Generation.
+
+App URL: https://myapp.com
+Pages to cover: [e.g., "Login, Dashboard, User Settings, Checkout"]
+Auth: [e.g., "Email + password. Test user: test@example.com / Test1234"]
+Priority flows: [e.g., "Login, Add to cart, Complete checkout"]
+Playwright project path: playwright/
+```
+
+---
 
 ### Workflow 5 -- Flaky Test Investigation
 
+**When to use:** CI is showing intermittent test failures that don't reproduce reliably.
+
 ```
-flake-triage (diagnose via repeated runs) -> test-results-analyst (trend analysis)
--> playwright-test-generator (rewrite flaky tests) -> pr-hygiene-checker (validate fix)
+flake-triage  (diagnose root causes — race conditions, timing, external dependencies)
+  -> test-results-analyst  (trend analysis across recent runs)
+  -> playwright-test-generator  (rewrite flaky tests with proper waiting strategies)
+  -> pr-hygiene-checker  (validate the fix before merge)
 ```
 
-Diagnoses flaky tests by identifying race conditions and timing issues, rewrites the tests, and validates the fix.
+**CLI command:**
+```bash
+qa-agent orchestrate -i flaky_tests.md -m copilot-gpt4o
+# or:
+qa-agent playwright-analyze --agent flake-triage -i playwright/tests/
+```
+
+**Prompt template:**
+```
+Run Workflow 5 — Flaky Test Investigation.
+
+Flaky tests (file paths or test names):
+- playwright/tests/ui/checkout.spec.ts — "should complete order" fails ~30% of runs
+- playwright/tests/ui/login.spec.ts — "should redirect after login" fails on slow CI
+
+Recent CI run results: [paste JSON output or describe failure pattern]
+Environment: [CI provider, Node version, Playwright version]
+```
+
+---
+
+### Workflow 6 -- UI Mockup vs Implementation Comparison
+
+**When to use:** Validating that a developed feature matches its design mockup. The Test Manager will pause after requirements analysis to let you confirm or update requirements before dispatching Playwright agents.
+
+```
+requirements-analyst  (review requirements + mockup for ambiguities)
+  -> request_human_input  (present questions, wait for updated requirements)
+  -> playwright-test-generator  (navigate live app, take full-page screenshots of all relevant pages)
+  -> ui-test-designer  (compare screenshots against mockup, list all deviations with severity)
+  -> testware-creator  (format each deviation as a structured Bug Report, save to outputs/)
+```
+
+**CLI command:**
+```bash
+qa-agent orchestrate -i mockup_comparison_task.md -m copilot-gpt4o
+```
+
+**Prompt template** (contents of `mockup_comparison_task.md`):
+```
+Run Workflow 6 — UI Mockup vs Implementation Comparison.
+
+App URL: https://myapp.com
+Mockup file: designs/feature-login-v2.png
+  (or Figma link: https://figma.com/file/...)
+  (or PDF wireframe: designs/wireframes.pdf)
+
+Pages / sections to compare:
+- Login page (desktop 1280px and mobile 375px)
+- Password reset modal
+- Dashboard header
+
+Requirements:
+- [Requirement 1 relevant to this UI]
+- [Acceptance criteria]
+
+For each deviation found, create a bug report following QA best practices
+(Bug ID, Title, Severity, Priority, Environment, Steps to Reproduce,
+Expected per mockup, Actual in implementation, Suggested Fix).
+Save all bug reports to outputs/bugs/.
+```
+
+**What the output looks like:**
+
+Each bug found is saved as a structured Markdown report in `outputs/testware-creator/`:
+
+```markdown
+**Bug ID:** BUG-001
+**Title:** "Sign in" button uses wrong background color on mobile
+**Severity:** Medium
+**Priority:** P3
+**Environment:** Chrome 120, Windows 11, https://myapp.com, 375×812
+**Mockup Reference:** designs/feature-login-v2.png — mobile login section
+**Screenshot (Actual):** outputs/screenshots/login-mobile-375.png
+
+**Steps to Reproduce:**
+1. Open https://myapp.com/login on a 375px viewport
+2. Observe the "Sign in" button
+
+**Expected (per mockup):** Button background #1A73E8 (brand blue)
+**Actual (implemented):** Button background #4285F4 (incorrect shade)
+**Suggested Fix:** Update the button's CSS class to use `var(--color-primary)`
+```
+
+---
+
+### Workflow 7 -- Full API Test Coverage
+
+**When to use:** Planning or auditing REST API test coverage for a service.
+
+```
+requirements-analyst  (validate API requirements and spec completeness)
+  -> api-coverage-planner  (build coverage matrix: method × endpoint × auth × status codes)
+  -> playwright-test-generator  (generate Playwright APIRequestContext test skeletons)
+  -> coverage-hunter  (verify all endpoints and edge cases are covered)
+  -> pr-hygiene-checker  (quality gate on generated test code)
+  -> testware-creator  (API Coverage Report)
+```
+
+**CLI command:**
+```bash
+qa-agent orchestrate -i api_coverage_task.md -m copilot-gpt4o
+# or use the dedicated shortcut:
+qa-agent playwright-analyze --agent api-coverage-planner -i src/routes/
+```
+
+**Prompt template:**
+```
+Run Workflow 7 — Full API Test Coverage.
+
+API spec / documentation: [path to OpenAPI spec, e.g., docs/openapi.yaml]
+  or describe endpoints:
+  - POST /api/auth/login
+  - GET  /api/users/:id
+  - PUT  /api/users/:id
+  - DELETE /api/users/:id
+
+Base URL: https://api.myapp.com
+Auth: Bearer token (test token: [token or env var name])
+Existing API tests path: playwright/tests/api/
+Priority: [e.g., "Focus on auth flows and user CRUD first"]
+```
+
+---
+
+### Workflow 8 -- Security Audit
+
+**When to use:** Before a release, after adding new dependencies, or as a regular security hygiene check.
+
+```
+security-scout  (scan for hardcoded secrets, unsafe patterns, committed .env files, dangerous constructs)
+  -> coverage-hunter  (check whether security test scenarios exist for discovered risk areas)
+  -> testware-creator  (Security Audit Report: findings by severity, remediation roadmap)
+```
+
+**CLI command:**
+```bash
+qa-agent orchestrate -i security_audit_task.md -m copilot-gpt4o
+# or target a specific directory:
+qa-agent playwright-analyze --agent security-scout -i playwright/
+```
+
+**Prompt template:**
+```
+Run Workflow 8 — Security Audit.
+
+Scope: [e.g., "Full repository" or "playwright/ directory only"]
+Codebase path: .
+Known risk areas: [e.g., "Auth tokens in fixture files, third-party script injection"]
+Previous audit date: [date or "never"]
+```
+
+---
+
+### Workflow 9 -- Test Data & Fixture Bootstrap
+
+**When to use:** Starting a new feature that requires realistic test data, or when test data is brittle and causing failures.
+
+```
+requirements-analyst  (extract data entities and edge-case values from PBIs)
+  -> synthetic-data-designer  (design privacy-safe datasets covering boundary and negative cases)
+  -> seed-data-manager  (implement fixtures, factories, seeding scripts, and teardown helpers)
+  -> coverage-hunter  (verify data scenarios cover all acceptance criteria)
+  -> testware-creator  (Data Setup Documentation: factory catalogue, seeding instructions)
+```
+
+**CLI command:**
+```bash
+qa-agent orchestrate -i data_bootstrap_task.md -m copilot-gpt4o
+```
+
+**Prompt template:**
+```
+Run Workflow 9 — Test Data & Fixture Bootstrap.
+
+Feature / PBIs: [e.g., "User registration and profile management"]
+Data entities needed:
+- User (roles: admin, editor, viewer)
+- Order (statuses: pending, paid, shipped, cancelled)
+- Product (categories: digital, physical)
+
+Edge cases to cover:
+- [e.g., "Users with no orders, orders with 100+ items, unicode in names"]
+
+Privacy constraints: [e.g., "No real PII — use faker-generated data only"]
+Target path: playwright/test-data/
+DB / API seeding method: [e.g., "REST API calls to /api/seed" or "direct DB via Prisma"]
+```
+
+---
+
+### Workflow 10 -- Full Test Health Audit
+
+**When to use:** When CI is slow, tests are unreliable, or coverage is unknown — get a full health picture and a prioritized improvement plan.
+
+```
+flake-triage  (diagnose unstable tests)
+  -> coverage-hunter  (map coverage gaps across pages, endpoints, and user journeys)
+  -> regression-optimizer  (recommend a lean, risk-prioritized regression suite)
+  -> pr-hygiene-checker  (quality gate on the full test codebase)
+  -> testware-creator  (Test Health Report: flaky inventory, gap map, suite recommendation)
+```
+
+**CLI command:**
+```bash
+qa-agent orchestrate -i health_audit_task.md -m copilot-gpt4o
+```
+
+**Prompt template:**
+```
+Run Workflow 10 — Full Test Health Audit.
+
+Test directory: playwright/tests/
+App URL: https://myapp.com
+Recent CI failure rate: [e.g., "~15% of runs have at least one failure"]
+Known problem areas: [e.g., "Checkout flow, anything touching date pickers"]
+Desired outcome: prioritized action list + lean regression suite recommendation
+```
 
 ---
 

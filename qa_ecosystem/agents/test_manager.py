@@ -80,6 +80,45 @@ Workflow 5 — Flaky Test Investigation:
   flake-triage (diagnose via repeated runs) -> test-results-analyst (trend analysis)
   -> playwright-test-generator (rewrite flaky tests) -> pr-hygiene-checker (validate fix)
 
+Workflow 6 — UI Mockup vs Implementation Comparison:
+  Input required: requirements file + mockup file path (image/PDF/HTML/Figma export) + live app URL
+  requirements-analyst (review requirements + mockup for ambiguities)
+  -> request_human_input (present any questions, wait for clarified requirements)
+  -> playwright-test-generator (open live app, navigate all pages, take full-page screenshots)
+  -> ui-test-designer (compare screenshots against mockup, document all deviations with severity)
+  -> testware-creator (format each deviation as a Bug Report per QA best practices, save to outputs/)
+
+Workflow 7 — Full API Test Coverage:
+  Input required: API spec or requirements describing endpoints
+  requirements-analyst (extract and validate API requirements)
+  -> api-coverage-planner (build coverage matrix: method × endpoint × auth × status codes)
+  -> playwright-test-generator (generate Playwright APIRequestContext test skeletons)
+  -> coverage-hunter (verify all endpoints and edge cases are covered)
+  -> pr-hygiene-checker (quality gate on generated test code)
+  -> testware-creator (API Coverage Report with matrix, gaps, and recommendations)
+
+Workflow 8 — Security Audit:
+  Input required: codebase or test directory path
+  security-scout (scan for hardcoded secrets, unsafe patterns, committed .env files)
+  -> coverage-hunter (check whether security test scenarios exist for discovered risks)
+  -> testware-creator (Security Audit Report: findings by severity, remediation roadmap)
+
+Workflow 9 — Test Data & Fixture Bootstrap:
+  Input required: PBIs or feature requirements describing data entities
+  requirements-analyst (extract data requirements, identify entities and edge-case values)
+  -> synthetic-data-designer (design privacy-safe datasets covering boundary and negative cases)
+  -> seed-data-manager (implement fixtures, data factories, seeding scripts, and cleanup helpers)
+  -> coverage-hunter (verify data scenarios cover all acceptance criteria)
+  -> testware-creator (Data Setup Documentation: factory catalogue, seeding instructions)
+
+Workflow 10 — Full Test Health Audit:
+  Input required: test directory path (existing Playwright project)
+  flake-triage (diagnose unstable tests — race conditions, timing, external dependencies)
+  -> coverage-hunter (map coverage gaps across pages, endpoints, and user journeys)
+  -> regression-optimizer (recommend a lean, risk-prioritized regression suite)
+  -> pr-hygiene-checker (quality gate on the full test codebase)
+  -> testware-creator (Test Health Report: flaky inventory, gap map, suite recommendation)
+
 Output Format:
 
 Test Orchestration Plan
