@@ -108,9 +108,32 @@ npm install
 npx playwright install --with-deps
 ```
 
+> **Windows note:** The CLI uses `shutil.which("npx")` to locate `npx.cmd` automatically — no extra steps needed on Windows once Node.js is on your PATH.
+
 ---
 
-## 8. Windows: `asyncio` Event Loop Error
+## 8. Windows: `UnicodeEncodeError` in Terminal
+
+**Error:** `UnicodeEncodeError: 'charmap' codec can't encode character '\u2192'`
+
+**Cause:** Windows terminals default to `cp1252` encoding, which cannot encode Unicode characters (such as `→`) used in the CLI help text.
+
+**Fix:** This is handled automatically — the CLI calls `sys.stdout.reconfigure(encoding='utf-8')` at startup. If you still see the error, set the terminal encoding manually before running:
+
+```powershell
+# PowerShell / CMD
+chcp 65001
+qa-agent --help
+```
+
+Or set it permanently in your environment:
+```powershell
+$env:PYTHONUTF8 = "1"
+```
+
+---
+
+## 10. Windows: `asyncio` Event Loop Error
 
 **Error:** `ValueError: set_wakeup_fd only works in main thread` or similar asyncio errors on Windows.
 
@@ -122,7 +145,7 @@ npx playwright install --with-deps
 
 ---
 
-## 9. `qa-agent` Command Not Found
+## 11. `qa-agent` Command Not Found
 
 **Error:** `'qa-agent' is not recognized` or `command not found: qa-agent`
 
@@ -142,7 +165,7 @@ qa-agent --help
 
 ---
 
-## 10. Orchestration Fails Mid-Workflow
+## 12. Orchestration Fails Mid-Workflow
 
 **Symptom:** Orchestration crashes or times out partway through a complex workflow.
 

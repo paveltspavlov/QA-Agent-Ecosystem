@@ -26,7 +26,7 @@ roles:
   default: claude-sonnet-api        # planning subagents (direct API)
   orchestrator: claude-opus-api     # test-manager (direct API)
   playwright: copilot-gpt4o        # Playwright execution agents
-  analysis: copilot-claude-sonnet  # analysis agents (coverage, hygiene, security)
+  analysis: copilot-o3-mini        # analysis agents (coverage, hygiene, security)
 
 # ── Model profiles ───────────────────────────────────────────────────────────
 
@@ -39,11 +39,6 @@ profiles:
     temperature: 0.4
     max_tokens: 16384
 
-  copilot-claude-sonnet:
-    provider: copilot
-    model_id: claude-sonnet-4.5
-    temperature: 0.4
-    max_tokens: 16384
 
   copilot-o3-mini:
     provider: copilot

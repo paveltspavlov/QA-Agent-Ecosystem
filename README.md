@@ -208,7 +208,7 @@ roles:
   default: claude-sonnet-api       # planning subagents
   orchestrator: claude-opus-api    # test-manager
   playwright: copilot-gpt4o       # Playwright execution agents
-  analysis: copilot-claude-sonnet  # analysis agents (coverage, hygiene, security)
+  analysis: copilot-o3-mini        # analysis agents (coverage, hygiene, security)
 ```
 
 ### Pre-configured Model Profiles
@@ -216,7 +216,6 @@ roles:
 | Profile | Provider | Model | Notes |
 |---------|----------|-------|-------|
 | `copilot-gpt4o` | GitHub Copilot | GPT-4o | |
-| `copilot-claude-sonnet` | GitHub Copilot | Claude Sonnet 4.5 | |
 | `copilot-o3-mini` | GitHub Copilot | o3-mini | |
 | `copilot-gemini` | GitHub Copilot | Gemini 2.5 Pro | |
 | `claude-sonnet-api` | Anthropic API | claude-sonnet-4-5 | **Default** -- no CLI needed |

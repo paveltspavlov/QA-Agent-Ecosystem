@@ -171,10 +171,10 @@ roles:
   default: copilot-gpt4o           # all planning agents
   orchestrator: copilot-gpt4o      # test-manager orchestrator
   playwright: copilot-gpt4o        # Playwright execution agents
-  analysis: copilot-claude-sonnet  # analysis agents
+  analysis: copilot-o3-mini        # analysis agents
 ```
 
-> **Tip:** If you want the orchestrator to use a more capable model for complex reasoning tasks, set `orchestrator: copilot-claude-sonnet` or `orchestrator: copilot-o3-mini`.
+> **Tip:** For complex reasoning tasks, set `orchestrator: copilot-o3-mini` in the `roles` section of `models.yaml`.
 
 Save the file. No restart or environment variable is needed — the configuration is read at runtime.
 
@@ -187,16 +187,16 @@ Four Copilot model profiles are available. Choose based on the task:
 | Profile | Model | Best For |
 |---------|-------|----------|
 | `copilot-gpt4o` | GPT-4o | General orchestration, test case generation, fast responses |
-| `copilot-claude-sonnet` | Claude Sonnet 4.5 | Deep requirements analysis, nuanced bug reports, long contexts |
-| `copilot-o3-mini` | o3-mini | Multi-step reasoning, traceability audits, logical coverage checks |
+| `copilot-o3-mini` | o3-mini | Deep analysis, requirements review, traceability audits, logical coverage checks |
 | `copilot-gemini` | Gemini 2.5 Pro | Multimodal tasks — mockup comparison, UI analysis with images |
+| `copilot-claude-haiku` | Claude Haiku 4.5 | Fast, lightweight tasks — simple test generation, quick summaries |
 
 **Recommended model per workflow category:**
 
 | Workflow category | Recommended model |
 |-------------------|-------------------|
 | New feature testing, regression | `copilot-gpt4o` |
-| Requirements analysis, AI/ML testing | `copilot-claude-sonnet` |
+| Requirements analysis, AI/ML testing | `copilot-o3-mini` |
 | Traceability, release sign-off | `copilot-o3-mini` |
 | UI mockup comparison (Workflow 6, 12) | `copilot-gemini` |
 | Playwright generation and execution | `copilot-gpt4o` |
@@ -204,7 +204,7 @@ Four Copilot model profiles are available. Choose based on the task:
 Override the model for a single run without editing the config file:
 
 ```bash
-qa-agent run requirements-analyst -i story.md -m copilot-claude-sonnet
+qa-agent run requirements-analyst -i story.md -m copilot-o3-mini
 qa-agent orchestrate -i release_task.md -m copilot-o3-mini
 ```
 
@@ -227,7 +227,7 @@ qa-agent run <agent-name> -i <input> -t <template-name> -m copilot-gpt4o
 
 ```bash
 # Analyse a user story for ambiguities
-qa-agent run requirements-analyst -i "As a user I want to reset my password via email OTP" -m copilot-claude-sonnet
+qa-agent run requirements-analyst -i "As a user I want to reset my password via email OTP" -m copilot-o3-mini
 
 # Generate ISTQB test cases from a PBI file
 qa-agent run test-case-generator -i examples/sample_pbi.md -m copilot-gpt4o
@@ -245,7 +245,7 @@ qa-agent run playwright-test-generator -i requirements.md -m copilot-gpt4o
 qa-agent run pr-hygiene-checker -i playwright/tests/ -m copilot-gpt4o
 
 # Scan for secrets and security issues
-qa-agent run security-scout -i . -m copilot-claude-sonnet
+qa-agent run security-scout -i . -m copilot-o3-mini
 ```
 
 **List all 18 available agents:**
@@ -616,7 +616,7 @@ security-scout    (scan for secrets, unsafe patterns, dangerous constructs)
 
 **Command:**
 ```bash
-qa-agent orchestrate -i workflow8_task.md -m copilot-claude-sonnet
+qa-agent orchestrate -i workflow8_task.md -m copilot-o3-mini
 # or target a specific directory:
 qa-agent playwright-analyze --agent security-scout -i playwright/
 ```
@@ -778,7 +778,7 @@ requirements-analyst     (identify non-determinism risks, bias scenarios, compli
 
 **Command:**
 ```bash
-qa-agent orchestrate -i workflow13_task.md -m copilot-claude-sonnet
+qa-agent orchestrate -i workflow13_task.md -m copilot-o3-mini
 ```
 
 **Template — `workflow13_task.md`:**
@@ -917,7 +917,7 @@ requirements-analyst   (identify ambiguous, high-risk, or poorly-specified areas
 
 **Command:**
 ```bash
-qa-agent orchestrate -i workflow17_task.md -m copilot-claude-sonnet
+qa-agent orchestrate -i workflow17_task.md -m copilot-o3-mini
 ```
 
 **Template — `workflow17_task.md`:**
@@ -1073,7 +1073,7 @@ qa-agent playwright-run --project chromium --grep "@smoke" --analyze
 qa-agent playwright-analyze --agent pr-hygiene-checker -i playwright/tests/ -m copilot-gpt4o
 
 # Security scan the Playwright project
-qa-agent playwright-analyze --agent security-scout -i playwright/ -m copilot-claude-sonnet
+qa-agent playwright-analyze --agent security-scout -i playwright/ -m copilot-o3-mini
 
 # Diagnose a specific flaky test file
 qa-agent playwright-analyze --agent flake-triage -i playwright/tests/ui/login.spec.ts -m copilot-gpt4o
