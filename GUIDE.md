@@ -90,13 +90,20 @@ qa-agent run requirements-analyst --input "As a user I want to reset my password
 # Full orchestration — Test Manager assigns work to specialist agents
 qa-agent orchestrate --input examples/sample_pbi.md
 
+# End-to-end example: requirements -> test execution -> bug report
+qa-agent orchestrate --input examples/workflow_requirements_to_report.md
+
 # Orchestrate with a local model (plan-only, no subagent delegation)
 qa-agent orchestrate --input examples/sample_pbi.md --model ollama-deepseek
 ```
 
-> **Note:** Only the `claude` provider supports tool use and subagent delegation.
+> **Plan approval:** When using the `copilot` or `claude` provider, the Test Manager
+> presents its proposed agent sequence for your review before delegation begins. You can
+> approve, edit (reorder/add/remove agents), or reject the plan.
+
+> **Note:** Only the `copilot` and `claude` providers support tool use and subagent delegation.
 > When you use OpenAI or local models, the orchestrator produces a test plan but
-> cannot actually invoke the 9 specialist agents.
+> cannot actually invoke the specialist agents.
 
 ### 4. Run from Python Code
 

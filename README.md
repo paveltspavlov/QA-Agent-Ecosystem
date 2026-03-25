@@ -9,6 +9,7 @@ You can run agents individually or let the Test Manager orchestrator decompose a
 ## What's New in v2.0
 
 - **20 orchestration workflows** -- covering new feature testing, bug analysis, regression, Playwright automation, mockup comparison, API coverage, security audit, cross-browser, responsive, AI/ML, release sign-off, user journey mapping, data maintenance, exploratory testing, PR gate, smoke verification, traceability audit, and more.
+- **Execution plan approval** -- the Test Manager presents its proposed agent sequence for user review before delegation begins. Users can approve, edit inline, edit as a markdown file, or reject the plan.
 - **Human-in-the-loop pause** -- the Test Manager can pause mid-workflow on Copilot to present requirements-analyst findings and wait for updated requirements before continuing.
 - **GitHub Copilot SDK** -- migrated from Claude Agent SDK to GitHub Copilot SDK (Agent mode) as the primary provider. Claude Agent SDK is retained for backward compatibility.
 - **Anthropic API provider (`anthropic-api`)** -- direct API access to Claude models without the Claude Code CLI.

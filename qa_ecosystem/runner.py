@@ -350,10 +350,12 @@ async def _run_copilot_orchestrator(manager, prompt, profile: ModelProfile, cwd,
     await client.start()
 
     try:
-        delegate_tool = _build_delegate_tool(client, profile, resume_from=resume_from)
+        plan_approval_tool, plan_state = _build_plan_approval_tool()
+        delegate_tool = _build_delegate_tool(client, profile, resume_from=resume_from, plan_state=plan_state)
         human_input_tool = _build_human_input_tool()
 
         tools = _resolve_copilot_tools(manager.tools or [])
+        tools.append(plan_approval_tool)
         tools.append(delegate_tool)
         tools.append(human_input_tool)
 
@@ -399,7 +401,7 @@ async def _run_copilot_orchestrator(manager, prompt, profile: ModelProfile, cwd,
     return "".join(collected)
 
 
-def _build_delegate_tool(client, profile: ModelProfile, resume_from=None):
+def _build_delegate_tool(client, profile: ModelProfile, resume_from=None, plan_state=None):
     """Build a custom tool that delegates tasks to specialist agents."""
     try:
         from copilot import define_tool
@@ -423,7 +425,9 @@ def _build_delegate_tool(client, profile: ModelProfile, resume_from=None):
 
     @define_tool(
         description=(
-            "Delegate a task to a specialist QA agent. Available agents: "
+            "Delegate a task to a specialist QA agent. IMPORTANT: You must call "
+            "submit_execution_plan first and receive approval before using this tool. "
+            "Available agents: "
             "test-case-generator, requirements-analyst, bug-pattern-analyst, "
             "regression-optimizer, ai-test-architect, synthetic-data-designer, "
             "test-oracle-creator, test-results-analyst, testware-creator, "
@@ -433,6 +437,13 @@ def _build_delegate_tool(client, profile: ModelProfile, resume_from=None):
         )
     )
     async def delegate_to_agent(params: DelegateParams) -> str:
+        # Enforce plan approval before any delegation
+        if plan_state is not None and not plan_state.get("approved", False):
+            return (
+                "[Delegation blocked] You must call submit_execution_plan and "
+                "receive user approval before delegating to any agent."
+            )
+
         # Depth enforcement
         if depth_counter[0] >= MAX_DELEGATION_DEPTH:
             return (
@@ -572,6 +583,130 @@ def _build_human_input_tool():
         return reply or "(no reply provided)"
 
     return request_human_input
+
+
+def _build_plan_approval_tool():
+    """Build a tool that presents the execution plan for user approval before delegation begins."""
+    try:
+        from copilot import define_tool
+        from pydantic import BaseModel, Field
+    except ImportError:
+        return None, {}
+
+    # Shared state: the delegate_to_agent tool checks this before running
+    plan_state: dict = {"approved": False, "plan": []}
+
+    class PlanStep(BaseModel):
+        step: int = Field(description="Step number in the execution sequence (1-based)")
+        agent_name: str = Field(description="Name of the specialist agent to invoke")
+        description: str = Field(description="What this agent will do and what it produces")
+        depends_on: str = Field(default="", description="Step number(s) this depends on, or empty for none")
+
+    class PlanParams(BaseModel):
+        objective: str = Field(description="One-line summary of the overall testing goal")
+        steps: list[PlanStep] = Field(description="Ordered list of agent execution steps")
+
+    @define_tool(
+        description=(
+            "REQUIRED FIRST STEP: Submit your execution plan for human approval BEFORE "
+            "calling delegate_to_agent. Present the ordered list of agents you intend to "
+            "invoke, what each will do, and their dependencies. The user can approve the "
+            "plan as-is, edit it (reorder, add, or remove agents), or reject it entirely. "
+            "You MUST call this tool and receive approval before any delegation."
+        )
+    )
+    async def submit_execution_plan(params: PlanParams) -> str:
+        plan_lines = [f"[bold]Objective:[/bold] {params.objective}\n"]
+        plan_lines.append("[bold]Execution Plan:[/bold]\n")
+        for s in params.steps:
+            dep = f" (after step {s.depends_on})" if s.depends_on else ""
+            plan_lines.append(f"  {s.step}. [cyan]{s.agent_name}[/cyan]{dep}")
+            plan_lines.append(f"     {s.description}")
+
+        console.print(
+            Panel(
+                "\n".join(plan_lines),
+                title="[bold blue]Proposed Execution Plan[/bold blue]",
+                border_style="blue",
+            )
+        )
+        console.print(
+            "[bold yellow]Options:[/bold yellow]\n"
+            "  [green]y[/green] / Enter  — Approve and start execution\n"
+            "  [cyan]edit[/cyan]         — Open plan as a markdown file for editing\n"
+            "  [red]n[/red]              — Reject the plan\n"
+            "  Or type modifications directly (e.g. 'remove step 3', 'swap steps 2 and 4', "
+            "'add security-scout after step 5')\n"
+        )
+        reply = await _prompt_user_plan()
+
+        if reply is None or reply in ("y", "yes", ""):
+            plan_state["approved"] = True
+            plan_state["plan"] = [
+                {"step": s.step, "agent": s.agent_name, "description": s.description}
+                for s in params.steps
+            ]
+            return (
+                "APPROVED. Proceed with delegation in the approved order. "
+                "Call delegate_to_agent for each step now."
+            )
+
+        if reply in ("n", "no"):
+            plan_state["approved"] = False
+            return (
+                "REJECTED by user. Do NOT proceed with delegation. "
+                "Ask the user what they would like instead."
+            )
+
+        if reply == "edit":
+            # Save plan to a markdown file for external editing
+            plan_md = _save_plan_to_file(params)
+            return (
+                f"Plan saved to {plan_md} for editing. "
+                "The user will edit the file and re-run the orchestrator with the updated input. "
+                "Do NOT proceed with delegation now — the session will end."
+            )
+
+        # User typed inline modifications — return them to the LLM
+        plan_state["approved"] = False
+        return (
+            f"User requested changes: {reply}\n"
+            "Revise your plan according to these instructions and call submit_execution_plan "
+            "again with the updated plan."
+        )
+
+    return submit_execution_plan, plan_state
+
+
+def _save_plan_to_file(params) -> Path:
+    """Save the proposed execution plan to a markdown file for external editing."""
+    OUTPUTS_DIR.mkdir(parents=True, exist_ok=True)
+    timestamp = datetime.now().strftime("%Y-%m-%d_%H-%M-%S")
+    plan_file = OUTPUTS_DIR / f"execution_plan_{timestamp}.md"
+
+    lines = [
+        f"# Execution Plan\n",
+        f"**Objective:** {params.objective}\n",
+        f"## Steps\n",
+        "| Step | Agent | Description | Depends On |",
+        "|------|-------|-------------|------------|",
+    ]
+    for s in params.steps:
+        lines.append(f"| {s.step} | {s.agent_name} | {s.description} | {s.depends_on or '-'} |")
+    lines.append("\n---\n*Edit this file, then re-run `qa-agent orchestrate` with the updated input.*\n")
+
+    plan_file.write_text("\n".join(lines), encoding="utf-8")
+    console.print(f"[dim]Plan saved to {plan_file} — edit and re-run.[/dim]\n")
+    return plan_file
+
+
+async def _prompt_user_plan() -> str | None:
+    """Prompt the user for plan approval. Returns None if they just press Enter (approve)."""
+    loop = asyncio.get_event_loop()
+    reply = await loop.run_in_executor(None, lambda: input("> ").strip())
+    if not reply:
+        return None
+    return reply.lower()
 
 
 def _resolve_copilot_tools(tool_names: list[str]) -> list:

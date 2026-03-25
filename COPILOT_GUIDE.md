@@ -276,12 +276,30 @@ qa-agent orchestrate -i workflow1_task.md -m copilot-gpt4o
 
 **What happens when you run the orchestrator:**
 
-1. The Test Manager reads your input and identifies the workflow.
-2. It delegates to the first agent in the chain.
-3. Agents run in the order defined by the workflow (some in parallel).
-4. If `request_human_input` is in the workflow, the orchestrator **pauses and waits for you** (see section 9).
-5. Each agent's output is saved to `outputs/<agent-name>/` automatically.
-6. The Test Manager collects all results and compiles a final report.
+1. The Test Manager reads your input and analyzes the testing objective.
+2. It builds an execution plan (ordered list of agents and their tasks).
+3. **Plan approval:** The plan is presented for your review. You can:
+   - **Approve** (`y` / Enter) — start execution immediately
+   - **Edit inline** — type changes like "remove step 3" or "add security-scout after step 5"
+   - **Edit as file** (`edit`) — open the plan as a markdown file for larger modifications
+   - **Reject** (`n`) — cancel the plan entirely
+4. Once approved, agents run in the approved order.
+5. If `request_human_input` is in the workflow, the orchestrator **pauses and waits for you** (see section 9).
+6. Each agent's output is saved to `outputs/<agent-name>/` automatically.
+7. The Test Manager collects all results and compiles a final report.
+
+**Example — Requirements-to-Report workflow:**
+
+An end-to-end example that goes from raw requirements through test execution to a bug report:
+
+```bash
+qa-agent orchestrate -i examples/workflow_requirements_to_report.md -m copilot-gpt4o
+```
+
+This workflow runs: `requirements-analyst` -> user clarification -> `test-case-generator` ->
+`playwright-test-generator` (generates and runs tests live) -> `test-results-analyst` ->
+`bug-pattern-analyst` (consolidated bug report). See `examples/workflow_requirements_to_report.md`
+for the full description.
 
 **Delegation plan output:**
 
