@@ -107,6 +107,9 @@ async def run_single_agent(
     output_format:
         "markdown" (default) or "json" — controls how the result is saved.
     """
+    global _approve_all
+    _approve_all = False
+
     from qa_ecosystem.agents import get_agent
 
     agent_def = get_agent(agent_name)
@@ -159,6 +162,9 @@ async def run_orchestrator(
         Optional CheckpointWriter loaded from a previous checkpoint file.
         When provided, already-completed delegation steps are skipped.
     """
+    global _approve_all
+    _approve_all = False
+
     from qa_ecosystem.agents import get_agent
 
     manager = get_agent("test-manager")
@@ -217,9 +223,59 @@ async def run_chain(
 # GitHub Copilot SDK path
 # ═══════════════════════════════════════════════════════════════════════════════
 
-def _on_permission_request_copilot(request) -> bool:
-    """Handle permission requests from Copilot SDK tools. Always approve."""
-    return True
+# When True, all subsequent permission requests are auto-approved for the
+# remainder of the session (set by the user typing "a" / "all").
+_approve_all: bool = False
+
+
+def _on_permission_request_copilot(request, invocation=None):
+    """Prompt the user to approve or deny each Copilot SDK tool action.
+
+    The user can respond with:
+      - Enter / y / yes  — approve this single action
+      - a / all          — approve this and all remaining actions in the session
+      - n / no           — deny this action
+    """
+    global _approve_all
+    from copilot import PermissionRequestResult
+
+    kind = request.kind.value if hasattr(request.kind, "value") else str(request.kind)
+
+    # Build a human-readable description of what the agent wants to do
+    parts: list[str] = [f"[bold yellow]Permission requested:[/bold yellow] [cyan]{kind}[/cyan]"]
+    if getattr(request, "full_command_text", None):
+        parts.append(f"  Command : {request.full_command_text}")
+    if getattr(request, "file_name", None):
+        parts.append(f"  File    : {request.file_name}")
+    if getattr(request, "tool_name", None):
+        parts.append(f"  Tool    : {request.tool_name}")
+    if getattr(request, "url", None):
+        parts.append(f"  URL     : {request.url}")
+    if getattr(request, "intention", None):
+        parts.append(f"  Intent  : {request.intention}")
+    if getattr(request, "diff", None):
+        diff_preview = request.diff[:500] + ("..." if len(request.diff) > 500 else "")
+        parts.append(f"  Diff    :\n{diff_preview}")
+
+    console.print("\n".join(parts))
+
+    # Fast path: user already chose "approve all" earlier in this session
+    if _approve_all:
+        console.print("[green]  -> Auto-approved (approve-all mode)[/green]\n")
+        return PermissionRequestResult(kind="approved")
+
+    reply = input("  Approve? [Y/n/a(ll)]: ").strip().lower()
+
+    if reply in ("a", "all"):
+        _approve_all = True
+        console.print("[green]  -> Approved (all future actions will be auto-approved)[/green]\n")
+        return PermissionRequestResult(kind="approved")
+    elif reply in ("", "y", "yes"):
+        console.print("[green]  -> Approved[/green]\n")
+        return PermissionRequestResult(kind="approved")
+    else:
+        console.print("[red]  -> Denied[/red]\n")
+        return PermissionRequestResult(kind="denied-interactively-by-user")
 
 
 async def _run_copilot_single(agent_def, prompt, profile: ModelProfile, cwd, max_turns) -> str:

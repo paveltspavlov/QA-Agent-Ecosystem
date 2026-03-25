@@ -325,6 +325,26 @@ Please provide updated or clarified requirements, then press Enter to continue.
 | Workflow 6 — UI Mockup vs Implementation | After requirements-analyst |
 | Workflow 13 — AI/ML Feature Testing | After requirements-analyst |
 
+### Tool Permission Approval
+
+When using a Copilot model, every tool action (shell commands, file writes, URL fetches, file reads) prompts you for approval before it runs:
+
+```
+Permission requested: shell
+  Command : ls -la
+  Approve? [Y/n/a(ll)]: _
+```
+
+**How to respond:**
+
+| Input | Effect |
+|-------|--------|
+| Enter / `y` / `yes` | Approve this single action |
+| `a` / `all` | Approve this action **and all remaining actions** in the session |
+| `n` / `no` (or any other text) | Deny this action |
+
+Once you choose **approve all**, subsequent actions are auto-approved for the rest of that session. The approval mode resets at the start of every new `qa-agent run` or `qa-agent orchestrate` invocation.
+
 ---
 
 ## 10. All 20 Workflows — Quick Reference

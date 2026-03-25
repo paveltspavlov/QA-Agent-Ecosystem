@@ -215,13 +215,17 @@ qa-agent list-templates --agent <agent-name>
 
 ## Provider Behavior
 
-| Provider | Tool Use | Subagent Delegation | Best For |
-|----------|----------|-------------------|----------|
-| `claude` | Yes | Yes | Full orchestration, production workflows |
-| `openai` | No | No | Cost-effective drafting, GPT-based analysis |
-| `openai-compatible` | No | No | Local experimentation, privacy, offline use |
+| Provider | Tool Use | Subagent Delegation | Permission Approval | Best For |
+|----------|----------|-------------------|---------------------|----------|
+| `copilot` | Yes | Yes | Interactive (per-action or approve-all) | Full orchestration, Playwright agents |
+| `claude` | Yes | Yes | `acceptEdits` (auto) | Full orchestration, production workflows |
+| `anthropic-api` | No | No | N/A | Direct API access, no CLI needed |
+| `openai` | No | No | N/A | Cost-effective drafting, GPT-based analysis |
+| `openai-compatible` | No | No | N/A | Local experimentation, privacy, offline use |
 
+- **Copilot** runs through the GitHub Copilot SDK with full tool access and subagent delegation. Every tool action (shell commands, file writes, URL fetches) prompts the user for approval. You can approve one-by-one, or type `a` / `all` to approve all remaining actions in the session.
 - **Claude** runs through the Claude Agent SDK with full access to file tools (Read, Write, Edit, Grep, Glob, Bash) and the Agent tool for subagent delegation.
+- **Anthropic API** calls the Anthropic Messages API directly. No CLI or external tools needed -- just set `ANTHROPIC_API_KEY`.
 - **OpenAI / OpenAI-compatible** runs via the OpenAI Chat Completions API. The agent's system prompt is sent as a system message and the user prompt as a user message. Responses are streamed. No tool use or file access is available on this path.
 
 ---

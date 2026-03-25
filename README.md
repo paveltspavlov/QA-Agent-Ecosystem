@@ -1120,15 +1120,15 @@ playwright/
 
 ## Provider Behavior
 
-| Provider | Tool Use | Subagent Delegation | Best For |
-|----------|----------|---------------------|----------|
-| `copilot` | Yes | Yes | Full orchestration, Playwright agents, multi-model |
-| `anthropic-api` | No | No | **Recommended** -- works everywhere, no CLI needed |
-| `claude` | Yes | Yes | Full orchestration, backward compatibility |
-| `openai` | No | No | Cost-effective drafting, GPT-based analysis |
-| `openai-compatible` | No | No | Local experimentation, privacy, offline use |
+| Provider | Tool Use | Subagent Delegation | Permission Approval | Best For |
+|----------|----------|---------------------|---------------------|----------|
+| `copilot` | Yes | Yes | Interactive (per-action or approve-all) | Full orchestration, Playwright agents, multi-model |
+| `anthropic-api` | No | No | N/A | **Recommended** -- works everywhere, no CLI needed |
+| `claude` | Yes | Yes | `acceptEdits` (auto) | Full orchestration, backward compatibility |
+| `openai` | No | No | N/A | Cost-effective drafting, GPT-based analysis |
+| `openai-compatible` | No | No | N/A | Local experimentation, privacy, offline use |
 
-- **Copilot** runs through the GitHub Copilot SDK with full tool access and subagent delegation. Supports routing to GPT-4o, Claude Sonnet, o3-mini, and Gemini within a single session.
+- **Copilot** runs through the GitHub Copilot SDK with full tool access and subagent delegation. Every tool action (shell commands, file writes, URL fetches) prompts the user for approval. You can approve one-by-one (`y`), approve all remaining actions in the session (`a`), or deny (`n`). Supports routing to GPT-4o, o3-mini, Gemini, and Claude Haiku within a single session.
 - **Anthropic API** calls the Anthropic Messages API directly. No CLI or external tools needed -- just set `ANTHROPIC_API_KEY`. Supports interactive Q&A.
 - **Claude** runs through the Claude Agent SDK with full access to file tools (Read, Write, Edit, Grep, Glob, Bash) and the Agent tool for subagent delegation.
 - **OpenAI / OpenAI-compatible** runs via the OpenAI Chat Completions API. The agent's system prompt is sent as a system message and the user prompt as a user message. Responses are streamed. Supports interactive Q&A.
