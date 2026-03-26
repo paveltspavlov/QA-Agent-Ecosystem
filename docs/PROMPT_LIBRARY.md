@@ -1,6 +1,6 @@
 # QA Agent Ecosystem -- Prompt Library
 
-Quick reference of ready-to-use prompts for all 18 QA agents. Copy, paste, and fill in the bracketed placeholders.
+Quick reference of ready-to-use prompts for all 21 QA agents. Copy, paste, and fill in the bracketed placeholders.
 
 ---
 

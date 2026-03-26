@@ -15,7 +15,8 @@ A step-by-step reference for QA Engineers who want to run the QA Agent Ecosystem
 7. [Running a Single Agent](#7-running-a-single-agent)
 8. [Running the Orchestrator](#8-running-the-orchestrator)
 9. [Human-in-the-Loop Interactions](#9-human-in-the-loop-interactions)
-10. [All 20 Workflows — Quick Reference](#10-all-20-workflows--quick-reference)
+10. [DAG Workflow Engine (New in v2.0)](#10-dag-workflow-engine-new-in-v20)
+11. [All 20 Workflows — Quick Reference](#11-all-20-workflows--quick-reference)
     - [Workflow 1 — New Feature Testing](#workflow-1--new-feature-testing)
     - [Workflow 2 — Bug Prevention and Root Cause](#workflow-2--bug-prevention-and-root-cause)
     - [Workflow 3 — Sprint / Release Regression](#workflow-3--sprint--release-regression)
@@ -36,9 +37,9 @@ A step-by-step reference for QA Engineers who want to run the QA Agent Ecosystem
     - [Workflow 18 — PR / Code Review QA Gate](#workflow-18--pr--code-review-qa-gate)
     - [Workflow 19 — Post-Deployment Smoke Verification](#workflow-19--post-deployment-smoke-verification)
     - [Workflow 20 — Requirements Traceability Audit](#workflow-20--requirements-traceability-audit)
-11. [Playwright Workflows with Copilot](#11-playwright-workflows-with-copilot)
-12. [Saving and Reviewing Outputs](#12-saving-and-reviewing-outputs)
-13. [Troubleshooting](#13-troubleshooting)
+12. [Playwright Workflows with Copilot](#12-playwright-workflows-with-copilot)
+13. [Saving and Reviewing Outputs](#13-saving-and-reviewing-outputs)
+14. [Troubleshooting](#14-troubleshooting)
 
 ---
 
@@ -365,7 +366,75 @@ Once you choose **approve all**, subsequent actions are auto-approved for the re
 
 ---
 
-## 10. All 20 Workflows — Quick Reference
+## 10. DAG Workflow Engine (New in v2.0)
+
+The ecosystem now includes a **DAG-based workflow engine** that executes agents in dependency order, with parallel execution for independent steps. 12 predefined workflows are available in `workflows.yaml`.
+
+### Using Predefined Workflows
+
+```bash
+# List all available DAG workflows
+qa-agent list-workflows
+
+# Run a predefined workflow
+qa-agent orchestrate -i requirements.md --workflow feature-testing
+
+# Run from a custom workflow YAML file
+qa-agent orchestrate -i requirements.md --workflow-file custom.yaml
+```
+
+### Customizing Workflows
+
+You can reorder agents, override dependencies, and skip agents:
+
+```bash
+# Reorder agents (assign new indices)
+qa-agent orchestrate -i requirements.md --workflow feature-testing \
+  --reorder "1:test-case-generator, 2:requirements-analyst, 3:testware-creator"
+
+# Override dependencies
+qa-agent orchestrate -i requirements.md --workflow feature-testing \
+  --deps "2:[1], 3:[1,2]"
+
+# Skip specific agents
+qa-agent orchestrate -i requirements.md --workflow feature-testing \
+  --skip synthetic-data-designer test-oracle-creator
+
+# Send a Slack notification on completion
+qa-agent orchestrate -i requirements.md --workflow feature-testing \
+  --notify https://hooks.slack.com/services/T00/B00/xxx
+```
+
+### Available DAG Workflows
+
+| Workflow | Steps | Description |
+|----------|-------|-------------|
+| `feature-testing` | 5 | Requirements → test cases → data + oracles (parallel) → test plan |
+| `bug-prevention` | 5 | Bug analysis → spec gaps → new tests → regression → report |
+| `playwright-gen` | 5 | Explore site → POM classes + fixtures (parallel) → coverage → quality gate |
+| `flake-investigation` | 4 | Diagnose flakes → trend analysis → rewrite tests → validate |
+| `api-coverage` | 5 | Coverage matrix → test cases → API tests → verify → quality gate |
+| `security-audit` | 3 | Scan vulnerabilities → coverage gaps → security report |
+| `test-debt` | 5 | Coverage gaps + quality + flakes (parallel) → optimize → backlog |
+| `test-monitoring` | 4 | Coverage + results (parallel) → flaky tests → dashboard |
+| `ai-testing` | 5 | AI strategy → test cases + synthetic data (parallel) → validation → plan |
+| `release-signoff` | 3 | Regression selection → results analysis → sign-off report |
+| `contract-testing` | 5 | API inventory → validate contracts → test cases → implement → report |
+| `post-deploy-smoke` | 5 | Seed data → smoke tests + API health (parallel) → analysis → report |
+
+### Checkpoint Management
+
+```bash
+# List all saved checkpoints
+qa-agent list-checkpoints
+
+# Clean old checkpoints (keep most recent N)
+qa-agent clean-checkpoints --keep 10
+```
+
+---
+
+## 11. All 20 Workflows — Quick Reference
 
 Each workflow below includes the agent chain, the CLI command, and a ready-to-use prompt template. Copy the template into a `.md` file, fill in the placeholders, and pass it to `qa-agent orchestrate`.
 
@@ -1078,7 +1147,7 @@ and a list of requirements with zero test coverage.
 
 ---
 
-## 11. Playwright Workflows with Copilot
+## 12. Playwright Workflows with Copilot
 
 The three dedicated Playwright CLI commands work with all Copilot models:
 
@@ -1135,7 +1204,7 @@ qa-agent playwright-analyze --agent api-coverage-planner -i src/routes/ -m copil
 
 ---
 
-## 12. Saving and Reviewing Outputs
+## 13. Saving and Reviewing Outputs
 
 Every agent run automatically saves its output to the `outputs/` folder.
 
@@ -1159,7 +1228,7 @@ outputs/
 
 ---
 
-## 13. Troubleshooting
+## 14. Troubleshooting
 
 ### `gh auth status` shows "not logged in"
 

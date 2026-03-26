@@ -1,6 +1,6 @@
 # QA Agent Ecosystem — User Guide
 
-A toolkit of 10 specialized AI-powered QA agents orchestrated by a Test Manager, built on the Claude Agent SDK with support for multiple AI providers.
+A toolkit of 21 specialized AI-powered QA agents (10 planning + 11 execution) orchestrated by a Test Manager, with DAG-based workflow engine, multi-provider model support, and comprehensive test suite.
 
 ---
 
@@ -52,7 +52,7 @@ set OPENAI_API_KEY=sk-...
 ### 1. Explore What's Available
 
 ```bash
-# See all 10 agents
+# See all 21 agents
 qa-agent list-agents
 
 # See all model profiles (Claude, GPT, Ollama, LM Studio, etc.)
@@ -63,6 +63,13 @@ qa-agent list-templates --agent test-case-generator
 
 # See ALL templates across all agents
 qa-agent list-templates
+
+# See all predefined DAG workflows
+qa-agent list-workflows
+
+# Manage checkpoints
+qa-agent list-checkpoints
+qa-agent clean-checkpoints --keep 10
 ```
 
 ### 2. Run a Single Agent
@@ -92,6 +99,24 @@ qa-agent orchestrate --input examples/sample_pbi.md
 
 # End-to-end example: requirements -> test execution -> bug report
 qa-agent orchestrate --input examples/workflow_requirements_to_report.md
+
+# Use a predefined DAG workflow with dependency-aware execution
+qa-agent orchestrate --input requirements.md --workflow feature-testing
+
+# Use a custom workflow YAML file
+qa-agent orchestrate --input requirements.md --workflow-file custom.yaml
+
+# Customize agent ordering and dependencies
+qa-agent orchestrate --input requirements.md --workflow feature-testing \
+  --reorder "1:test-case-generator, 2:requirements-analyst" --deps "2:[1]"
+
+# Skip specific agents
+qa-agent orchestrate --input requirements.md --workflow feature-testing \
+  --skip synthetic-data-designer
+
+# Webhook notification on completion
+qa-agent orchestrate --input requirements.md --workflow feature-testing \
+  --notify https://hooks.slack.com/services/T00/B00/xxx
 
 # Orchestrate with a local model (plan-only, no subagent delegation)
 qa-agent orchestrate --input examples/sample_pbi.md --model ollama-deepseek
@@ -197,7 +222,9 @@ qa-agent list-models
 
 ---
 
-## All 10 Agents at a Glance
+## All 21 Agents at a Glance
+
+### Planning Agents (10)
 
 | Agent | What It Does | Example Use |
 |-------|-------------|-------------|
@@ -211,6 +238,22 @@ qa-agent list-models
 | `test-oracle-creator` | Expected results and validation rules | `qa-agent run test-oracle-creator -i scenarios.md` |
 | `test-results-analyst` | Failure trends from execution data | `qa-agent run test-results-analyst -i results.csv` |
 | `testware-creator` | Test plans, reports, matrices | `qa-agent run testware-creator -i scope.md` |
+
+### Execution Agents (11)
+
+| Agent | What It Does | Example Use |
+|-------|-------------|-------------|
+| `playwright-test-generator` | Generate Playwright TypeScript tests | `qa-agent playwright-gen --url https://myapp.com` |
+| `ui-test-designer` | POM-based UI tests, accessibility selectors | `qa-agent run ui-test-designer -i spec.md` |
+| `api-coverage-planner` | API test coverage matrix | `qa-agent run api-coverage-planner -i openapi.yaml` |
+| `pr-hygiene-checker` | 8-check code quality gate | `qa-agent playwright-analyze --agent pr-hygiene-checker -i tests/` |
+| `security-scout` | Secrets and vulnerability scanning | `qa-agent playwright-analyze --agent security-scout -i .` |
+| `coverage-hunter` | Test coverage gap analysis | `qa-agent run coverage-hunter -i tests/` |
+| `flake-triage` | Flaky test diagnosis and fix | `qa-agent run flake-triage -i tests/` |
+| `seed-data-manager` | Test data factories and fixtures | `qa-agent run seed-data-manager -i spec.md` |
+| `accessibility-auditor` | WCAG 2.1 AA compliance via axe-core | `qa-agent run accessibility-auditor -i "https://myapp.com"` |
+| `performance-profiler` | Core Web Vitals and load profiling | `qa-agent run performance-profiler -i "https://myapp.com"` |
+| `api-contract-validator` | OpenAPI spec validation, breaking changes | `qa-agent run api-contract-validator -i openapi.yaml` |
 
 Each agent has **5 prompt templates**. View them with:
 
@@ -246,28 +289,39 @@ QA_app/
 ├── GUIDE.md                           # This file
 ├── qa_ecosystem/
 │   ├── __init__.py                    # Package init
-│   ├── cli.py                         # CLI entry point (qa-agent command)
+│   ├── cli.py                         # CLI entry point (13 subcommands)
 │   ├── config.py                      # Tool sets, turn limits, agent names
 │   ├── models.py                      # Model profile loader and resolver
 │   ├── models.yaml                    # Model configuration (edit this!)
-│   ├── runner.py                      # Execution engine (Claude SDK + OpenAI)
-│   ├── agents/
-│   │   ├── __init__.py                # Agent registry
-│   │   ├── test_case_generator.py     # Agent 1
-│   │   ├── requirements_analyst.py    # Agent 2
-│   │   ├── bug_pattern_analyst.py     # Agent 3
-│   │   ├── regression_optimizer.py    # Agent 4
-│   │   ├── ai_test_architect.py       # Agent 5
-│   │   ├── synthetic_data_designer.py # Agent 6
-│   │   ├── test_manager.py           # Agent 7 (Orchestrator)
-│   │   ├── test_oracle_creator.py     # Agent 8
-│   │   ├── test_results_analyst.py    # Agent 9
-│   │   └── testware_creator.py        # Agent 10
+│   ├── runner.py                      # Thin orchestration layer
+│   ├── workflow_executor.py           # DAG-based workflow engine
+│   ├── workflows.yaml                 # 12 predefined workflow definitions
+│   ├── checkpoint.py                  # Session persistence with per-step status
+│   ├── metrics.py                     # Token usage and cost tracking
+│   ├── notifications.py              # Webhook notifications (Slack support)
+│   ├── sdk_adapter.py                # AgentDefinition + AgentResult dataclasses
+│   ├── providers/                     # Provider modules
+│   │   ├── copilot.py                # GitHub Copilot SDK path
+│   │   ├── claude.py                 # Claude Agent SDK path
+│   │   ├── anthropic_api.py          # Anthropic Messages API path
+│   │   └── openai.py                 # OpenAI/compatible path
+│   ├── agents/                        # 21 agent definitions
+│   │   ├── __init__.py               # Agent registry
+│   │   ├── test_case_generator.py    ... test_manager.py (10 planning)
+│   │   ├── playwright_test_generator.py ... seed_data_manager.py (8 execution)
+│   │   ├── accessibility_auditor.py  # WCAG 2.1 AA audits
+│   │   ├── performance_profiler.py   # Core Web Vitals profiling
+│   │   └── api_contract_validator.py # OpenAPI spec validation
 │   └── templates/
-│       ├── __init__.py                # Template loader
-│       └── *.yaml                     # 5 prompt templates per agent (50 total)
+│       ├── __init__.py               # Template loader
+│       └── *.yaml                    # 5 templates per agent (105 total)
+├── tests/                             # 175 pytest tests
+│   ├── test_agents.py                # Agent registry tests
+│   ├── test_cli.py                   # CLI argument parsing tests
+│   ├── test_workflow_executor.py     # Workflow DAG execution tests
+│   └── ...                           # checkpoint, notifications, skills, templates
 └── examples/
-    ├── run_single_agent.py            # Programmatic single-agent example
-    ├── run_orchestrator.py            # Programmatic orchestrator example
-    └── sample_pbi.md                  # Sample PBI for testing
+    ├── run_single_agent.py           # Programmatic single-agent example
+    ├── run_orchestrator.py           # Programmatic orchestrator example
+    └── sample_pbi.md                 # Sample PBI for testing
 ```

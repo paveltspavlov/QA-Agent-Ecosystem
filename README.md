@@ -1,6 +1,6 @@
 # QA Agent Ecosystem v2.0
 
-18 AI-powered QA agents (10 planning + 8 Playwright execution) with multi-provider model support, orchestrated by a Test Manager. Built on the GitHub Copilot SDK (Agent mode) as the primary provider, with backward compatibility for direct Anthropic API access, Claude Agent SDK, OpenAI, and local models.
+21 AI-powered QA agents (10 planning + 11 Playwright execution) with multi-provider model support, orchestrated by a Test Manager. Built on the GitHub Copilot SDK (Agent mode) as the primary provider, with backward compatibility for direct Anthropic API access, Claude Agent SDK, OpenAI, and local models.
 
 You can run agents individually or let the Test Manager orchestrator decompose a complex testing task, delegate to specialists in parallel, and consolidate the results.
 
@@ -8,20 +8,28 @@ You can run agents individually or let the Test Manager orchestrator decompose a
 
 ## What's New in v2.0
 
-- **20 orchestration workflows** -- covering new feature testing, bug analysis, regression, Playwright automation, mockup comparison, API coverage, security audit, cross-browser, responsive, AI/ML, release sign-off, user journey mapping, data maintenance, exploratory testing, PR gate, smoke verification, traceability audit, and more.
+- **DAG-based workflow engine** -- 12 predefined workflows in `workflows.yaml` with index-based ordering, dependency management, and parallel execution via `asyncio.gather()`. Users can customize workflows with `--workflow`, `--reorder`, `--deps`, and `--skip` CLI flags.
+- **20 orchestration workflows** -- covering new feature testing, bug analysis, regression, Playwright automation, mockup comparison, API coverage, security audit, cross-browser, responsive, AI/ML, release sign-off, user journey mapping, data maintenance, exploratory testing, PR gate, smoke verification, traceability audit, contract testing, and post-deployment smoke.
 - **Execution plan approval** -- the Test Manager presents its proposed agent sequence for user review before delegation begins. Users can approve, edit inline, edit as a markdown file, or reject the plan.
 - **Human-in-the-loop pause** -- the Test Manager can pause mid-workflow on Copilot to present requirements-analyst findings and wait for updated requirements before continuing.
 - **GitHub Copilot SDK** -- migrated from Claude Agent SDK to GitHub Copilot SDK (Agent mode) as the primary provider. Claude Agent SDK is retained for backward compatibility.
 - **Anthropic API provider (`anthropic-api`)** -- direct API access to Claude models without the Claude Code CLI.
-- **8 new Playwright execution agents** -- 18 agents total (10 planning + 8 execution).
-- **90 prompt templates** -- up from 50 (5 per agent across 18 agents).
+- **11 Playwright execution agents** -- 21 agents total (10 planning + 11 execution), including accessibility auditor, performance profiler, and API contract validator.
+- **105 prompt templates** -- 5 per agent across 21 agents.
+- **Provider module architecture** -- `runner.py` decomposed into focused provider modules (`providers/copilot.py`, `providers/claude.py`, `providers/anthropic_api.py`, `providers/openai.py`).
+- **Structured result contracts** -- `AgentResult` dataclass with status, summary, artifacts, and metadata for typed inter-agent communication.
+- **Token usage and cost tracking** -- per-agent metrics with estimated cost based on model pricing. Summary table printed after each run.
+- **Webhook notifications** -- `--notify <webhook_url>` flag on `orchestrate` to POST a summary JSON on completion. Supports Slack Block Kit format.
+- **Checkpoint management** -- `list-checkpoints` and `clean-checkpoints` CLI commands with per-step status tracking.
 - **Playwright TypeScript framework scaffold** -- full project structure with Page Object Model pattern, custom fixtures, data factories, and auth caching.
-- **3 new CLI commands** -- `playwright-gen`, `playwright-run`, `playwright-analyze` for end-to-end Playwright workflows from the terminal.
+- **3 Playwright CLI commands** -- `playwright-gen`, `playwright-run`, `playwright-analyze` for end-to-end Playwright workflows from the terminal.
 - **Multi-model support** -- GPT-4o, Claude Sonnet, o3-mini, Gemini 2.5 Pro via Copilot; plus direct Anthropic API, Claude Agent SDK, OpenAI, and local model access.
-- **SDK adapter layer** -- provider-agnostic `AgentDefinition` dataclass so agent modules work with any backend.
+- **SDK adapter layer** -- provider-agnostic `AgentDefinition` dataclass with optional `output_schema` for structured output validation.
 - **Automatic result saving** -- each agent's output is saved to `outputs/{agent-name}/` with timestamped filenames.
 - **Interactive Q&A** -- multi-turn conversation where agents can ask follow-up questions directly in the terminal (supported on `anthropic-api` and `openai` providers).
-- **CLI tool** (`qa-agent`) with 8 subcommands for running agents from the terminal.
+- **CLI tool** (`qa-agent`) with 13 subcommands for running agents from the terminal.
+- **Comprehensive test suite** -- 175 pytest tests covering agents, templates, skills, CLI, workflows, checkpoints, and notifications.
+- **GitHub Actions CI** -- pytest on Python 3.10/3.11/3.12 with ruff lint on every push and PR.
 - **Python API** for programmatic integration.
 - **Configurable models** via a single `models.yaml` file.
 
@@ -55,30 +63,46 @@ You can run agents individually or let the Test Manager orchestrator decompose a
      api-coverage-planner        pr-hygiene-checker
      security-scout              coverage-hunter
      flake-triage                seed-data-manager
+     accessibility-auditor       performance-profiler
+     api-contract-validator
 ```
 
 ```
 qa_ecosystem/
-├── agents/           # 18 agent definitions (10 planning + 8 execution)
-├── templates/        # 18 YAML files with 90 prompt templates
-├── sdk_adapter.py    # Provider-agnostic AgentDefinition dataclass
-├── runner.py         # Multi-provider execution engine (Copilot, Anthropic API, Claude, OpenAI)
-├── models.py         # Model profile abstraction and resolver
-├── models.yaml       # Model configuration (Copilot, Anthropic API, Claude, OpenAI, local)
-├── config.py         # Tool sets, agent registry, constants
-├── cli.py            # CLI entry point with 8 subcommands
+├── agents/               # 21 agent definitions (10 planning + 11 execution)
+├── templates/            # 21 YAML files with 105 prompt templates
+├── providers/            # Provider modules (copilot, claude, anthropic_api, openai)
+├── sdk_adapter.py        # AgentDefinition + AgentResult dataclasses
+├── runner.py             # Thin orchestration layer delegating to providers
+├── workflow_executor.py  # DAG-based workflow engine with parallel execution
+├── workflows.yaml        # 12 predefined workflow definitions
+├── checkpoint.py         # Session persistence with per-step status tracking
+├── metrics.py            # Token usage and cost tracking
+├── notifications.py      # Webhook notifications (Slack Block Kit support)
+├── models.py             # Model profile abstraction and resolver
+├── models.yaml           # Model configuration (all providers)
+├── config.py             # Tool sets, agent registry, constants
+├── cli.py                # CLI entry point with 13 subcommands
 └── __init__.py
-playwright/           # Playwright TypeScript framework scaffold
+tests/                    # 175 pytest tests
+├── test_agents.py        # Agent registry and definition tests
+├── test_cli.py           # CLI argument parsing tests
+├── test_checkpoint.py    # Checkpoint persistence tests
+├── test_notifications.py # Webhook notification tests
+├── test_skill_loader.py  # Skill loading tests
+├── test_templates.py     # Template YAML parsing tests
+└── test_workflow_executor.py  # Workflow DAG execution tests
+playwright/               # Playwright TypeScript framework scaffold
 ├── playwright.config.ts
-├── pages/            # Page Object Model classes
-├── fixtures/         # Custom test fixtures
-├── helpers/          # Timeouts, env, API helpers
-├── test-data/        # Data factory
-├── auth/             # Auth state caching
-└── tests/            # UI and API test specs
+├── pages/                # Page Object Model classes
+├── fixtures/             # Custom test fixtures
+├── helpers/              # Timeouts, env, API helpers
+├── test-data/            # Data factory
+├── auth/                 # Auth state caching
+└── tests/                # UI and API test specs
 docs/
-├── QA_CONTEXT.md     # Playwright conventions and patterns
-└── PROMPT_LIBRARY.md # Copy-paste prompts for all 18 agents
+├── QA_CONTEXT.md         # Playwright conventions and patterns
+└── PROMPT_LIBRARY.md     # Copy-paste prompts for all 21 agents
 outputs/              # Auto-created on first run
 ├── manager_instructions.md   # Test Manager delegation plans
 └── {agent-name}/             # One folder per agent
@@ -87,7 +111,7 @@ outputs/              # Auto-created on first run
 
 ---
 
-## All 18 Agents
+## All 21 Agents
 
 | # | Agent | Category | Purpose |
 |---|-------|----------|---------|
@@ -97,7 +121,7 @@ outputs/              # Auto-created on first run
 | 4 | `regression-optimizer` | Planning | Optimized regression suites |
 | 5 | `ai-test-architect` | Planning | AI/ML test strategy and compliance |
 | 6 | `synthetic-data-designer` | Planning | Privacy-safe test data design |
-| 7 | `test-manager` | Planning | Orchestrator with 20 workflows |
+| 7 | `test-manager` | Planning | Orchestrator with 20+ workflows |
 | 8 | `test-oracle-creator` | Planning | Expected results and validation rules |
 | 9 | `test-results-analyst` | Planning | Test execution analysis and failure trends |
 | 10 | `testware-creator` | Planning | Professional QA documentation |
@@ -109,6 +133,9 @@ outputs/              # Auto-created on first run
 | 16 | `coverage-hunter` | Execution | Test coverage gap analysis |
 | 17 | `flake-triage` | Execution | Flaky test diagnosis and fix |
 | 18 | `seed-data-manager` | Execution | Test data factories and fixtures |
+| 19 | `accessibility-auditor` | Execution | WCAG 2.1 AA compliance audits via axe-core |
+| 20 | `performance-profiler` | Execution | Core Web Vitals and page load profiling |
+| 21 | `api-contract-validator` | Execution | OpenAPI spec validation and breaking change detection |
 
 Each agent has **5 prompt templates**. View them with:
 
@@ -285,7 +312,7 @@ qa-agent run test-case-generator --input examples/sample_pbi.md --model my-local
 
 ## CLI Reference
 
-The `qa-agent` CLI provides 8 subcommands covering discovery, execution, orchestration, and Playwright workflows.
+The `qa-agent` CLI provides 13 subcommands covering discovery, execution, orchestration, workflow management, and Playwright workflows.
 
 **Common flags:**
 - `--input / -i` -- path to a file OR inline text (required for `run` and `orchestrate`)
@@ -295,10 +322,10 @@ The `qa-agent` CLI provides 8 subcommands covering discovery, execution, orchest
 ### Discovery Commands
 
 ```bash
-# List all 18 agents
+# List all 21 agents
 qa-agent list-agents
 
-# List all 90 prompt templates
+# List all 105 prompt templates
 qa-agent list-templates
 
 # List templates for a specific agent
@@ -330,8 +357,35 @@ qa-agent run requirements-analyst -i "As a user I want to reset my password"
 # Full orchestration -- Test Manager decomposes and delegates
 qa-agent orchestrate -i project_context.md
 
-# Orchestrate with a specific workflow template
-qa-agent orchestrate -i project_context.md -t playwright-gen
+# Use a predefined DAG workflow
+qa-agent orchestrate -i requirements.md --workflow feature-testing
+
+# Use a custom workflow YAML file
+qa-agent orchestrate -i requirements.md --workflow-file custom.yaml
+
+# Reorder agents and set custom dependencies
+qa-agent orchestrate -i requirements.md --workflow feature-testing \
+  --reorder "1:test-case-generator, 2:requirements-analyst, 3:testware-creator" \
+  --deps "2:[1], 3:[1,2]"
+
+# Skip specific agents
+qa-agent orchestrate -i requirements.md --workflow feature-testing \
+  --skip synthetic-data-designer test-oracle-creator
+
+# Send a webhook notification on completion
+qa-agent orchestrate -i requirements.md --workflow feature-testing \
+  --notify https://hooks.slack.com/services/T00/B00/xxx
+```
+
+### Workflow Management
+
+```bash
+# List all predefined workflows
+qa-agent list-workflows
+
+# List and manage checkpoints
+qa-agent list-checkpoints
+qa-agent clean-checkpoints --keep 10
 ```
 
 ### Playwright Commands

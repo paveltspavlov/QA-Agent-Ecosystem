@@ -20,8 +20,8 @@ The **skills system** allows reusable prompt fragments to be shared across multi
 | `auth_state_caching` | ui-test-designer, seed-data-manager | storageState caching, per-role auth files, global setup pattern |
 | `istqb_techniques` | test-case-generator, regression-optimizer, ai-test-architect | EP, BVA, decision tables, state transition testing |
 | `priority_ranking` | test-case-generator, requirements-analyst, regression-optimizer, ai-test-architect, test-results-analyst, coverage-hunter, test-manager | P0–P3 framework |
-| `severity_classification` | bug-pattern-analyst, security-scout, test-results-analyst, test-manager | CRITICAL / HIGH / MEDIUM / LOW definitions |
-| `output_format_guidelines` | Most planning agents | Markdown tables, code blocks, summary + recommendations structure |
+| `severity_classification` | bug-pattern-analyst, security-scout, test-results-analyst, test-manager, accessibility-auditor, performance-profiler, api-contract-validator | CRITICAL / HIGH / MEDIUM / LOW definitions |
+| `output_format_guidelines` | Most planning and execution agents, accessibility-auditor, performance-profiler, api-contract-validator | Markdown tables, code blocks, summary + recommendations structure |
 | `bug_report_format` | bug-pattern-analyst, testware-creator | Standard bug report fields: Title, Environment, Steps, Expected, Actual, Severity |
 
 ## Listing Skills from the CLI
