@@ -55,7 +55,7 @@ AGENT_NAMES = [
     "test-oracle-creator",
     "test-results-analyst",
     "testware-creator",
-    # Playwright execution agents (new 8)
+    # Playwright execution agents
     "playwright-test-generator",
     "ui-test-designer",
     "api-coverage-planner",
@@ -64,6 +64,9 @@ AGENT_NAMES = [
     "coverage-hunter",
     "flake-triage",
     "seed-data-manager",
+    "accessibility-auditor",
+    "performance-profiler",
+    "api-contract-validator",
 ]
 
 # Playwright-specific agent names (for CLI filtering)
@@ -76,4 +79,7 @@ PLAYWRIGHT_AGENT_NAMES = [
     "coverage-hunter",
     "flake-triage",
     "seed-data-manager",
+    "accessibility-auditor",
+    "performance-profiler",
+    "api-contract-validator",
 ]

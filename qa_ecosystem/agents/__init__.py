@@ -62,4 +62,7 @@ def _ensure_loaded() -> None:
         coverage_hunter,
         flake_triage,
         seed_data_manager,
+        accessibility_auditor,
+        performance_profiler,
+        api_contract_validator,
     )

@@ -8,7 +8,7 @@ from qa_ecosystem.config import (
 
 
 def test_agent_names_count():
-    assert len(AGENT_NAMES) == 18
+    assert len(AGENT_NAMES) == 21
 
 
 def test_playwright_agents_are_subset():

@@ -1,0 +1,62 @@
+agent: api-contract-validator
+templates:
+  - name: "default"
+    description: "Full API contract validation against OpenAPI spec"
+    prompt: |
+      Validate the API implementation at {base_url} against the OpenAPI specification at {spec_file}.
+      Check all endpoints for schema compliance, missing fields, type mismatches, and breaking changes.
+      Generate Playwright contract tests for each endpoint.
+
+  - name: "breaking-changes"
+    description: "Detect breaking changes between two API versions"
+    prompt: |
+      Compare the API specifications to detect breaking changes:
+      - Previous version: {old_spec}
+      - Current version: {new_spec}
+
+      Categorize each change as:
+      - Breaking (removed endpoints, removed fields, type changes)
+      - Non-breaking (new optional fields, new endpoints)
+      - Deprecation (endpoints marked deprecated)
+
+      Produce a migration guide for API consumers.
+
+  - name: "contract-tests"
+    description: "Generate consumer-driven contract tests"
+    prompt: |
+      Generate consumer-driven contract tests for the API at {base_url}.
+      Specification: {spec_file}
+      Consumer: {consumer_name}
+
+      Focus on the endpoints this consumer depends on:
+      {consumer_endpoints}
+
+      Generate Playwright API tests that verify the contract from the consumer's perspective.
+
+  - name: "schema-validation"
+    description: "Validate response schemas only"
+    prompt: |
+      Validate response schemas for the API at {base_url} against {spec_file}.
+
+      For each endpoint, send a request and validate:
+      - Response body matches the declared schema
+      - Required fields are present
+      - Data types are correct
+      - Nested objects and arrays conform to schema
+
+      Report any schema mismatches with actual vs expected values.
+
+  - name: "error-contracts"
+    description: "Validate error response contracts"
+    prompt: |
+      Validate error response contracts for the API at {base_url}.
+      Specification: {spec_file}
+
+      For each endpoint, test error scenarios:
+      - Invalid request body (400)
+      - Missing authentication (401)
+      - Insufficient permissions (403)
+      - Resource not found (404)
+      - Validation errors (422)
+
+      Verify error responses match the spec's error schema and include useful error messages.

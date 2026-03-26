@@ -41,13 +41,14 @@ def cmd_list_agents(_args: argparse.Namespace) -> None:
     """Print all registered agents."""
     from qa_ecosystem.agents import list_agents
 
-    table = Table(title="QA Agent Ecosystem — Agents (18)")
+    agents = list_agents()
+    table = Table(title=f"QA Agent Ecosystem — Agents ({len(agents)})")
     table.add_column("Name", style="cyan", no_wrap=True)
     table.add_column("Category", style="magenta")
     table.add_column("Model", style="green")
     table.add_column("Description", style="white")
 
-    for name, defn in list_agents().items():
+    for name, defn in agents.items():
         category = getattr(defn, "category", "planning")
         table.add_row(name, category, defn.model or "default", defn.description[:100])
 
@@ -118,6 +119,7 @@ def cmd_list_models(_args: argparse.Namespace) -> None:
 def cmd_run(args: argparse.Namespace) -> None:
     """Run a single agent."""
     from qa_ecosystem.runner import run_single_agent, run_sync
+    from qa_ecosystem.metrics import start_run, finish_run
     from qa_ecosystem.templates import fill_template
 
     raw_input = _read_input(args.input)
@@ -149,6 +151,7 @@ def cmd_run(args: argparse.Namespace) -> None:
     except (KeyError, FileNotFoundError):
         prompt = raw_input
 
+    start_run()
     run_sync(run_single_agent(
         agent_name=args.agent,
         prompt=prompt,
@@ -156,14 +159,24 @@ def cmd_run(args: argparse.Namespace) -> None:
         model_override=args.model,
         output_format=output_format,
     ))
+    finish_run()
 
 
 def cmd_orchestrate(args: argparse.Namespace) -> None:
     """Run the Test Manager orchestrator."""
-    from qa_ecosystem.runner import run_orchestrator, run_sync
+    from qa_ecosystem.runner import run_orchestrator, run_single_agent, run_sync
+    from qa_ecosystem.metrics import start_run, finish_run
     from qa_ecosystem.templates import fill_template
 
     raw_input = _read_input(args.input)
+
+    # Check if a workflow was specified
+    workflow_name = getattr(args, "workflow", None)
+    workflow_file = getattr(args, "workflow_file", None)
+
+    if workflow_name or workflow_file:
+        _run_workflow_mode(args, raw_input)
+        return
 
     if getattr(args, "dry_run", False):
         console.print(
@@ -194,12 +207,108 @@ def cmd_orchestrate(args: argparse.Namespace) -> None:
             f"({len(resume_from.steps)} completed steps)[/dim]\n"
         )
 
+    start_run()
     run_sync(run_orchestrator(
         prompt=prompt,
         cwd=args.cwd,
         model_override=args.model,
         resume_from=resume_from,
     ))
+    finish_run()
+
+
+def _run_workflow_mode(args: argparse.Namespace, raw_input: str) -> None:
+    """Execute a predefined or custom workflow with index-based ordering."""
+    from qa_ecosystem.runner import run_single_agent, run_sync
+    from qa_ecosystem.metrics import start_run, finish_run
+    from qa_ecosystem.checkpoint import CheckpointWriter, load_checkpoint
+    from qa_ecosystem.workflow_executor import (
+        WorkflowExecutor,
+        get_workflow,
+        load_workflow_file,
+        apply_reorder,
+        apply_deps,
+        apply_skip,
+    )
+    from rich.panel import Panel
+
+    # Load the workflow definition
+    workflow_file = getattr(args, "workflow_file", None)
+    workflow_name = getattr(args, "workflow", None)
+
+    if workflow_file:
+        workflow = load_workflow_file(workflow_file)
+    else:
+        workflow = get_workflow(workflow_name)
+
+    # Apply modifications
+    reorder = getattr(args, "reorder", None)
+    if reorder:
+        workflow = apply_reorder(workflow, reorder)
+
+    deps = getattr(args, "deps", None)
+    if deps:
+        workflow = apply_deps(workflow, deps)
+
+    skip = getattr(args, "skip", None)
+    if skip:
+        workflow = apply_skip(workflow, skip)
+
+    # Validate
+    errors = workflow.validate()
+    if errors:
+        console.print(f"[red]Workflow validation errors:[/red]")
+        for err in errors:
+            console.print(f"  [red]• {err}[/red]")
+        return
+
+    # Display the workflow
+    console.print(Panel(
+        f"[bold]{workflow.name}[/bold]\n{workflow.description}\n\n{workflow.render_dag()}",
+        title="Workflow Execution Plan",
+        border_style="blue",
+    ))
+
+    # Dry run check
+    if getattr(args, "dry_run", False):
+        console.print("[bold yellow]Dry run — would execute the workflow above.[/bold yellow]")
+        return
+
+    # Set up checkpoint
+    resume_path = getattr(args, "resume", None)
+    if resume_path:
+        checkpoint = load_checkpoint(resume_path)
+        console.print(f"[dim]Resuming from checkpoint ({len(checkpoint.steps)} completed steps)[/dim]\n")
+    else:
+        checkpoint = CheckpointWriter(workflow_name=workflow.name)
+
+    # Define the delegate function that calls run_single_agent
+    model_override = getattr(args, "model", None)
+    cwd = getattr(args, "cwd", ".")
+
+    async def delegate(agent_name: str, task_prompt: str) -> str:
+        return await run_single_agent(
+            agent_name=agent_name,
+            prompt=task_prompt,
+            cwd=cwd,
+            model_override=model_override,
+        )
+
+    # Execute the workflow
+    start_run()
+
+    async def _run():
+        executor = WorkflowExecutor(workflow, checkpoint=checkpoint)
+        return await executor.execute(delegate, raw_input)
+
+    results = run_sync(_run())
+
+    finish_run()
+    console.print(
+        f"\n[bold green]Workflow '{workflow.name}' completed — "
+        f"{len(results)} steps executed.[/bold green]\n"
+        f"[dim]Checkpoint: {checkpoint.path}[/dim]"
+    )
 
 
 # ---------------------------------------------------------------------------
@@ -494,6 +603,50 @@ def cmd_list_workflows(_args: argparse.Namespace) -> None:
     console.print("\n[dim]Run: qa-agent orchestrate -i <input> -t <workflow-template>[/dim]\n")
 
 
+def cmd_list_checkpoints(_args: argparse.Namespace) -> None:
+    """Print all saved orchestration checkpoint sessions."""
+    from qa_ecosystem.checkpoint import list_checkpoints
+
+    checkpoints = list_checkpoints()
+    if not checkpoints:
+        console.print("[yellow]No checkpoints found.[/yellow]")
+        return
+
+    table = Table(title=f"Orchestration Checkpoints ({len(checkpoints)})")
+    table.add_column("Session ID", style="cyan", no_wrap=True)
+    table.add_column("Workflow", style="magenta")
+    table.add_column("Created", style="green")
+    table.add_column("Updated", style="green")
+    table.add_column("Steps", style="white")
+    table.add_column("File", style="dim")
+
+    for cp in checkpoints:
+        steps_info = f"{cp['completed_steps']}/{cp['total_steps']}"
+        table.add_row(
+            cp["session_id"],
+            cp.get("workflow_name") or "-",
+            cp["created_at"][:19],
+            cp["updated_at"][:19],
+            steps_info,
+            cp["file"],
+        )
+
+    console.print(table)
+    console.print("\n[dim]Resume with: qa-agent orchestrate --resume <file>[/dim]\n")
+
+
+def cmd_clean_checkpoints(args: argparse.Namespace) -> None:
+    """Remove old checkpoint files."""
+    from qa_ecosystem.checkpoint import clean_checkpoints
+
+    keep = getattr(args, "keep", 5)
+    removed = clean_checkpoints(keep_last=keep)
+    if removed:
+        console.print(f"[green]Removed {removed} old checkpoint(s), kept {keep} most recent.[/green]")
+    else:
+        console.print("[dim]No checkpoints to clean.[/dim]")
+
+
 def cmd_list_skills(_args: argparse.Namespace) -> None:
     """Print all available shared skills."""
     from qa_ecosystem.skill_loader import list_skills, load_skill
@@ -613,6 +766,20 @@ def build_parser() -> argparse.ArgumentParser:
     orch.add_argument("--resume", default=None,
                       metavar="CHECKPOINT_FILE",
                       help="Resume from a checkpoint file (outputs/checkpoints/<id>.json)")
+    orch.add_argument("--workflow", "-w", default=None,
+                      help="Use a predefined workflow from workflows.yaml (e.g. feature-testing, playwright-gen)")
+    orch.add_argument("--workflow-file", default=None,
+                      metavar="PATH",
+                      help="Use a custom workflow YAML file")
+    orch.add_argument("--reorder", default=None,
+                      help='Reassign agent indices: "1:agent-a, 2:agent-b, 3:agent-c"')
+    orch.add_argument("--deps", default=None,
+                      help='Override dependencies: "2:[1], 3:[1,2]"')
+    orch.add_argument("--skip", nargs="*", default=None,
+                      help="Skip specific agents from the workflow")
+    orch.add_argument("--notify", default=None,
+                      metavar="WEBHOOK_URL",
+                      help="POST a summary JSON to this webhook URL on completion (supports Slack)")
     _add_model_arg(orch)
 
     # --- playwright-gen ---
@@ -672,6 +839,14 @@ def build_parser() -> argparse.ArgumentParser:
     # --- list-workflows ---
     sub.add_parser("list-workflows", help="List all 20 orchestration workflows")
 
+    # --- list-checkpoints ---
+    sub.add_parser("list-checkpoints", help="List all saved orchestration checkpoint sessions")
+
+    # --- clean-checkpoints ---
+    clean_cp = sub.add_parser("clean-checkpoints", help="Remove old checkpoint files")
+    clean_cp.add_argument("--keep", type=int, default=5,
+                          help="Number of most recent checkpoints to keep (default: 5)")
+
     # --- chain ---
     chain = sub.add_parser("chain", help="Execute a linear agent sequence (pipe output→input)")
     chain.add_argument("agents", nargs="+", choices=AGENT_NAMES,
@@ -724,6 +899,8 @@ def main() -> None:
         "doctor": cmd_doctor,
         "list-skills": cmd_list_skills,
         "list-workflows": cmd_list_workflows,
+        "list-checkpoints": cmd_list_checkpoints,
+        "clean-checkpoints": cmd_clean_checkpoints,
         "chain": cmd_chain,
     }
     dispatch[args.command](args)

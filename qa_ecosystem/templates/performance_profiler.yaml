@@ -1,0 +1,69 @@
+agent: performance-profiler
+templates:
+  - name: "default"
+    description: "Full performance profile with Core Web Vitals"
+    prompt: |
+      Perform a comprehensive performance profile of the web application at {url}.
+      Use Playwright DevTools Protocol to measure Core Web Vitals and generate a baseline report.
+
+      Target pages: {pages}
+      Runs per page: {runs}
+
+      Measure LCP, FID, CLS, TTFB, FCP, network waterfall, and JS bundle sizes.
+      Produce a report with ratings and optimization recommendations.
+
+  - name: "web-vitals"
+    description: "Core Web Vitals measurement only"
+    prompt: |
+      Measure Core Web Vitals for the page at {url}.
+
+      Run {runs} iterations and report:
+      - LCP (Largest Contentful Paint)
+      - FID (First Input Delay) / INP (Interaction to Next Paint)
+      - CLS (Cumulative Layout Shift)
+      - TTFB (Time to First Byte)
+      - FCP (First Contentful Paint)
+
+      Include p50, p75, and p99 values across runs.
+
+  - name: "bundle-analysis"
+    description: "JavaScript bundle size and coverage analysis"
+    prompt: |
+      Analyze JavaScript bundles loaded by {url}.
+
+      Use Playwright JS coverage API to measure:
+      - Bundle transfer and decoded sizes
+      - Percentage of unused JavaScript per bundle
+      - Total JS payload and unused ratio
+
+      Identify the top optimization opportunities for reducing bundle size.
+
+  - name: "network-waterfall"
+    description: "Network request waterfall analysis"
+    prompt: |
+      Capture and analyze the network waterfall for {url}.
+
+      Report:
+      - Total number of requests by type (document, script, stylesheet, image, font, xhr/fetch)
+      - Total transfer size by type
+      - Render-blocking resources
+      - Requests exceeding {threshold_ms}ms
+      - Resources exceeding {threshold_kb}KB
+      - Connection reuse and HTTP/2 multiplexing efficiency
+
+      Identify the critical rendering path and bottlenecks.
+
+  - name: "comparison"
+    description: "Compare performance between two URLs or builds"
+    prompt: |
+      Compare performance between:
+      - Baseline: {baseline_url}
+      - Candidate: {candidate_url}
+
+      Run {runs} iterations of each and compare:
+      - Core Web Vitals (LCP, FID, CLS)
+      - Total load time
+      - Total transfer size
+      - Number of requests
+
+      Produce a side-by-side comparison with statistical significance indicators.

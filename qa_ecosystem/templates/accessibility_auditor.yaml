@@ -1,0 +1,74 @@
+agent: accessibility-auditor
+templates:
+  - name: "default"
+    description: "Full WCAG 2.1 AA accessibility audit"
+    prompt: |
+      Perform a comprehensive WCAG 2.1 AA accessibility audit of the web application at {url}.
+      Use Playwright with axe-core to scan all pages and produce a compliance report.
+
+      Target pages: {pages}
+      Project root: {project_root}
+
+      Audit all WCAG 2.1 AA success criteria and produce a prioritized findings report.
+
+  - name: "page-audit"
+    description: "Audit a single page for accessibility violations"
+    prompt: |
+      Audit the page at {url} for WCAG 2.1 AA accessibility violations.
+
+      Focus areas: {focus_areas}
+
+      Use axe-core via Playwright to detect violations, then manually verify:
+      - Keyboard navigation and focus management
+      - Screen reader compatibility
+      - Color contrast ratios
+
+      Report all findings with severity and remediation steps.
+
+  - name: "component-audit"
+    description: "Audit a specific component for accessibility"
+    prompt: |
+      Audit the {component_name} component for accessibility compliance.
+
+      Component file: {component_file}
+      Test file: {test_file}
+
+      Check:
+      - ARIA roles and properties are correct
+      - Keyboard interaction patterns match WAI-ARIA Authoring Practices
+      - Focus management is handled properly
+      - State changes are announced to assistive technology
+
+      Provide code-level fixes for any violations found.
+
+  - name: "keyboard-audit"
+    description: "Keyboard navigation and focus management audit"
+    prompt: |
+      Perform a keyboard-only navigation audit of {url}.
+
+      Test these user flows:
+      {user_flows}
+
+      Verify:
+      - All interactive elements are reachable via Tab
+      - Focus order is logical and follows visual layout
+      - Focus indicators are visible on every focusable element
+      - No keyboard traps exist
+      - Modal dialogs trap focus correctly
+      - Skip links are present and functional
+
+      Document the tab order for each flow and flag any issues.
+
+  - name: "ci-setup"
+    description: "Set up automated accessibility testing in CI"
+    prompt: |
+      Set up automated accessibility testing for the project at {project_root}.
+
+      Test framework: {test_framework}
+      CI platform: {ci_platform}
+
+      Create:
+      - axe-core integration with the existing Playwright test suite
+      - Accessibility test helpers and fixtures
+      - CI pipeline step that fails on Critical/Serious violations
+      - Threshold configuration for gradual compliance improvement

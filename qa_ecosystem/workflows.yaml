@@ -1,0 +1,295 @@
+# ──────────────────────────────────────────────────────────────────────────────
+# QA Agent Ecosystem — Workflow Definitions
+# ──────────────────────────────────────────────────────────────────────────────
+# Each workflow defines a sequence of agents with execution indices and
+# dependencies.  Steps with the same resolved dependencies can run in parallel.
+#
+# Index:        Integer execution order identifier (1-based)
+# Dependencies: List of step indices that must complete before this step starts
+#               An empty list [] means the step can start immediately.
+#
+# Users can customize workflows via:
+#   --workflow <name>                 Use a predefined workflow
+#   --workflow-file <path>            Use a custom workflow YAML file
+#   --reorder "1:agent-a, 2:agent-b" Reassign indices
+#   --deps "2:[1], 3:[1,2]"          Override dependencies
+#   --skip <agent-name>              Skip specific agents
+# ──────────────────────────────────────────────────────────────────────────────
+
+workflows:
+
+  feature-testing:
+    name: "New Feature Testing"
+    description: "End-to-end workflow from requirements to test report"
+    steps:
+      - index: 1
+        agent: requirements-analyst
+        description: "Analyze requirements for ambiguities and missing criteria"
+        dependencies: []
+      - index: 2
+        agent: test-case-generator
+        description: "Generate ISTQB test cases from clarified requirements"
+        dependencies: [1]
+      - index: 3
+        agent: synthetic-data-designer
+        description: "Generate privacy-safe test data"
+        dependencies: [2]
+      - index: 4
+        agent: test-oracle-creator
+        description: "Define expected results and validation rules"
+        dependencies: [2]
+      - index: 5
+        agent: testware-creator
+        description: "Generate test plan document"
+        dependencies: [3, 4]
+
+  bug-prevention:
+    name: "Bug Prevention & Root Cause Analysis"
+    description: "Analyze bug patterns and generate preventive test cases"
+    steps:
+      - index: 1
+        agent: bug-pattern-analyst
+        description: "Analyze bug reports for patterns and trends"
+        dependencies: []
+      - index: 2
+        agent: requirements-analyst
+        description: "Check if spec gaps caused the bugs"
+        dependencies: [1]
+      - index: 3
+        agent: test-case-generator
+        description: "Generate new validation test cases"
+        dependencies: [2]
+      - index: 4
+        agent: regression-optimizer
+        description: "Optimize regression suite with new cases"
+        dependencies: [3]
+      - index: 5
+        agent: testware-creator
+        description: "Generate defect report"
+        dependencies: [4]
+
+  playwright-gen:
+    name: "Playwright Test Generation"
+    description: "Generate Playwright tests with POM pattern and quality gates"
+    steps:
+      - index: 1
+        agent: playwright-test-generator
+        description: "Explore website and generate Playwright tests"
+        dependencies: []
+      - index: 2
+        agent: ui-test-designer
+        description: "Create Page Object Model classes"
+        dependencies: [1]
+      - index: 3
+        agent: seed-data-manager
+        description: "Set up test fixtures and data factories"
+        dependencies: [1]
+      - index: 4
+        agent: coverage-hunter
+        description: "Verify test coverage and identify gaps"
+        dependencies: [2, 3]
+      - index: 5
+        agent: pr-hygiene-checker
+        description: "Run 8-check code quality gate"
+        dependencies: [4]
+
+  flake-investigation:
+    name: "Flaky Test Investigation"
+    description: "Diagnose and fix flaky tests"
+    steps:
+      - index: 1
+        agent: flake-triage
+        description: "Diagnose race conditions and timing issues"
+        dependencies: []
+      - index: 2
+        agent: test-results-analyst
+        description: "Analyze failure patterns and trends"
+        dependencies: [1]
+      - index: 3
+        agent: playwright-test-generator
+        description: "Rewrite flaky tests with proper waits"
+        dependencies: [1, 2]
+      - index: 4
+        agent: pr-hygiene-checker
+        description: "Validate fixed tests pass quality gate"
+        dependencies: [3]
+
+  api-coverage:
+    name: "Full API Test Coverage"
+    description: "Plan and generate comprehensive API tests"
+    steps:
+      - index: 1
+        agent: api-coverage-planner
+        description: "Build API test coverage matrix from spec"
+        dependencies: []
+      - index: 2
+        agent: test-case-generator
+        description: "Generate API test cases"
+        dependencies: [1]
+      - index: 3
+        agent: playwright-test-generator
+        description: "Implement API tests with APIRequestContext"
+        dependencies: [2]
+      - index: 4
+        agent: coverage-hunter
+        description: "Verify coverage against endpoints"
+        dependencies: [3]
+      - index: 5
+        agent: pr-hygiene-checker
+        description: "Run quality gate on test code"
+        dependencies: [4]
+
+  security-audit:
+    name: "Security Audit"
+    description: "Scan for vulnerabilities and generate security report"
+    steps:
+      - index: 1
+        agent: security-scout
+        description: "Scan for secrets, vulnerabilities, and dangerous patterns"
+        dependencies: []
+      - index: 2
+        agent: coverage-hunter
+        description: "Identify security-related coverage gaps"
+        dependencies: [1]
+      - index: 3
+        agent: testware-creator
+        description: "Generate security audit report"
+        dependencies: [1, 2]
+
+  test-debt:
+    name: "Test Debt Assessment"
+    description: "Audit and prioritize technical debt in the test suite"
+    steps:
+      - index: 1
+        agent: coverage-hunter
+        description: "Identify test coverage gaps"
+        dependencies: []
+      - index: 2
+        agent: pr-hygiene-checker
+        description: "Grade code quality across test files"
+        dependencies: []
+      - index: 3
+        agent: flake-triage
+        description: "Identify unreliable tests"
+        dependencies: []
+      - index: 4
+        agent: regression-optimizer
+        description: "Suggest tests to retire or consolidate"
+        dependencies: [1, 2, 3]
+      - index: 5
+        agent: testware-creator
+        description: "Generate prioritized debt backlog"
+        dependencies: [4]
+
+  test-monitoring:
+    name: "Continuous Test Health Monitoring"
+    description: "Analyze test health trends and produce a dashboard report"
+    steps:
+      - index: 1
+        agent: coverage-hunter
+        description: "Measure current test coverage"
+        dependencies: []
+      - index: 2
+        agent: test-results-analyst
+        description: "Analyze recent test results for trends"
+        dependencies: []
+      - index: 3
+        agent: flake-triage
+        description: "Identify newly flaky tests"
+        dependencies: [2]
+      - index: 4
+        agent: testware-creator
+        description: "Generate health dashboard report"
+        dependencies: [1, 2, 3]
+
+  ai-testing:
+    name: "AI/ML Feature Testing"
+    description: "Test strategy for AI-integrated features"
+    steps:
+      - index: 1
+        agent: ai-test-architect
+        description: "Design AI/ML test strategy and compliance checks"
+        dependencies: []
+      - index: 2
+        agent: test-case-generator
+        description: "Generate test cases for AI features"
+        dependencies: [1]
+      - index: 3
+        agent: synthetic-data-designer
+        description: "Generate synthetic datasets for AI testing"
+        dependencies: [1]
+      - index: 4
+        agent: test-oracle-creator
+        description: "Define model validation criteria"
+        dependencies: [2]
+      - index: 5
+        agent: testware-creator
+        description: "Generate AI test plan"
+        dependencies: [2, 3, 4]
+
+  release-signoff:
+    name: "Release Sign-off"
+    description: "Comprehensive release readiness assessment"
+    steps:
+      - index: 1
+        agent: regression-optimizer
+        description: "Select critical regression tests for release"
+        dependencies: []
+      - index: 2
+        agent: test-results-analyst
+        description: "Analyze test results and quality metrics"
+        dependencies: [1]
+      - index: 3
+        agent: testware-creator
+        description: "Generate release sign-off report"
+        dependencies: [2]
+
+  contract-testing:
+    name: "Consumer-Driven Contract Testing"
+    description: "Validate API contracts and generate backward-compatibility tests"
+    steps:
+      - index: 1
+        agent: api-coverage-planner
+        description: "Build API endpoint inventory from OpenAPI spec"
+        dependencies: []
+      - index: 2
+        agent: api-contract-validator
+        description: "Validate responses against spec and detect breaking changes"
+        dependencies: [1]
+      - index: 3
+        agent: test-case-generator
+        description: "Generate contract test cases for each endpoint"
+        dependencies: [2]
+      - index: 4
+        agent: playwright-test-generator
+        description: "Implement contract tests with Playwright APIRequestContext"
+        dependencies: [3]
+      - index: 5
+        agent: testware-creator
+        description: "Generate contract compliance report"
+        dependencies: [2, 4]
+
+  post-deploy-smoke:
+    name: "Post-Deployment Smoke & Canary"
+    description: "Run critical-path smoke tests against a live deployment"
+    steps:
+      - index: 1
+        agent: seed-data-manager
+        description: "Prepare smoke test data and preconditions"
+        dependencies: []
+      - index: 2
+        agent: playwright-test-generator
+        description: "Execute critical user journey smoke tests"
+        dependencies: [1]
+      - index: 3
+        agent: api-contract-validator
+        description: "Validate API health and contract compliance"
+        dependencies: [1]
+      - index: 4
+        agent: test-results-analyst
+        description: "Analyze smoke test results and canary metrics"
+        dependencies: [2, 3]
+      - index: 5
+        agent: testware-creator
+        description: "Generate deployment verification report"
+        dependencies: [4]

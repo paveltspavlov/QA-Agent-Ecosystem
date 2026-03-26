@@ -2,12 +2,11 @@
 
 Execution paths
 ───────────────
-• **Copilot SDK provider** → ``copilot.CopilotClient`` sessions with full tool
-  & subagent support via custom ``@define_tool``.
-• **Claude Agent SDK provider** → ``claude_agent_sdk`` with Agent tool delegation.
-• **Anthropic API provider** → ``anthropic.AsyncAnthropic`` streaming messages
+• **Copilot SDK provider** → ``providers.copilot`` with full tool & subagent support.
+• **Claude Agent SDK provider** → ``providers.claude`` with Agent tool delegation.
+• **Anthropic API provider** → ``providers.anthropic_api`` streaming messages
   with multi-turn conversation support (no tool use).
-• **OpenAI / OpenAI-compatible provider** → ``openai.AsyncOpenAI`` chat completions
+• **OpenAI / OpenAI-compatible provider** → ``providers.openai`` chat completions
   with multi-turn conversation support (no tool use).
 """
 
@@ -16,14 +15,15 @@ from __future__ import annotations
 import asyncio
 import json
 import sys
+import time
 from datetime import datetime
 from pathlib import Path
 
 from rich.console import Console
-from rich.markdown import Markdown
 from rich.panel import Panel
 
-from qa_ecosystem.config import DEFAULT_PERMISSION_MODE, MAX_DELEGATION_DEPTH, MAX_TURNS_ORCHESTRATED, MAX_TURNS_SINGLE
+from qa_ecosystem.config import MAX_TURNS_ORCHESTRATED, MAX_TURNS_SINGLE
+from qa_ecosystem.metrics import start_run, record_agent, finish_run
 from qa_ecosystem.models import ModelProfile, resolve_model
 
 console = Console()
@@ -85,6 +85,37 @@ def _save_workflow_context(steps: list[dict]) -> Path:
     return ctx_file
 
 
+def _print_model_banner(profile: ModelProfile, agent_label: str) -> None:
+    """Print a short banner showing which model will be used."""
+    provider_tag = {
+        "copilot": "GitHub Copilot",
+        "claude": "Anthropic Claude (Agent SDK)",
+        "anthropic-api": "Anthropic API (direct)",
+        "openai": "OpenAI",
+        "openai-compatible": "Local / Compatible",
+    }.get(profile.provider, profile.provider)
+
+    info = (
+        f"[bold]{agent_label}[/bold]\n"
+        f"Provider : {provider_tag}\n"
+        f"Model    : {profile.model_id}\n"
+        f"Profile  : {profile.name}"
+    )
+    if profile.api_base:
+        info += f"\nEndpoint : {profile.api_base}"
+
+    console.print(Panel(info, title="Model Config", border_style="blue", expand=False))
+    console.print()
+
+    if VERBOSE:
+        console.print(
+            f"[dim]VERBOSE — Full profile: provider={profile.provider}, "
+            f"model_id={profile.model_id}, temperature={profile.temperature}, "
+            f"max_tokens={profile.max_tokens}, api_base={profile.api_base}, "
+            f"api_key_env={profile.api_key_env}[/dim]\n"
+        )
+
+
 # ═══════════════════════════════════════════════════════════════════════════════
 # Public API
 # ═══════════════════════════════════════════════════════════════════════════════
@@ -107,9 +138,6 @@ async def run_single_agent(
     output_format:
         "markdown" (default) or "json" — controls how the result is saved.
     """
-    global _approve_all
-    _approve_all = False
-
     from qa_ecosystem.agents import get_agent
 
     agent_def = get_agent(agent_name)
@@ -124,14 +152,36 @@ async def run_single_agent(
 
     _log("agent_start", agent=agent_name, model=profile.model_id, provider=profile.provider)
 
+    t0 = time.monotonic()
+
     if profile.is_copilot:
-        result = await _run_copilot_single(agent_def, prompt, profile, cwd, max_turns)
+        from qa_ecosystem.providers.copilot import run_single, reset_approve_all
+        reset_approve_all()
+        result = await run_single(agent_def, prompt, profile, cwd, max_turns)
     elif profile.is_claude:
-        result = await _run_claude_single(agent_def, prompt, profile, cwd, max_turns)
+        from qa_ecosystem.providers.claude import run_single
+        result = await run_single(agent_def, prompt, profile, cwd, max_turns)
     elif profile.is_anthropic_api:
-        result = await _run_anthropic_api(agent_def.prompt, prompt, profile)
+        from qa_ecosystem.providers.anthropic_api import run
+        result = await run(agent_def.prompt, prompt, profile)
     else:
-        result = await _run_openai(agent_def.prompt, prompt, profile)
+        from qa_ecosystem.providers.openai import run
+        result = await run(agent_def.prompt, prompt, profile)
+
+    latency_ms = (time.monotonic() - t0) * 1000
+
+    # Record approximate metrics (exact token counts depend on provider response)
+    # For text-only responses, estimate ~4 chars per token as a rough approximation
+    est_input_tokens = len(prompt) // 4
+    est_output_tokens = len(result) // 4
+    record_agent(
+        agent_name=agent_name,
+        model_id=profile.model_id,
+        provider=profile.provider,
+        input_tokens=est_input_tokens,
+        output_tokens=est_output_tokens,
+        latency_ms=latency_ms,
+    )
 
     if VERBOSE:
         console.print(f"[dim]--- VERBOSE: Full result from {agent_name} ---[/dim]")
@@ -162,9 +212,6 @@ async def run_orchestrator(
         Optional CheckpointWriter loaded from a previous checkpoint file.
         When provided, already-completed delegation steps are skipped.
     """
-    global _approve_all
-    _approve_all = False
-
     from qa_ecosystem.agents import get_agent
 
     manager = get_agent("test-manager")
@@ -173,22 +220,32 @@ async def run_orchestrator(
     _print_model_banner(profile, "test-manager (orchestrator)")
 
     if profile.is_copilot:
-        result = await _run_copilot_orchestrator(manager, prompt, profile, cwd, max_turns, resume_from=resume_from)
+        from qa_ecosystem.providers.copilot import run_orchestrator, reset_approve_all
+        reset_approve_all()
+        result = await run_orchestrator(
+            manager, prompt, profile, cwd, max_turns,
+            resume_from=resume_from,
+            log_fn=_log,
+            save_workflow_fn=_save_workflow_context,
+        )
     elif profile.is_claude:
-        result = await _run_claude_orchestrator(manager, prompt, profile, cwd, max_turns)
+        from qa_ecosystem.providers.claude import run_orchestrator
+        result = await run_orchestrator(manager, prompt, profile, cwd, max_turns)
     elif profile.is_anthropic_api:
         console.print(
             "[yellow]Note: anthropic-api provider runs without tool use or subagent delegation. "
             "The Test Manager will produce a plan only.[/yellow]\n"
         )
-        result = await _run_anthropic_api(manager.prompt, prompt, profile)
+        from qa_ecosystem.providers.anthropic_api import run
+        result = await run(manager.prompt, prompt, profile)
     else:
         console.print(
             "[yellow]Note: Non-agentic model selected — running orchestrator without "
             "tool use or subagent delegation. The Test Manager will produce a "
             "plan but cannot invoke specialist agents.[/yellow]\n"
         )
-        result = await _run_openai(manager.prompt, prompt, profile)
+        from qa_ecosystem.providers.openai import run
+        result = await run(manager.prompt, prompt, profile)
 
     _save_manager_instructions(result)
     _save_agent_result("test-manager", result)
@@ -217,756 +274,6 @@ async def run_chain(
         results.append(result)
         current_input = result
     return results
-
-
-# ═══════════════════════════════════════════════════════════════════════════════
-# GitHub Copilot SDK path
-# ═══════════════════════════════════════════════════════════════════════════════
-
-# When True, all subsequent permission requests are auto-approved for the
-# remainder of the session (set by the user typing "a" / "all").
-_approve_all: bool = False
-
-
-def _on_permission_request_copilot(request, invocation=None):
-    """Prompt the user to approve or deny each Copilot SDK tool action.
-
-    The user can respond with:
-      - Enter / y / yes  — approve this single action
-      - a / all          — approve this and all remaining actions in the session
-      - n / no           — deny this action
-    """
-    global _approve_all
-    from copilot import PermissionRequestResult
-
-    kind = request.kind.value if hasattr(request.kind, "value") else str(request.kind)
-
-    # Build a human-readable description of what the agent wants to do
-    parts: list[str] = [f"[bold yellow]Permission requested:[/bold yellow] [cyan]{kind}[/cyan]"]
-    if getattr(request, "full_command_text", None):
-        parts.append(f"  Command : {request.full_command_text}")
-    if getattr(request, "file_name", None):
-        parts.append(f"  File    : {request.file_name}")
-    if getattr(request, "tool_name", None):
-        parts.append(f"  Tool    : {request.tool_name}")
-    if getattr(request, "url", None):
-        parts.append(f"  URL     : {request.url}")
-    if getattr(request, "intention", None):
-        parts.append(f"  Intent  : {request.intention}")
-    if getattr(request, "diff", None):
-        diff_preview = request.diff[:500] + ("..." if len(request.diff) > 500 else "")
-        parts.append(f"  Diff    :\n{diff_preview}")
-
-    console.print("\n".join(parts))
-
-    # Fast path: user already chose "approve all" earlier in this session
-    if _approve_all:
-        console.print("[green]  -> Auto-approved (approve-all mode)[/green]\n")
-        return PermissionRequestResult(kind="approved")
-
-    reply = input("  Approve? [Y/n/a(ll)]: ").strip().lower()
-
-    if reply in ("a", "all"):
-        _approve_all = True
-        console.print("[green]  -> Approved (all future actions will be auto-approved)[/green]\n")
-        return PermissionRequestResult(kind="approved")
-    elif reply in ("", "y", "yes"):
-        console.print("[green]  -> Approved[/green]\n")
-        return PermissionRequestResult(kind="approved")
-    else:
-        console.print("[red]  -> Denied[/red]\n")
-        return PermissionRequestResult(kind="denied-interactively-by-user")
-
-
-async def _run_copilot_single(agent_def, prompt, profile: ModelProfile, cwd, max_turns) -> str:
-    """Execute a single agent via the GitHub Copilot SDK."""
-    try:
-        from copilot import CopilotClient
-    except ImportError:
-        console.print(
-            "[red]The 'github-copilot-sdk' package is required for copilot models.\n"
-            "Install it with:  pip install github-copilot-sdk[/red]"
-        )
-        raise SystemExit(1)
-
-    client = CopilotClient()
-    await client.start()
-
-    try:
-        session = await client.create_session(
-            model=profile.model_id,
-            tools=[],
-            on_permission_request=_on_permission_request_copilot,
-        )
-
-        collected: list[str] = []
-        done = asyncio.Event()
-
-        def on_event(event):
-            etype = getattr(event, "type", None)
-            etype_val = etype.value if hasattr(etype, "value") else str(etype)
-            if etype_val == "assistant.message_delta":
-                delta = getattr(event.data, "delta_content", "") or ""
-                if delta:
-                    collected.append(delta)
-                    console.print(delta, end="")
-            elif etype_val == "assistant.message":
-                content = getattr(event.data, "content", "")
-                if content and not collected:
-                    collected.append(content)
-                    console.print(Markdown(content))
-            elif etype_val in ("session.idle", "session.end"):
-                done.set()
-
-        session.on(on_event)
-        combined_message = f"{agent_def.prompt}\n\n{prompt}"
-        await session.send(combined_message)
-
-        try:
-            await asyncio.wait_for(done.wait(), timeout=300)
-        except asyncio.TimeoutError:
-            console.print("\n[yellow]Session timed out after 5 minutes.[/yellow]")
-
-        await session.disconnect()
-    finally:
-        await client.stop()
-
-    console.print()
-    return "".join(collected)
-
-
-async def _run_copilot_orchestrator(manager, prompt, profile: ModelProfile, cwd, max_turns, resume_from=None) -> str:
-    """Execute the orchestrator via the GitHub Copilot SDK with delegation support."""
-    try:
-        from copilot import CopilotClient, define_tool
-    except ImportError:
-        console.print(
-            "[red]The 'github-copilot-sdk' package is required for copilot models.\n"
-            "Install it with:  pip install github-copilot-sdk[/red]"
-        )
-        raise SystemExit(1)
-
-    client = CopilotClient()
-    await client.start()
-
-    try:
-        plan_approval_tool, plan_state = _build_plan_approval_tool()
-        delegate_tool = _build_delegate_tool(client, profile, resume_from=resume_from, plan_state=plan_state)
-        human_input_tool = _build_human_input_tool()
-
-        tools = _resolve_copilot_tools(manager.tools or [])
-        tools.append(plan_approval_tool)
-        tools.append(delegate_tool)
-        tools.append(human_input_tool)
-
-        session = await client.create_session(
-            model=profile.model_id,
-            tools=[],
-            on_permission_request=_on_permission_request_copilot,
-        )
-
-        collected: list[str] = []
-        done = asyncio.Event()
-
-        def on_event(event):
-            etype = getattr(event, "type", None)
-            etype_val = etype.value if hasattr(etype, "value") else str(etype)
-            if etype_val == "assistant.message_delta":
-                delta = getattr(event.data, "delta_content", "") or ""
-                if delta:
-                    collected.append(delta)
-                    console.print(delta, end="")
-            elif etype_val == "assistant.message":
-                content = getattr(event.data, "content", "")
-                if content and not collected:
-                    collected.append(content)
-                    console.print(Markdown(content))
-            elif etype_val in ("session.idle", "session.end"):
-                done.set()
-
-        session.on(on_event)
-        combined_message = f"{manager.prompt}\n\n{prompt}"
-        await session.send(combined_message)
-
-        try:
-            await asyncio.wait_for(done.wait(), timeout=600)
-        except asyncio.TimeoutError:
-            console.print("\n[yellow]Orchestrator session timed out after 10 minutes.[/yellow]")
-
-        await session.disconnect()
-    finally:
-        await client.stop()
-
-    console.print()
-    return "".join(collected)
-
-
-def _build_delegate_tool(client, profile: ModelProfile, resume_from=None, plan_state=None):
-    """Build a custom tool that delegates tasks to specialist agents."""
-    try:
-        from copilot import define_tool
-        from pydantic import BaseModel, Field
-    except ImportError:
-        return None
-
-    # Create a new CheckpointWriter for this orchestration session
-    from qa_ecosystem.checkpoint import CheckpointWriter
-    checkpoint_writer = resume_from if resume_from is not None else CheckpointWriter()
-
-    # Depth tracking for delegation
-    depth_counter: list[int] = [0]
-
-    # Accumulate workflow steps for context saving
-    workflow_steps: list[dict] = []
-
-    class DelegateParams(BaseModel):
-        agent_name: str = Field(description="Name of the specialist agent to invoke")
-        task_prompt: str = Field(description="The task/prompt to send to the specialist agent")
-
-    @define_tool(
-        description=(
-            "Delegate a task to a specialist QA agent. IMPORTANT: You must call "
-            "submit_execution_plan first and receive approval before using this tool. "
-            "Available agents: "
-            "test-case-generator, requirements-analyst, bug-pattern-analyst, "
-            "regression-optimizer, ai-test-architect, synthetic-data-designer, "
-            "test-oracle-creator, test-results-analyst, testware-creator, "
-            "playwright-test-generator, ui-test-designer, api-coverage-planner, "
-            "pr-hygiene-checker, security-scout, coverage-hunter, flake-triage, "
-            "seed-data-manager"
-        )
-    )
-    async def delegate_to_agent(params: DelegateParams) -> str:
-        # Enforce plan approval before any delegation
-        if plan_state is not None and not plan_state.get("approved", False):
-            return (
-                "[Delegation blocked] You must call submit_execution_plan and "
-                "receive user approval before delegating to any agent."
-            )
-
-        # Depth enforcement
-        if depth_counter[0] >= MAX_DELEGATION_DEPTH:
-            return (
-                f"[Delegation refused: MAX_DELEGATION_DEPTH={MAX_DELEGATION_DEPTH} reached. "
-                f"Cannot delegate to '{params.agent_name}'.]"
-            )
-
-        # Resume support — skip already-completed agents
-        already_done, cached_result = checkpoint_writer.is_completed(params.agent_name)
-        if already_done:
-            console.print(
-                f"[dim]⟳  Skipping '{params.agent_name}' — already completed in checkpoint.[/dim]\n"
-            )
-            return cached_result
-
-        depth_counter[0] += 1
-        _log("delegation", agent=params.agent_name, depth=depth_counter[0])
-
-        try:
-            from qa_ecosystem.agents import get_agent
-
-            agent_def = get_agent(params.agent_name)
-            sub_profile = resolve_model(agent_role="default")
-
-            console.print(
-                f"\n[dim]-> Delegating to {params.agent_name} "
-                f"(model: {sub_profile.model_id})...[/dim]\n"
-            )
-
-            MAX_RETRIES = 3
-            last_exc: Exception | None = None
-            result = ""
-
-            for attempt in range(MAX_RETRIES):
-                try:
-                    child_done: asyncio.Event = asyncio.Event()
-                    child_collected: list[str] = []
-
-                    child_session = await client.create_session(
-                        model=sub_profile.model_id,
-                        tools=[],
-                        on_permission_request=_on_permission_request_copilot,
-                    )
-
-                    def on_child_event(event):
-                        etype = getattr(event, "type", None)
-                        etype_val = etype.value if hasattr(etype, "value") else str(etype)
-                        if etype_val == "assistant.message_delta":
-                            delta = getattr(event.data, "delta_content", "") or ""
-                            if delta:
-                                child_collected.append(delta)
-                        elif etype_val == "assistant.message":
-                            content = getattr(event.data, "content", "")
-                            if content:
-                                child_collected.append(content)
-                        elif etype_val in ("session.idle", "session.end"):
-                            child_done.set()
-
-                    child_session.on(on_child_event)
-                    combined_task_message = f"{agent_def.prompt}\n\n{params.task_prompt}"
-                    await child_session.send(combined_task_message)
-
-                    try:
-                        await asyncio.wait_for(child_done.wait(), timeout=300)
-                    except asyncio.TimeoutError:
-                        child_collected.append("\n[Subagent timed out after 5 minutes]")
-
-                    await child_session.disconnect()
-                    result = "".join(child_collected)
-                    break
-
-                except (asyncio.TimeoutError, Exception) as exc:
-                    last_exc = exc
-                    if attempt == MAX_RETRIES - 1:
-                        raise
-                    delay = 2 ** attempt
-                    console.print(
-                        f"[yellow]⟳  Retry {attempt + 1}/{MAX_RETRIES} for "
-                        f"'{params.agent_name}' in {delay}s ({exc})[/yellow]"
-                    )
-                    _log("retry_attempt", agent=params.agent_name, attempt=attempt + 1, error=str(exc))
-                    await asyncio.sleep(delay)
-
-            console.print(f"[dim]<- {params.agent_name} returned {len(result)} chars[/dim]\n")
-
-            # Persist checkpoint step
-            checkpoint_writer.append_step(
-                agent_name=params.agent_name,
-                prompt=params.task_prompt,
-                result=result,
-            )
-
-            # Accumulate for workflow context
-            workflow_steps.append({
-                "agent_name": params.agent_name,
-                "prompt": params.task_prompt,
-                "result": result,
-            })
-            if len(workflow_steps) >= 2:
-                _save_workflow_context(workflow_steps)
-
-            return result
-
-        finally:
-            depth_counter[0] -= 1
-
-    return delegate_to_agent
-
-
-def _build_human_input_tool():
-    """Build a tool that pauses the orchestrator and prompts the user for input."""
-    try:
-        from copilot import define_tool
-        from pydantic import BaseModel, Field
-    except ImportError:
-        return None
-
-    class HumanInputParams(BaseModel):
-        message: str = Field(description="Message or findings to display to the user before asking for input")
-
-    @define_tool(
-        description=(
-            "Pause the workflow and present findings or questions to the human operator, "
-            "then wait for their reply before continuing. Use this after requirements-analyst "
-            "returns its ambiguity report so the user can provide updated or clarified requirements."
-        )
-    )
-    async def request_human_input(params: HumanInputParams) -> str:
-        console.print(
-            Panel(
-                params.message,
-                title="[bold yellow]Agent is asking for input[/bold yellow]",
-                border_style="yellow",
-            )
-        )
-        reply = await _prompt_user()
-        return reply or "(no reply provided)"
-
-    return request_human_input
-
-
-def _build_plan_approval_tool():
-    """Build a tool that presents the execution plan for user approval before delegation begins."""
-    try:
-        from copilot import define_tool
-        from pydantic import BaseModel, Field
-    except ImportError:
-        return None, {}
-
-    # Shared state: the delegate_to_agent tool checks this before running
-    plan_state: dict = {"approved": False, "plan": []}
-
-    class PlanStep(BaseModel):
-        step: int = Field(description="Step number in the execution sequence (1-based)")
-        agent_name: str = Field(description="Name of the specialist agent to invoke")
-        description: str = Field(description="What this agent will do and what it produces")
-        depends_on: str = Field(default="", description="Step number(s) this depends on, or empty for none")
-
-    class PlanParams(BaseModel):
-        objective: str = Field(description="One-line summary of the overall testing goal")
-        steps: list[PlanStep] = Field(description="Ordered list of agent execution steps")
-
-    @define_tool(
-        description=(
-            "REQUIRED FIRST STEP: Submit your execution plan for human approval BEFORE "
-            "calling delegate_to_agent. Present the ordered list of agents you intend to "
-            "invoke, what each will do, and their dependencies. The user can approve the "
-            "plan as-is, edit it (reorder, add, or remove agents), or reject it entirely. "
-            "You MUST call this tool and receive approval before any delegation."
-        )
-    )
-    async def submit_execution_plan(params: PlanParams) -> str:
-        plan_lines = [f"[bold]Objective:[/bold] {params.objective}\n"]
-        plan_lines.append("[bold]Execution Plan:[/bold]\n")
-        for s in params.steps:
-            dep = f" (after step {s.depends_on})" if s.depends_on else ""
-            plan_lines.append(f"  {s.step}. [cyan]{s.agent_name}[/cyan]{dep}")
-            plan_lines.append(f"     {s.description}")
-
-        console.print(
-            Panel(
-                "\n".join(plan_lines),
-                title="[bold blue]Proposed Execution Plan[/bold blue]",
-                border_style="blue",
-            )
-        )
-        console.print(
-            "[bold yellow]Options:[/bold yellow]\n"
-            "  [green]y[/green] / Enter  — Approve and start execution\n"
-            "  [cyan]edit[/cyan]         — Open plan as a markdown file for editing\n"
-            "  [red]n[/red]              — Reject the plan\n"
-            "  Or type modifications directly (e.g. 'remove step 3', 'swap steps 2 and 4', "
-            "'add security-scout after step 5')\n"
-        )
-        reply = await _prompt_user_plan()
-
-        if reply is None or reply in ("y", "yes", ""):
-            plan_state["approved"] = True
-            plan_state["plan"] = [
-                {"step": s.step, "agent": s.agent_name, "description": s.description}
-                for s in params.steps
-            ]
-            return (
-                "APPROVED. Proceed with delegation in the approved order. "
-                "Call delegate_to_agent for each step now."
-            )
-
-        if reply in ("n", "no"):
-            plan_state["approved"] = False
-            return (
-                "REJECTED by user. Do NOT proceed with delegation. "
-                "Ask the user what they would like instead."
-            )
-
-        if reply == "edit":
-            # Save plan to a markdown file for external editing
-            plan_md = _save_plan_to_file(params)
-            return (
-                f"Plan saved to {plan_md} for editing. "
-                "The user will edit the file and re-run the orchestrator with the updated input. "
-                "Do NOT proceed with delegation now — the session will end."
-            )
-
-        # User typed inline modifications — return them to the LLM
-        plan_state["approved"] = False
-        return (
-            f"User requested changes: {reply}\n"
-            "Revise your plan according to these instructions and call submit_execution_plan "
-            "again with the updated plan."
-        )
-
-    return submit_execution_plan, plan_state
-
-
-def _save_plan_to_file(params) -> Path:
-    """Save the proposed execution plan to a markdown file for external editing."""
-    OUTPUTS_DIR.mkdir(parents=True, exist_ok=True)
-    timestamp = datetime.now().strftime("%Y-%m-%d_%H-%M-%S")
-    plan_file = OUTPUTS_DIR / f"execution_plan_{timestamp}.md"
-
-    lines = [
-        f"# Execution Plan\n",
-        f"**Objective:** {params.objective}\n",
-        f"## Steps\n",
-        "| Step | Agent | Description | Depends On |",
-        "|------|-------|-------------|------------|",
-    ]
-    for s in params.steps:
-        lines.append(f"| {s.step} | {s.agent_name} | {s.description} | {s.depends_on or '-'} |")
-    lines.append("\n---\n*Edit this file, then re-run `qa-agent orchestrate` with the updated input.*\n")
-
-    plan_file.write_text("\n".join(lines), encoding="utf-8")
-    console.print(f"[dim]Plan saved to {plan_file} — edit and re-run.[/dim]\n")
-    return plan_file
-
-
-async def _prompt_user_plan() -> str | None:
-    """Prompt the user for plan approval. Returns None if they just press Enter (approve)."""
-    loop = asyncio.get_event_loop()
-    reply = await loop.run_in_executor(None, lambda: input("> ").strip())
-    if not reply:
-        return None
-    return reply.lower()
-
-
-def _resolve_copilot_tools(tool_names: list[str]) -> list:
-    """Map abstract tool-set names to Copilot SDK tool identifiers."""
-    return [t for t in tool_names if t != "Agent"]
-
-
-# ═══════════════════════════════════════════════════════════════════════════════
-# Claude Agent SDK path (backward compatibility)
-# ═══════════════════════════════════════════════════════════════════════════════
-
-async def _run_claude_single(agent_def, prompt, profile: ModelProfile, cwd, max_turns) -> str:
-    try:
-        from claude_agent_sdk import ClaudeAgentOptions, query
-    except ImportError:
-        console.print(
-            "[red]The 'claude-agent-sdk' package is required for claude models.\n"
-            "Install it with:  pip install claude-agent-sdk[/red]"
-        )
-        raise SystemExit(1)
-
-    options = ClaudeAgentOptions(
-        system_prompt=agent_def.prompt,
-        allowed_tools=agent_def.tools or [],
-        model=profile.model_id,
-        max_turns=max_turns,
-        cwd=cwd or ".",
-        permission_mode=DEFAULT_PERMISSION_MODE,
-    )
-    return await _stream_claude(prompt, options)
-
-
-async def _run_claude_orchestrator(manager, prompt, profile: ModelProfile, cwd, max_turns) -> str:
-    from qa_ecosystem.agents import get_all_agents
-    try:
-        from claude_agent_sdk import ClaudeAgentOptions, query
-    except ImportError:
-        console.print(
-            "[red]The 'claude-agent-sdk' package is required for claude models.\n"
-            "Install it with:  pip install claude-agent-sdk[/red]"
-        )
-        raise SystemExit(1)
-
-    subagents = get_all_agents()
-
-    options = ClaudeAgentOptions(
-        system_prompt=manager.prompt,
-        allowed_tools=manager.tools or [],
-        agents=subagents,
-        model=profile.model_id,
-        max_turns=max_turns,
-        cwd=cwd or ".",
-        permission_mode=DEFAULT_PERMISSION_MODE,
-    )
-    return await _stream_claude(prompt, options)
-
-
-async def _stream_claude(prompt: str, options) -> str:
-    from claude_agent_sdk import query
-
-    collected: list[str] = []
-    async for message in query(prompt=prompt, options=options):
-        text = _extract_text(message)
-        if text:
-            collected.append(text)
-            console.print(Markdown(text))
-    return "\n".join(collected)
-
-
-# ═══════════════════════════════════════════════════════════════════════════════
-# Direct Anthropic API path
-# ═══════════════════════════════════════════════════════════════════════════════
-
-async def _run_anthropic_api(system_prompt: str, user_prompt: str, profile: ModelProfile) -> str:
-    """Execute via the Anthropic Messages API directly (no Claude Code CLI required)."""
-    try:
-        import anthropic as anthropic_sdk
-    except ImportError:
-        console.print(
-            "[red]The 'anthropic' package is required for the anthropic-api provider.\n"
-            "Install it with:  pip install anthropic[/red]"
-        )
-        raise SystemExit(1)
-
-    api_key = profile.resolve_api_key()
-    if not api_key:
-        console.print(
-            f"[red]No API key found for profile '{profile.name}'.\n"
-            "Set the ANTHROPIC_API_KEY environment variable.[/red]"
-        )
-        raise SystemExit(1)
-
-    client = anthropic_sdk.AsyncAnthropic(api_key=api_key)
-    console.print(f"[dim]Streaming from Anthropic API: {profile.model_id} ...[/dim]\n")
-
-    messages: list[dict] = [{"role": "user", "content": user_prompt}]
-    all_turns: list[str] = []
-
-    while True:
-        collected: list[str] = []
-        async with client.messages.stream(
-            model=profile.model_id,
-            system=system_prompt,
-            messages=messages,
-            temperature=profile.temperature,
-            max_tokens=profile.max_tokens,
-        ) as stream:
-            async for text in stream.text_stream:
-                collected.append(text)
-                console.print(text, end="")
-
-        console.print()
-        turn_text = "".join(collected)
-        all_turns.append(turn_text)
-        messages.append({"role": "assistant", "content": turn_text})
-
-        if not _has_question(turn_text):
-            break
-
-        user_reply = await _prompt_user()
-        if user_reply is None:
-            break
-        messages.append({"role": "user", "content": user_reply})
-
-    return "\n\n".join(all_turns)
-
-
-# ═══════════════════════════════════════════════════════════════════════════════
-# OpenAI / OpenAI-compatible path
-# ═══════════════════════════════════════════════════════════════════════════════
-
-async def _run_openai(system_prompt: str, user_prompt: str, profile: ModelProfile) -> str:
-    """Execute via the OpenAI Chat Completions API (works with GPT, Ollama, LM Studio, etc.)."""
-    try:
-        from openai import AsyncOpenAI
-    except ImportError:
-        console.print(
-            "[red]The 'openai' package is required for non-Claude models.\n"
-            "Install it with:  pip install openai[/red]"
-        )
-        raise SystemExit(1)
-
-    api_key = profile.resolve_api_key()
-    if not api_key:
-        console.print(
-            f"[red]No API key found for profile '{profile.name}'.\n"
-            f"Set the {profile.api_key_env or 'API key'} environment variable.[/red]"
-        )
-        raise SystemExit(1)
-
-    client_kwargs: dict = {"api_key": api_key}
-    if profile.api_base:
-        client_kwargs["base_url"] = profile.api_base
-
-    client = AsyncOpenAI(**client_kwargs)
-
-    console.print(f"[dim]Streaming from {profile.provider}:{profile.model_id} ...[/dim]\n")
-
-    messages: list[dict] = [
-        {"role": "system", "content": system_prompt},
-        {"role": "user", "content": user_prompt},
-    ]
-    all_turns: list[str] = []
-
-    while True:
-        collected: list[str] = []
-        stream = await client.chat.completions.create(
-            model=profile.model_id,
-            messages=messages,
-            temperature=profile.temperature,
-            max_tokens=profile.max_tokens,
-            stream=True,
-        )
-
-        async for chunk in stream:
-            delta = chunk.choices[0].delta if chunk.choices else None
-            if delta and delta.content:
-                collected.append(delta.content)
-                console.print(delta.content, end="")
-
-        console.print()
-        turn_text = "".join(collected)
-        all_turns.append(turn_text)
-        messages.append({"role": "assistant", "content": turn_text})
-
-        if not _has_question(turn_text):
-            break
-
-        user_reply = await _prompt_user()
-        if user_reply is None:
-            break
-        messages.append({"role": "user", "content": user_reply})
-
-    return "\n\n".join(all_turns)
-
-
-# ═══════════════════════════════════════════════════════════════════════════════
-# Helpers
-# ═══════════════════════════════════════════════════════════════════════════════
-
-def _has_question(text: str) -> bool:
-    """Return True if the agent's response ends with a question."""
-    lines = [l.strip() for l in text.strip().splitlines() if l.strip()]
-    if not lines:
-        return False
-    return lines[-1].endswith("?")
-
-
-async def _prompt_user() -> str | None:
-    """Prompt the user for a reply in the terminal. Returns None if they skip."""
-    console.print("\n[bold yellow]Agent is asking a question. Type your reply (or press Enter to skip):[/bold yellow]")
-    loop = asyncio.get_event_loop()
-    reply = await loop.run_in_executor(None, lambda: input("> ").strip())
-    if not reply:
-        console.print("[dim]No reply given — continuing without response.[/dim]\n")
-        return None
-    console.print()
-    return reply
-
-
-def _extract_text(message: object) -> str | None:
-    """Extract printable text from a Claude Agent SDK message."""
-    if hasattr(message, "result") and message.result:
-        return str(message.result)
-    if hasattr(message, "content") and message.content:
-        parts = [block.text for block in message.content if hasattr(block, "text")]
-        if parts:
-            return "\n".join(parts)
-    return None
-
-
-def _print_model_banner(profile: ModelProfile, agent_label: str) -> None:
-    """Print a short banner showing which model will be used."""
-    provider_tag = {
-        "copilot": "GitHub Copilot",
-        "claude": "Anthropic Claude (Agent SDK)",
-        "anthropic-api": "Anthropic API (direct)",
-        "openai": "OpenAI",
-        "openai-compatible": "Local / Compatible",
-    }.get(profile.provider, profile.provider)
-
-    info = (
-        f"[bold]{agent_label}[/bold]\n"
-        f"Provider : {provider_tag}\n"
-        f"Model    : {profile.model_id}\n"
-        f"Profile  : {profile.name}"
-    )
-    if profile.api_base:
-        info += f"\nEndpoint : {profile.api_base}"
-
-    console.print(Panel(info, title="Model Config", border_style="blue", expand=False))
-    console.print()
-
-    if VERBOSE:
-        console.print(
-            f"[dim]VERBOSE — Full profile: provider={profile.provider}, "
-            f"model_id={profile.model_id}, temperature={profile.temperature}, "
-            f"max_tokens={profile.max_tokens}, api_base={profile.api_base}, "
-            f"api_key_env={profile.api_key_env}[/dim]\n"
-        )
 
 
 def run_sync(coro):
