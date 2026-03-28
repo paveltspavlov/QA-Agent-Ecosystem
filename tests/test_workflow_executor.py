@@ -102,11 +102,18 @@ def test_get_workflow_feature_testing():
 
 def test_get_workflow_playwright_gen():
     wf = get_workflow("playwright-gen")
-    assert len(wf.steps) == 5
-    # coverage-hunter depends on both ui-test-designer and seed-data-manager
-    step4 = wf.get_step(4)
-    assert step4.agent == "coverage-hunter"
-    assert set(step4.dependencies) == {2, 3}
+    assert len(wf.steps) == 10
+    # test-validator depends on ui-test-designer, seed-data-manager, and api-coverage-planner
+    step5 = wf.get_step(5)
+    assert step5.agent == "test-validator"
+    assert set(step5.dependencies) == {2, 3, 4}
+    # accessibility-auditor and performance-profiler run in parallel after discovery
+    step9 = wf.get_step(9)
+    assert step9.agent == "accessibility-auditor"
+    assert step9.dependencies == [1]
+    step10 = wf.get_step(10)
+    assert step10.agent == "performance-profiler"
+    assert step10.dependencies == [1]
 
 
 def test_get_workflow_unknown_raises():

@@ -11,6 +11,7 @@ EXPECTED_SKILLS = [
     "istqb_techniques",
     "output_format_guidelines",
     "page_object_model",
+    "playwright_conventions",
     "playwright_selector_strategy",
     "playwright_waiting_strategy",
     "priority_ranking",
@@ -21,7 +22,7 @@ EXPECTED_SKILLS = [
 
 def test_list_skills_returns_all():
     skills = list_skills()
-    assert len(skills) == 10
+    assert len(skills) == 11
     for expected in EXPECTED_SKILLS:
         assert expected in skills, f"Skill '{expected}' not found in list_skills()"
 

@@ -46,12 +46,27 @@ def _log(event: str, **kwargs) -> None:
         fh.write(json.dumps(entry) + "\n")
 
 
-def _save_agent_result(agent_name: str, result: str, output_format: str = "markdown") -> Path:
-    """Save an agent result to outputs/{agent_name}/{timestamp}.md or .json."""
+def _save_agent_result(
+    agent_name: str,
+    result: str,
+    output_format: str = "markdown",
+    prompt: str = "",
+) -> Path:
+    """Save an agent result to outputs/{agent_name}/{timestamp}.md or .json.
+
+    For playwright-test-generator the result is parsed into structured output
+    with separate test files, a concise summary, and the full raw output —
+    all stored under ``outputs/{app-name}/{timestamp}/``.
+    """
     import json as _json
+    timestamp = datetime.now().strftime("%Y-%m-%d_%H-%M-%S")
+
+    # ── Playwright agents get structured output ─────────────────────────
+    if agent_name == "playwright-test-generator":
+        return _save_playwright_result(result, prompt, timestamp)
+
     agent_dir = OUTPUTS_DIR / agent_name
     agent_dir.mkdir(parents=True, exist_ok=True)
-    timestamp = datetime.now().strftime("%Y-%m-%d_%H-%M-%S")
     if output_format == "json":
         out_file = agent_dir / f"{timestamp}.json"
         payload = {"agent": agent_name, "timestamp": timestamp, "result": result}
@@ -61,6 +76,78 @@ def _save_agent_result(agent_name: str, result: str, output_format: str = "markd
         out_file.write_text(result, encoding="utf-8")
     console.print(f"[dim]Result saved → {out_file}[/dim]\n")
     return out_file
+
+
+def _save_playwright_result(result: str, prompt: str, timestamp: str) -> Path:
+    """Parse and save playwright-test-generator output into structured folders.
+
+    Creates::
+
+        outputs/{app-name}/{timestamp}/
+        ├── summary.md              # Short test-results overview
+        ├── generated-tests/        # Extracted .spec.ts and .page.ts files
+        │   ├── *.spec.ts
+        │   └── *.page.ts
+        └── full-output.md          # Complete raw agent output
+    """
+    from qa_ecosystem.output_parser import save_playwright_session, parse_playwright_output
+
+    session_dir, saved_files = save_playwright_session(
+        raw_output=result,
+        prompt=prompt,
+        output_dir=OUTPUTS_DIR,
+        timestamp=timestamp,
+    )
+
+    # ── Print a concise session recap to the console ────────────────────
+    parsed = parse_playwright_output(result)
+    n_specs = len(parsed.test_files)
+    n_pages = len(parsed.page_objects)
+    n_fixtures = len(parsed.fixture_files)
+    n_helpers = len(parsed.helper_files)
+    n_results = len(parsed.test_results)
+
+    console.print()
+    recap_lines: list[str] = [
+        f"[bold green]Test session saved → {session_dir}[/bold green]",
+        "",
+        f"  [cyan]Specs generated :[/cyan] {n_specs}",
+        f"  [cyan]Page objects    :[/cyan] {n_pages}",
+    ]
+    if n_fixtures:
+        recap_lines.append(f"  [cyan]Fixtures        :[/cyan] {n_fixtures}")
+    if n_helpers:
+        recap_lines.append(f"  [cyan]Helpers         :[/cyan] {n_helpers}")
+
+    if parsed.app_map:
+        app_pages = len(parsed.app_map.get("pages", []))
+        recap_lines.append(f"  [cyan]App map pages  :[/cyan] {app_pages}")
+
+    if parsed.test_results:
+        passed = sum(1 for r in parsed.test_results if r["status"] == "passed")
+        failed = sum(1 for r in parsed.test_results if r["status"] == "failed")
+        recap_lines.append(f"  [cyan]Tests executed  :[/cyan] {n_results}  "
+                           f"([green]{passed} passed[/green], [red]{failed} failed[/red])")
+    else:
+        recap_lines.append(f"  [cyan]Tests executed  :[/cyan] (not captured — run tests with "
+                           f"[bold]npx playwright test[/bold])")
+
+    recap_lines.append("")
+    recap_lines.append(f"  [dim]Summary       → {session_dir / 'summary.md'}[/dim]")
+    if parsed.app_map:
+        recap_lines.append(f"  [dim]App map       → {session_dir / 'app-map.json'}[/dim]")
+    recap_lines.append(f"  [dim]Test files    → {session_dir / 'generated-tests/'}[/dim]")
+    recap_lines.append(f"  [dim]Full output   → {session_dir / 'full-output.md'}[/dim]")
+
+    console.print(Panel(
+        "\n".join(recap_lines),
+        title="[bold blue]Playwright Session Results[/bold blue]",
+        border_style="blue",
+        expand=False,
+    ))
+    console.print()
+
+    return session_dir
 
 
 def _save_manager_instructions(instructions: str) -> Path:
@@ -189,7 +276,7 @@ async def run_single_agent(
         console.print(f"[dim]--- END result ---[/dim]\n")
 
     _log("agent_complete", agent=agent_name, result_length=len(result))
-    _save_agent_result(agent_name, result, output_format=output_format)
+    _save_agent_result(agent_name, result, output_format=output_format, prompt=prompt)
     return result
 
 

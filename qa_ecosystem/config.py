@@ -67,6 +67,8 @@ AGENT_NAMES = [
     "accessibility-auditor",
     "performance-profiler",
     "api-contract-validator",
+    "test-validator",
+    "inventory-builder",
 ]
 
 # Playwright-specific agent names (for CLI filtering)
@@ -82,4 +84,6 @@ PLAYWRIGHT_AGENT_NAMES = [
     "accessibility-auditor",
     "performance-profiler",
     "api-contract-validator",
+    "test-validator",
+    "inventory-builder",
 ]

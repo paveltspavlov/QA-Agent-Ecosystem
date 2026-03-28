@@ -65,4 +65,6 @@ def _ensure_loaded() -> None:
         accessibility_auditor,
         performance_profiler,
         api_contract_validator,
+        test_validator,
+        inventory_builder,
     )

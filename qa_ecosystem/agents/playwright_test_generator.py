@@ -14,64 +14,117 @@ DESCRIPTION = (
 )
 
 _BASE_PROMPT = """\
-You are an expert QA automation engineer specializing in Playwright end-to-end testing. Your role is
-to explore web applications, discover testable surfaces, and generate production-quality Playwright
-TypeScript test code.
+You are an expert Playwright automation engineer. Explore web apps, discover testable surfaces,
+and generate production-quality TypeScript test code.
 
-IMPORTANT: Start immediately using the URL provided in the user message.
-Do NOT ask the user for the URL, focus areas, or any other information.
-Begin the Discovery Phase right away.
+IMPORTANT: Start immediately using the URL in the user message. Do NOT ask for clarification.
 
 Discovery Phase:
-Use the Bash tool to run Playwright CLI commands for exploration:
-- `npx playwright codegen --output=<file> <url>` — record user interactions and generate code
-- `npx playwright test --list` — list all discovered tests in the project
-- `npx playwright test --reporter=json` — run tests and capture structured results
-- `npx playwright show-trace <trace.zip>` — inspect trace files for debugging
+Run Playwright CLI commands via Bash:
+- `npx playwright codegen --output=<file> <url>` — record interactions
+- `npx playwright test --reporter=json --trace=retain-on-failure` — run with traces
+Read source code, route definitions, and sitemaps to map the application.
 
-Read existing source code, route definitions, and sitemap files to build a map of the application's
-pages, forms, API endpoints, and navigation flows.
+Network Discovery:
+Intercept API calls during exploration using page.on('request', ...) to capture fetch/xhr
+endpoints. Include discovered endpoints in the app map under "apiEndpoints".
 
-Code Generation Rules:
+App Map:
+Produce a JSON app map: { baseUrl, pages[{path, title, forms, buttons, links}], navigation, auth, apiEndpoints }.
+This feeds downstream agents (ui-test-designer, coverage-hunter, seed-data-manager).
 
-1. Selectors:
-   - Prefer accessibility-first selectors: getByRole(), getByLabel(), getByText()
-   - Use data-testid attributes when semantic selectors are unavailable
-   - Never use fragile CSS class selectors or XPath
+Code Generation (follow Playwright Conventions skill for selectors and waiting):
+- *.spec.ts with Arrange-Act-Assert, test.describe() blocks, test.beforeEach() for setup
+- *.page.ts using Page Object Model pattern
+- Tag every test: @ui, @smoke, or @regression
 
-2. Waiting:
-   - Rely on Playwright's built-in auto-waiting; never use hardcoded sleeps
-   - Use expect(locator).toBeVisible() and page.waitForURL() for explicit waits
-
-3. Test Structure:
-   - Generate *.spec.ts files with descriptive test names
-   - Follow Arrange-Act-Assert pattern in every test
-   - Use test.describe() blocks to group related scenarios
-   - Include test.beforeEach() for common setup (navigation, auth)
-
-4. Page Objects:
-   - Create *.page.ts files using the Page Object Model pattern
-   - Encapsulate locators and actions; never expose raw locators in tests
-
-5. Test Tagging:
-   - Tag every test with at least one category: @ui, @smoke, @regression
-   - Use test.describe('Feature @smoke @regression', ...) or test annotations
-   - Smoke tests must be independent and fast (< 30 seconds each)
-
-Output:
-- Provide complete, runnable *.spec.ts files alongside their *.page.ts page objects
-- Include a brief summary of discovered pages, forms, and user journeys
-- Note any areas that need manual review or additional test coverage
+Output Structure (code blocks MUST have filename comment on first line):
+### 1. App Map — JSON block
+### 2. Discovery Summary — brief overview
+### 3. Page Objects — ```typescript // login.page.ts ...```
+### 4. Test Specs — ```typescript // login.spec.ts ...```
+### 5. Test Results — run `npx playwright test --reporter=list`, report pass/fail
+### 6. Coverage Notes — areas needing additional coverage
 """
 
 SKILLS = [
-    "playwright_selector_strategy",
-    "playwright_waiting_strategy",
-    "page_object_model",
+    "playwright_conventions",
     "test_data_factory",
 ]
 
 SYSTEM_PROMPT = build_prompt(_BASE_PROMPT, skills=SKILLS)
+
+# Structured output schema for reliable artifact extraction
+OUTPUT_SCHEMA = {
+    "type": "object",
+    "properties": {
+        "appMap": {
+            "type": "object",
+            "description": "Structured application map from exploration",
+            "properties": {
+                "baseUrl": {"type": "string"},
+                "pages": {
+                    "type": "array",
+                    "items": {
+                        "type": "object",
+                        "properties": {
+                            "path": {"type": "string"},
+                            "title": {"type": "string"},
+                            "forms": {"type": "array"},
+                            "buttons": {"type": "array", "items": {"type": "string"}},
+                            "links": {"type": "array", "items": {"type": "string"}},
+                            "interactiveElements": {"type": "array", "items": {"type": "string"}},
+                        },
+                    },
+                },
+                "navigation": {"type": "object"},
+                "auth": {"type": "object"},
+                "apiEndpoints": {
+                    "type": "array",
+                    "description": "API endpoints discovered during exploration",
+                    "items": {
+                        "type": "object",
+                        "properties": {
+                            "method": {"type": "string"},
+                            "path": {"type": "string"},
+                            "description": {"type": "string"},
+                        },
+                    },
+                },
+            },
+        },
+        "files": {
+            "type": "array",
+            "description": "All generated code files",
+            "items": {
+                "type": "object",
+                "properties": {
+                    "path": {"type": "string", "description": "Filename e.g. login.spec.ts"},
+                    "type": {"type": "string", "enum": ["spec", "page", "component", "fixture", "helper"]},
+                    "content": {"type": "string", "description": "Full file content"},
+                },
+                "required": ["path", "type", "content"],
+            },
+        },
+        "testResults": {
+            "type": "array",
+            "description": "Results from running the generated tests",
+            "items": {
+                "type": "object",
+                "properties": {
+                    "name": {"type": "string"},
+                    "status": {"type": "string", "enum": ["passed", "failed", "skipped"]},
+                    "duration": {"type": "string"},
+                    "error": {"type": "string"},
+                },
+                "required": ["name", "status"],
+            },
+        },
+        "summary": {"type": "string", "description": "Discovery summary text"},
+        "coverageNotes": {"type": "string", "description": "Areas needing additional coverage"},
+    },
+    "required": ["files", "summary"],
+}
 
 definition = AgentDefinition(
     description=DESCRIPTION,
@@ -79,6 +132,7 @@ definition = AgentDefinition(
     tools=TOOL_SETS["playwright_full"],
     model=DEFAULT_MODEL,
     category="execution",
+    output_schema=OUTPUT_SCHEMA,
 )
 
 register_agent(AGENT_NAME, definition)

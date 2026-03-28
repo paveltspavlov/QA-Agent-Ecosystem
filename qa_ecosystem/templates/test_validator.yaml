@@ -1,0 +1,68 @@
+agent: test-validator
+templates:
+  - name: "default"
+    description: "Validate generated Playwright tests — compile, run, fix, verify"
+    prompt: |
+      Validate the generated Playwright test suite in the following directory.
+
+      Test directory: {test_directory}
+
+      Run the full validation pipeline:
+      1. TypeScript compilation check (npx tsc --noEmit)
+      2. Execute tests with trace collection (--trace=retain-on-failure)
+      3. Diagnose and fix any failures (max 3 iterations)
+      4. Run stability check on fixed tests (--repeat-each=3)
+      5. Produce a validation report
+
+  - name: "compile-only"
+    description: "Check TypeScript compilation without running tests"
+    prompt: |
+      Check TypeScript compilation for the following test files.
+
+      Test files:
+      {test_files}
+
+      Run: npx tsc --noEmit --project playwright/tsconfig.json
+      Fix any type errors, missing imports, or incorrect method signatures.
+      Report all fixes applied.
+
+  - name: "fix-failures"
+    description: "Fix specific failing tests from a previous run"
+    prompt: |
+      Fix the following test failures from a previous Playwright run.
+
+      Test results (JSON):
+      {test_results_json}
+
+      For each failure:
+      1. Read the error message and identify the root cause category
+      2. Inspect the trace file if available
+      3. Apply the fix directly using Edit
+      4. Re-run and verify the fix
+
+  - name: "stability-check"
+    description: "Run repeat-each stability check on tests"
+    prompt: |
+      Run a stability check on the following test files to detect flakiness.
+
+      Test files:
+      {test_files}
+
+      Run: npx playwright test {test_files} --repeat-each=5 --reporter=list
+      Report any tests that fail intermittently.
+      Flag flaky tests for flake-triage review.
+
+  - name: "trace-diagnosis"
+    description: "Diagnose test failures using Playwright traces"
+    prompt: |
+      Diagnose test failures using the collected Playwright traces.
+
+      Trace directory: {trace_directory}
+      Failing tests:
+      {failing_tests}
+
+      For each failure:
+      1. Open the trace: npx playwright show-trace <trace.zip>
+      2. Analyze action timing, network waterfall, and screenshots
+      3. Identify the root cause from trace evidence
+      4. Apply the fix and verify

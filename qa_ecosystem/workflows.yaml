@@ -70,28 +70,48 @@ workflows:
 
   playwright-gen:
     name: "Playwright Test Generation"
-    description: "Generate Playwright tests with POM pattern and quality gates"
+    description: "Generate Playwright tests with POM pattern, validation, quality gates, and a11y/perf audits"
     steps:
       - index: 1
         agent: playwright-test-generator
-        description: "Explore website and generate Playwright tests"
+        description: "Explore website, build app map, discover API endpoints, and generate Playwright tests"
         dependencies: []
       - index: 2
         agent: ui-test-designer
-        description: "Create Page Object Model classes"
+        description: "Create Page Object Model classes with responsive viewport testing"
         dependencies: [1]
       - index: 3
         agent: seed-data-manager
         description: "Set up test fixtures and data factories"
         dependencies: [1]
       - index: 4
-        agent: coverage-hunter
-        description: "Verify test coverage and identify gaps"
-        dependencies: [2, 3]
+        agent: api-coverage-planner
+        description: "Plan API test coverage from discovered endpoints"
+        dependencies: [1]
       - index: 5
+        agent: test-validator
+        description: "Compile and run generated tests with trace collection, fix failures"
+        dependencies: [2, 3, 4]
+      - index: 6
+        agent: inventory-builder
+        description: "Build shared test inventory index with fixture and helper tracking"
+        dependencies: [5]
+      - index: 7
+        agent: coverage-hunter
+        description: "Verify test coverage using inventory index"
+        dependencies: [6]
+      - index: 8
         agent: pr-hygiene-checker
-        description: "Run 8-check code quality gate"
-        dependencies: [4]
+        description: "Run 11-check code quality gate"
+        dependencies: [6]
+      - index: 9
+        agent: accessibility-auditor
+        description: "Run WCAG 2.1 AA accessibility audit on discovered pages"
+        dependencies: [1]
+      - index: 10
+        agent: performance-profiler
+        description: "Profile Core Web Vitals and page load performance"
+        dependencies: [1]
 
   flake-investigation:
     name: "Flaky Test Investigation"

@@ -1,0 +1,64 @@
+agent: inventory-builder
+templates:
+  - name: "default"
+    description: "Build full test inventory index"
+    prompt: |
+      Build a complete test inventory index for the Playwright project.
+
+      Project directory: {project_directory}
+
+      Scan all page objects, test specs, API tests, fixtures, and helpers.
+      Cross-reference coverage and identify gaps.
+      Write the inventory to test-inventory.json.
+
+  - name: "delta-update"
+    description: "Update existing inventory with changes since last build"
+    prompt: |
+      Update the existing test inventory index.
+
+      Project directory: {project_directory}
+      Existing inventory: {inventory_path}
+
+      Check staleness, scan for changes, and produce a delta summary
+      showing what was added, removed, or changed since the last build.
+
+  - name: "coverage-gaps"
+    description: "Focus on identifying coverage gaps"
+    prompt: |
+      Analyze the test inventory and identify all coverage gaps.
+
+      Project directory: {project_directory}
+
+      Focus on:
+      - Page objects with no test references
+      - Methods never called in any test
+      - App map pages without page objects
+      - Missing negative test scenarios
+      - Missing test tags (@smoke, @regression, @ui)
+      - Unused fixtures and helpers
+
+  - name: "fixture-audit"
+    description: "Audit fixture and helper usage"
+    prompt: |
+      Audit fixture and helper file usage across the test suite.
+
+      Project directory: {project_directory}
+
+      For each fixture and helper file:
+      - Which specs import and use it
+      - Whether it's unused (dead code)
+      - Whether multiple specs duplicate similar setup that could be a shared fixture
+
+  - name: "cross-reference"
+    description: "Cross-reference app map against test coverage"
+    prompt: |
+      Cross-reference the app map from playwright-test-generator against the
+      current test inventory.
+
+      App map: {app_map_path}
+      Project directory: {project_directory}
+
+      For each page, form, and navigation link in the app map:
+      - Does a page object exist?
+      - Are there tests exercising it?
+      - Are there API endpoints discovered but not tested?

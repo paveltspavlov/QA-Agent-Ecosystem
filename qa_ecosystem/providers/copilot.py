@@ -15,6 +15,39 @@ from qa_ecosystem.models import ModelProfile, resolve_model
 console = Console()
 
 # ---------------------------------------------------------------------------
+# Pydantic tool-parameter models — must live at module level so that
+# ``typing.get_type_hints()`` (called by the Copilot SDK's ``@define_tool``
+# decorator) can resolve the forward references produced by
+# ``from __future__ import annotations``.  Python 3.14 made this stricter.
+# The try/except keeps the module importable when pydantic is not installed.
+# ---------------------------------------------------------------------------
+try:
+    from pydantic import BaseModel, Field
+
+    class DelegateParams(BaseModel):
+        agent_name: str = Field(description="Name of the specialist agent to invoke")
+        task_prompt: str = Field(description="The task/prompt to send to the specialist agent")
+
+    class HumanInputParams(BaseModel):
+        message: str = Field(description="Message or findings to display to the user before asking for input")
+
+    class PlanStep(BaseModel):
+        step: int = Field(description="Step number in the execution sequence (1-based)")
+        agent_name: str = Field(description="Name of the specialist agent to invoke")
+        description: str = Field(description="What this agent will do and what it produces")
+        depends_on: str = Field(default="", description="Step number(s) this depends on, or empty for none")
+
+    class PlanParams(BaseModel):
+        objective: str = Field(description="One-line summary of the overall testing goal")
+        steps: list[PlanStep] = Field(description="Ordered list of agent execution steps")
+
+except ImportError:
+    DelegateParams = None  # type: ignore[assignment,misc]
+    HumanInputParams = None  # type: ignore[assignment,misc]
+    PlanStep = None  # type: ignore[assignment,misc]
+    PlanParams = None  # type: ignore[assignment,misc]
+
+# ---------------------------------------------------------------------------
 # Module-level approve-all flag (shared across the session)
 # ---------------------------------------------------------------------------
 _approve_all: bool = False
@@ -87,6 +120,8 @@ async def run_single(agent_def, prompt, profile: ModelProfile, cwd, max_turns) -
             model=profile.model_id,
             tools=[],
             on_permission_request=on_permission_request,
+            system_message={"mode": "replace", "content": agent_def.prompt},
+            streaming=True,
         )
 
         collected: list[str] = []
@@ -109,20 +144,38 @@ async def run_single(agent_def, prompt, profile: ModelProfile, cwd, max_turns) -
                 done.set()
 
         session.on(on_event)
-        combined_message = f"{agent_def.prompt}\n\n{prompt}"
-        await session.send(combined_message)
+        await session.send(prompt)
 
-        try:
-            await asyncio.wait_for(done.wait(), timeout=300)
-        except asyncio.TimeoutError:
-            console.print("\n[yellow]Session timed out after 5 minutes.[/yellow]")
+        all_turns: list[str] = []
+
+        while True:
+            try:
+                await asyncio.wait_for(done.wait(), timeout=300)
+            except asyncio.TimeoutError:
+                console.print("\n[yellow]Session timed out after 5 minutes.[/yellow]")
+                break
+
+            turn_text = "".join(collected)
+            all_turns.append(turn_text)
+
+            if not _has_question(turn_text):
+                break
+
+            user_reply = await _prompt_user()
+            if user_reply is None:
+                break
+
+            # Reset for the next turn
+            collected.clear()
+            done.clear()
+            await session.send(user_reply)
 
         await session.disconnect()
     finally:
         await client.stop()
 
     console.print()
-    return "".join(collected)
+    return "\n\n".join(all_turns)
 
 
 async def run_orchestrator(manager, prompt, profile: ModelProfile, cwd, max_turns, resume_from=None, log_fn=None, save_workflow_fn=None) -> str:
@@ -156,6 +209,8 @@ async def run_orchestrator(manager, prompt, profile: ModelProfile, cwd, max_turn
             model=profile.model_id,
             tools=[],
             on_permission_request=on_permission_request,
+            system_message={"mode": "replace", "content": manager.prompt},
+            streaming=True,
         )
 
         collected: list[str] = []
@@ -178,8 +233,7 @@ async def run_orchestrator(manager, prompt, profile: ModelProfile, cwd, max_turn
                 done.set()
 
         session.on(on_event)
-        combined_message = f"{manager.prompt}\n\n{prompt}"
-        await session.send(combined_message)
+        await session.send(prompt)
 
         try:
             await asyncio.wait_for(done.wait(), timeout=600)
@@ -202,8 +256,10 @@ def build_delegate_tool(client, profile: ModelProfile, resume_from=None, plan_st
     """Build a custom tool that delegates tasks to specialist agents."""
     try:
         from copilot import define_tool
-        from pydantic import BaseModel, Field
     except ImportError:
+        return None
+
+    if DelegateParams is None:
         return None
 
     from qa_ecosystem.checkpoint import CheckpointWriter
@@ -214,10 +270,6 @@ def build_delegate_tool(client, profile: ModelProfile, resume_from=None, plan_st
 
     _log = log_fn or (lambda *a, **kw: None)
     _save_wf = save_workflow_fn or (lambda *a, **kw: None)
-
-    class DelegateParams(BaseModel):
-        agent_name: str = Field(description="Name of the specialist agent to invoke")
-        task_prompt: str = Field(description="The task/prompt to send to the specialist agent")
 
     @define_tool(
         description=(
@@ -284,6 +336,8 @@ def build_delegate_tool(client, profile: ModelProfile, resume_from=None, plan_st
                         model=sub_profile.model_id,
                         tools=[],
                         on_permission_request=on_permission_request,
+                        system_message={"mode": "replace", "content": agent_def.prompt},
+                        streaming=True,
                     )
 
                     def on_child_event(event):
@@ -301,8 +355,7 @@ def build_delegate_tool(client, profile: ModelProfile, resume_from=None, plan_st
                             child_done.set()
 
                     child_session.on(on_child_event)
-                    combined_task_message = f"{agent_def.prompt}\n\n{params.task_prompt}"
-                    await child_session.send(combined_task_message)
+                    await child_session.send(params.task_prompt)
 
                     try:
                         await asyncio.wait_for(child_done.wait(), timeout=300)
@@ -353,12 +406,11 @@ def build_human_input_tool():
     """Build a tool that pauses the orchestrator and prompts the user for input."""
     try:
         from copilot import define_tool
-        from pydantic import BaseModel, Field
     except ImportError:
         return None
 
-    class HumanInputParams(BaseModel):
-        message: str = Field(description="Message or findings to display to the user before asking for input")
+    if HumanInputParams is None:
+        return None
 
     @define_tool(
         description=(
@@ -385,21 +437,13 @@ def build_plan_approval_tool():
     """Build a tool that presents the execution plan for user approval."""
     try:
         from copilot import define_tool
-        from pydantic import BaseModel, Field
     except ImportError:
         return None, {}
 
+    if PlanParams is None:
+        return None, {}
+
     plan_state: dict = {"approved": False, "plan": []}
-
-    class PlanStep(BaseModel):
-        step: int = Field(description="Step number in the execution sequence (1-based)")
-        agent_name: str = Field(description="Name of the specialist agent to invoke")
-        description: str = Field(description="What this agent will do and what it produces")
-        depends_on: str = Field(default="", description="Step number(s) this depends on, or empty for none")
-
-    class PlanParams(BaseModel):
-        objective: str = Field(description="One-line summary of the overall testing goal")
-        steps: list[PlanStep] = Field(description="Ordered list of agent execution steps")
 
     @define_tool(
         description=(
@@ -479,6 +523,14 @@ def build_plan_approval_tool():
 def _resolve_tools(tool_names: list[str]) -> list:
     """Map abstract tool-set names to Copilot SDK tool identifiers."""
     return [t for t in tool_names if t != "Agent"]
+
+
+def _has_question(text: str) -> bool:
+    """Return True if the agent's response ends with a question."""
+    lines = [l.strip() for l in text.strip().splitlines() if l.strip()]
+    if not lines:
+        return False
+    return lines[-1].endswith("?")
 
 
 async def _prompt_user() -> str | None:

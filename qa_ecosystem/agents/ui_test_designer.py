@@ -14,70 +14,100 @@ DESCRIPTION = (
 )
 
 _BASE_PROMPT = """\
-You are a senior UI test automation architect specializing in Playwright TypeScript. Your role is to
-design and implement robust, maintainable UI test suites using the Page Object Model pattern and
-Playwright best practices.
+You are a senior UI test automation architect specializing in Playwright TypeScript.
+Design and implement robust, maintainable test suites using POM pattern.
 
-Use the Bash tool to run Playwright commands such as:
-- `npx playwright test` — execute the test suite
-- `npx playwright test --project=chromium` — run against a specific browser
-- `npx playwright test --ui` — launch the interactive UI mode
-- `npx playwright codegen <url>` — generate code from recorded interactions
+Bash commands: `npx playwright test`, `npx playwright test --project=chromium`,
+`npx playwright codegen <url>`, `npx playwright screenshot <url> --full-page <path>`.
 
-Multi-Browser Configuration:
-- Configure projects in playwright.config.ts for chromium, firefox, webkit
-- Use conditional logic for browser-specific workarounds only when necessary
-- Run cross-browser tests in CI with sharding: --shard=1/3
+Multi-Browser: configure chromium/firefox/webkit projects in playwright.config.ts.
+Use --shard=1/3 for CI. Browser-specific workarounds only when necessary.
 
-Timeout Constants (define in a shared constants file):
-- SHORT_TIMEOUT = 3_000   (3 seconds — element appearance)
-- MEDIUM_TIMEOUT = 5_000  (5 seconds — API responses)
-- LONG_TIMEOUT = 10_000   (10 seconds — file uploads, complex operations)
-- NAVIGATION_TIMEOUT = 15_000 (15 seconds — full page navigations)
-- NEVER use hardcoded numeric timeouts directly in test code
-- NEVER use page.waitForTimeout() or any sleep-based waiting
+Timeout Constants (shared helpers file — never hardcode numbers):
+SHORT=3s, MEDIUM=5s, LONG=10s, NAVIGATION=15s.
 
-Test Organization:
-- Group tests with test.describe() by feature or user journey
-- Use test.beforeEach() and test.afterEach() for setup/teardown
-- Follow Arrange-Act-Assert pattern in every test
-- Tag tests: @ui, @smoke, @regression for filtering
+Responsive Viewports: mobile (375×667), tablet (768×1024), desktop (1280×720).
+Use test.describe() per viewport with page.setViewportSize() in beforeEach(),
+or separate projects in playwright.config.ts.
 
-Mockup vs Implementation Comparison:
-When given a mockup file (image, PDF, HTML wireframe, or Figma export) alongside a live app URL:
-1. Open the app with `npx playwright codegen <url>` or direct Bash navigation to capture each page.
-2. Use the Bash tool to take screenshots of each relevant page/section:
-   `npx playwright screenshot --browser chromium <url> --full-page <output-path>`
-3. For each page or section, compare the screenshot against the corresponding mockup area:
-   - Layout: element positioning, spacing, alignment, responsive breakpoints
-   - Visual: colors, typography, icons, images
-   - Content: labels, placeholder text, headings
-   - Functional: presence/absence of buttons, links, forms, navigation items
-   - Responsive: differences at mobile (375px), tablet (768px), desktop (1280px) viewports
-4. Document every deviation as a structured finding with:
-   - Which page/section is affected
-   - What the mockup shows (expected)
-   - What the live app shows (actual)
-   - Severity: Critical (core functionality missing), High (visible layout break),
-     Medium (cosmetic difference), Low (minor copy/style variance)
-   - Screenshot path of the actual implementation
-5. Return all findings as a structured list so testware-creator can format them as bug reports.
+Mockup Comparison (when given a mockup + live URL):
+1. Screenshot each page: `npx playwright screenshot --browser chromium <url> --full-page <path>`
+2. Compare layout, visual, content, functional, responsive aspects
+3. Document deviations: page, expected, actual, severity (Critical/High/Medium/Low), screenshot
+4. Return structured list for testware-creator bug reports
 
-Output:
-- Complete page object files, fixture files, and spec files
-- A playwright.config.ts snippet if multi-browser setup is needed
-- Notes on any accessibility concerns discovered during test design
-- When performing mockup comparison: a structured deviation list ready for bug report generation
+Output (code blocks MUST have filename comment on first line):
+### 1. Page Objects — *.page.ts
+### 2. Component Objects — *.component.ts
+### 3. Fixtures — *.fixture.ts
+### 4. Test Specs — *.spec.ts
+### 5. Configuration — playwright.config.ts snippet if needed
+### 6. Accessibility Notes
+### 7. Mockup Deviations (if applicable)
 """
 
 SKILLS = [
-    "playwright_selector_strategy",
-    "playwright_waiting_strategy",
-    "page_object_model",
+    "playwright_conventions",
     "auth_state_caching",
 ]
 
 SYSTEM_PROMPT = build_prompt(_BASE_PROMPT, skills=SKILLS)
+
+# Structured output schema for reliable artifact extraction
+OUTPUT_SCHEMA = {
+    "type": "object",
+    "properties": {
+        "files": {
+            "type": "array",
+            "description": "All generated code files",
+            "items": {
+                "type": "object",
+                "properties": {
+                    "path": {"type": "string", "description": "Filename e.g. login.page.ts"},
+                    "type": {
+                        "type": "string",
+                        "enum": ["page", "component", "fixture", "spec", "config"],
+                    },
+                    "content": {"type": "string", "description": "Full file content"},
+                },
+                "required": ["path", "type", "content"],
+            },
+        },
+        "configSnippet": {
+            "type": "string",
+            "description": "playwright.config.ts snippet for multi-browser/viewport setup",
+        },
+        "accessibilityNotes": {
+            "type": "array",
+            "description": "Accessibility concerns discovered during test design",
+            "items": {
+                "type": "object",
+                "properties": {
+                    "page": {"type": "string"},
+                    "issue": {"type": "string"},
+                    "severity": {"type": "string", "enum": ["Critical", "High", "Medium", "Low"]},
+                    "recommendation": {"type": "string"},
+                },
+            },
+        },
+        "mockupDeviations": {
+            "type": "array",
+            "description": "Deviations found during mockup comparison (if applicable)",
+            "items": {
+                "type": "object",
+                "properties": {
+                    "page": {"type": "string"},
+                    "expected": {"type": "string"},
+                    "actual": {"type": "string"},
+                    "severity": {"type": "string", "enum": ["Critical", "High", "Medium", "Low"]},
+                    "screenshotPath": {"type": "string"},
+                },
+            },
+        },
+        "summary": {"type": "string", "description": "Summary of designed test architecture"},
+    },
+    "required": ["files", "summary"],
+}
 
 definition = AgentDefinition(
     description=DESCRIPTION,
@@ -85,6 +115,7 @@ definition = AgentDefinition(
     tools=TOOL_SETS["playwright_full"],
     model=DEFAULT_MODEL,
     category="execution",
+    output_schema=OUTPUT_SCHEMA,
 )
 
 register_agent(AGENT_NAME, definition)
