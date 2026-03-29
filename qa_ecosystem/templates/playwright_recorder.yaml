@@ -1,0 +1,76 @@
+agent: playwright-recorder
+templates:
+  - name: "default"
+    description: "Convert test cases into automated Playwright tests"
+    prompt: |
+      Convert the following test cases into automated Playwright TypeScript tests:
+
+      TARGET URL: {url}
+
+      Test Cases:
+      {test_cases}
+
+      Requirements:
+      - Create Page Object Model classes for each page
+      - Generate spec files with test cases mapped to Playwright actions
+      - Use accessibility-first selectors (getByRole, getByLabel, getByText)
+      - Preserve test case IDs in test titles for traceability
+      - Write all files to disk using the Write tool
+
+  - name: "from-file"
+    description: "Generate Playwright tests from a test case file"
+    prompt: |
+      Read and convert the test cases from the following file into Playwright tests:
+
+      Test Case File: {test_case_file}
+      TARGET URL: {url}
+
+      Requirements:
+      - Parse all test cases from the file
+      - Create POM classes and spec files
+      - Map every test step to a Playwright action + assertion
+      - Write files to playwright/tests/exploratory/
+
+  - name: "single-feature"
+    description: "Record Playwright tests for a single feature"
+    prompt: |
+      Generate Playwright tests for a single feature:
+
+      TARGET URL: {url}
+      Feature: {feature_name}
+      Test Cases:
+      {test_cases}
+
+      Requirements:
+      - Create one page object and one spec file for the feature
+      - Implement all test case steps as Playwright actions
+      - Tag tests appropriately (@smoke, @regression, @exploratory)
+
+  - name: "codegen-assisted"
+    description: "Use Playwright codegen CLI to record and refine tests"
+    prompt: |
+      Use Playwright codegen to record interactions and generate tests:
+
+      TARGET URL: {url}
+      Output Directory: {output_dir}
+
+      Steps:
+      1. Run: npx playwright codegen --target=playwright-test --output={output_dir}/recorded.spec.ts {url}
+      2. Refine the recorded tests with POM pattern
+      3. Add assertions for expected behavior
+      4. Tag and organize tests by feature
+
+  - name: "api-tests"
+    description: "Generate Playwright API tests from test cases"
+    prompt: |
+      Generate Playwright API tests using APIRequestContext:
+
+      Base URL: {url}
+      API Endpoints:
+      {api_endpoints}
+
+      Requirements:
+      - Create API test specs using request fixture
+      - Test each endpoint with valid and invalid payloads
+      - Assert status codes, response schemas, and error messages
+      - Include authentication and authorization test cases

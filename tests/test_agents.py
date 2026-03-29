@@ -7,7 +7,6 @@ from qa_ecosystem.agents import (
     get_agent,
     get_all_agents,
     list_agents,
-    AGENT_REGISTRY,
 )
 from qa_ecosystem.sdk_adapter import AgentDefinition, AgentResult
 

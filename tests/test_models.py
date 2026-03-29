@@ -1,5 +1,4 @@
 """Unit tests for qa_ecosystem/models.py"""
-import os
 import pytest
 
 

@@ -164,7 +164,7 @@ def cmd_run(args: argparse.Namespace) -> None:
 
 def cmd_orchestrate(args: argparse.Namespace) -> None:
     """Run the Test Manager orchestrator."""
-    from qa_ecosystem.runner import run_orchestrator, run_single_agent, run_sync
+    from qa_ecosystem.runner import run_orchestrator, run_sync
     from qa_ecosystem.metrics import start_run, finish_run
     from qa_ecosystem.templates import fill_template
 
@@ -257,7 +257,7 @@ def _run_workflow_mode(args: argparse.Namespace, raw_input: str) -> None:
     # Validate
     errors = workflow.validate()
     if errors:
-        console.print(f"[red]Workflow validation errors:[/red]")
+        console.print("[red]Workflow validation errors:[/red]")
         for err in errors:
             console.print(f"  [red]• {err}[/red]")
         return
@@ -502,7 +502,6 @@ def cmd_init(_args: argparse.Namespace) -> None:
 
 def cmd_doctor(_args: argparse.Namespace) -> None:
     """Validate configuration, API keys, gh auth, and Playwright."""
-    import os
     from pathlib import Path
 
     checks: list[tuple[str, bool, str]] = []
@@ -519,7 +518,7 @@ def cmd_doctor(_args: argparse.Namespace) -> None:
         checks.append((
             f"API key for default profile ({profile.name})",
             key_ok,
-            f"Set the required env var (e.g. ANTHROPIC_API_KEY) in your .env file",
+            "Set the required env var (e.g. ANTHROPIC_API_KEY) in your .env file",
         ))
     except Exception as exc:
         checks.append(("Default model profile resolves", False, str(exc)))
@@ -555,7 +554,7 @@ def cmd_doctor(_args: argparse.Namespace) -> None:
         from qa_ecosystem.models import list_profiles
         profiles = list_profiles()
         yaml_ok = len(profiles) >= 1
-    except Exception as exc:
+    except Exception:
         yaml_ok = False
     checks.append(("models.yaml valid and has profiles", yaml_ok,
                    "Check qa_ecosystem/models.yaml for YAML syntax errors"))
@@ -680,7 +679,7 @@ def cmd_list_skills(_args: argparse.Namespace) -> None:
         table.add_row(name, preview)
 
     console.print(table)
-    console.print(f"\n[dim]Skills directory: qa_ecosystem/skills/[/dim]\n")
+    console.print("\n[dim]Skills directory: qa_ecosystem/skills/[/dim]\n")
 
 
 def cmd_chain(args: argparse.Namespace) -> None:

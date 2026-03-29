@@ -3,8 +3,6 @@
 from __future__ import annotations
 
 from pathlib import Path
-from typing import Any
-
 import yaml
 
 TEMPLATES_DIR = Path(__file__).parent

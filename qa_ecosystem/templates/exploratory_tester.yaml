@@ -1,0 +1,71 @@
+agent: exploratory-tester
+templates:
+  - name: "default"
+    description: "Full exploratory testing session on a web application"
+    prompt: |
+      Perform exploratory testing on the following web application:
+
+      TARGET URL: {url}
+
+      Requirements:
+      - Discover all pages, forms, and interactive elements
+      - Generate structured test cases with detailed steps and expected results
+      - Cover positive, negative, and edge case scenarios
+      - Assign priority and identify automation candidates
+      - Produce at least 15 test cases
+
+  - name: "focused"
+    description: "Focused exploratory testing on specific areas"
+    prompt: |
+      Perform focused exploratory testing on the following web application:
+
+      TARGET URL: {url}
+      Focus Areas: {focus_areas}
+
+      Requirements:
+      - Concentrate testing on the specified focus areas
+      - Discover and document all interactive elements in those areas
+      - Generate test cases with detailed steps for each focus area
+      - Include boundary value and error handling scenarios
+
+  - name: "regression-discovery"
+    description: "Discover regression test candidates from exploratory session"
+    prompt: |
+      Perform exploratory testing to identify regression test candidates:
+
+      TARGET URL: {url}
+      Recent Changes: {recent_changes}
+
+      Requirements:
+      - Focus on areas affected by recent changes
+      - Identify critical user journeys that should be regression tested
+      - Generate test cases suitable for automated regression testing
+      - Flag high-risk areas and potential side effects
+
+  - name: "form-validation"
+    description: "Exploratory testing focused on forms and input validation"
+    prompt: |
+      Perform exploratory testing focused on form validation:
+
+      TARGET URL: {url}
+      Form Description: {form_description}
+
+      Requirements:
+      - Discover all forms and input fields
+      - Test boundary values, special characters, and empty submissions
+      - Verify required field enforcement and inline validation
+      - Generate test cases for positive, negative, and edge cases
+
+  - name: "user-journey"
+    description: "Exploratory testing of end-to-end user journeys"
+    prompt: |
+      Perform exploratory testing of user journeys:
+
+      TARGET URL: {url}
+      User Personas: {user_personas}
+
+      Requirements:
+      - Map critical user journeys from entry to completion
+      - Test each journey with different user personas
+      - Identify alternate and error paths
+      - Generate end-to-end test cases with complete step sequences

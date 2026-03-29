@@ -23,7 +23,7 @@ from rich.console import Console
 from rich.panel import Panel
 
 from qa_ecosystem.config import MAX_TURNS_ORCHESTRATED, MAX_TURNS_SINGLE
-from qa_ecosystem.metrics import start_run, record_agent, finish_run
+from qa_ecosystem.metrics import record_agent
 from qa_ecosystem.models import ModelProfile, resolve_model
 
 console = Console()
@@ -129,8 +129,8 @@ def _save_playwright_result(result: str, prompt: str, timestamp: str) -> Path:
         recap_lines.append(f"  [cyan]Tests executed  :[/cyan] {n_results}  "
                            f"([green]{passed} passed[/green], [red]{failed} failed[/red])")
     else:
-        recap_lines.append(f"  [cyan]Tests executed  :[/cyan] (not captured — run tests with "
-                           f"[bold]npx playwright test[/bold])")
+        recap_lines.append("  [cyan]Tests executed  :[/cyan] (not captured — run tests with "
+                           "[bold]npx playwright test[/bold])")
 
     recap_lines.append("")
     recap_lines.append(f"  [dim]Summary       → {session_dir / 'summary.md'}[/dim]")
@@ -235,7 +235,7 @@ async def run_single_agent(
     if VERBOSE:
         console.print(f"[dim]--- VERBOSE: Full prompt for {agent_name} ---[/dim]")
         console.print(prompt)
-        console.print(f"[dim]--- END prompt ---[/dim]\n")
+        console.print("[dim]--- END prompt ---[/dim]\n")
 
     _log("agent_start", agent=agent_name, model=profile.model_id, provider=profile.provider)
 
@@ -273,7 +273,7 @@ async def run_single_agent(
     if VERBOSE:
         console.print(f"[dim]--- VERBOSE: Full result from {agent_name} ---[/dim]")
         console.print(result)
-        console.print(f"[dim]--- END result ---[/dim]\n")
+        console.print("[dim]--- END result ---[/dim]\n")
 
     _log("agent_complete", agent=agent_name, result_length=len(result))
     _save_agent_result(agent_name, result, output_format=output_format, prompt=prompt)

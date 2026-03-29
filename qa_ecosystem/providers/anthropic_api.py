@@ -67,7 +67,7 @@ async def run(system_prompt: str, user_prompt: str, profile: ModelProfile) -> st
 
 def _has_question(text: str) -> bool:
     """Return True if the agent's response ends with a question."""
-    lines = [l.strip() for l in text.strip().splitlines() if l.strip()]
+    lines = [ln.strip() for ln in text.strip().splitlines() if ln.strip()]
     if not lines:
         return False
     return lines[-1].endswith("?")

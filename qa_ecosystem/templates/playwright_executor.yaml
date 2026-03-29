@@ -1,0 +1,70 @@
+agent: playwright-executor
+templates:
+  - name: "default"
+    description: "Run Playwright tests and produce execution report"
+    prompt: |
+      Execute the Playwright test suite and produce a comprehensive report.
+
+      Test Directory: {test_directory}
+
+      Pipeline:
+      1. Verify test files exist and Playwright is installed
+      2. Run tests with trace collection
+      3. Diagnose and fix failures (max 3 iterations)
+      4. Run stability check on passing tests
+      5. Generate execution report with pass/fail per test case
+
+  - name: "specific-files"
+    description: "Run specific Playwright test files"
+    prompt: |
+      Execute the following specific Playwright test files:
+
+      Test Files:
+      {test_files}
+
+      Requirements:
+      - Run only the specified files
+      - Collect traces on failure
+      - Report results per test case
+      - Fix failures if possible (max 3 iterations)
+
+  - name: "cross-browser"
+    description: "Run tests across multiple browsers"
+    prompt: |
+      Execute Playwright tests across multiple browsers:
+
+      Test Directory: {test_directory}
+      Browsers: {browsers}
+
+      Requirements:
+      - Run tests on each specified browser (chromium, firefox, webkit)
+      - Compare results across browsers
+      - Flag browser-specific failures
+      - Produce a cross-browser compatibility report
+
+  - name: "smoke-only"
+    description: "Run only smoke-tagged tests"
+    prompt: |
+      Execute only smoke tests for quick validation:
+
+      Test Directory: {test_directory}
+
+      Run: npx playwright test --grep @smoke --reporter=list
+      Requirements:
+      - Run only tests tagged with @smoke
+      - Report pass/fail within 2 minutes
+      - Flag any failures as critical blockers
+
+  - name: "stability-check"
+    description: "Run repeat-each stability check"
+    prompt: |
+      Run a stability check to detect flaky tests:
+
+      Test Directory: {test_directory}
+      Repeat Count: {repeat_count}
+
+      Run: npx playwright test {test_directory} --repeat-each={repeat_count} --reporter=list
+      Requirements:
+      - Identify tests that fail intermittently
+      - Report flakiness rate per test
+      - Suggest fixes for flaky patterns

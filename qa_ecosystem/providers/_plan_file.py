@@ -23,9 +23,9 @@ def save_plan_to_file(params) -> Path:
     plan_file = OUTPUTS_DIR / f"execution_plan_{timestamp}.md"
 
     lines = [
-        f"# Execution Plan\n",
+        "# Execution Plan\n",
         f"**Objective:** {params.objective}\n",
-        f"## Steps\n",
+        "## Steps\n",
         "| Step | Agent | Description | Depends On |",
         "|------|-------|-------------|------------|",
     ]

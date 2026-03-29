@@ -321,7 +321,7 @@ def test_executor_deadlock_detection(tmp_checkpoint):
     async def mock_delegate(agent_name: str, prompt: str) -> str:
         return "ok"
 
-    executor = WorkflowExecutor(wf)
+    WorkflowExecutor(wf)  # ensures constructor doesn't crash
     # The validation should catch this
     errors = wf.validate()
     assert len(errors) > 0

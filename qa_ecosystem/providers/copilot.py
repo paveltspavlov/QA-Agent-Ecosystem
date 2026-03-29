@@ -3,7 +3,6 @@
 from __future__ import annotations
 
 import asyncio
-from pathlib import Path
 
 from rich.console import Console
 from rich.markdown import Markdown
@@ -197,7 +196,7 @@ async def run_single(agent_def, prompt, profile: ModelProfile, cwd, max_turns) -
 async def run_orchestrator(manager, prompt, profile: ModelProfile, cwd, max_turns, resume_from=None, log_fn=None, save_workflow_fn=None) -> str:
     """Execute the orchestrator via the GitHub Copilot SDK with delegation support."""
     try:
-        from copilot import CopilotClient, define_tool
+        from copilot import CopilotClient, define_tool  # noqa: F401
     except ImportError:
         console.print(
             "[red]The 'github-copilot-sdk' package is required for copilot models.\n"
@@ -340,7 +339,6 @@ def build_delegate_tool(client, profile: ModelProfile, resume_from=None, plan_st
             )
 
             MAX_RETRIES = 3
-            last_exc: Exception | None = None
             result = ""
 
             for attempt in range(MAX_RETRIES):
@@ -383,7 +381,6 @@ def build_delegate_tool(client, profile: ModelProfile, resume_from=None, plan_st
                     break
 
                 except (asyncio.TimeoutError, Exception) as exc:
-                    last_exc = exc
                     if attempt == MAX_RETRIES - 1:
                         raise
                     delay = 2 ** attempt
@@ -543,7 +540,7 @@ def _resolve_tools(tool_names: list[str]) -> list:
 
 def _has_question(text: str) -> bool:
     """Return True if the agent's response ends with a question."""
-    lines = [l.strip() for l in text.strip().splitlines() if l.strip()]
+    lines = [ln.strip() for ln in text.strip().splitlines() if ln.strip()]
     if not lines:
         return False
     return lines[-1].endswith("?")

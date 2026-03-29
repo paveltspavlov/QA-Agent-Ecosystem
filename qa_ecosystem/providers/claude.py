@@ -14,7 +14,7 @@ console = Console()
 async def run_single(agent_def, prompt, profile: ModelProfile, cwd, max_turns) -> str:
     """Execute a single agent via Claude Agent SDK."""
     try:
-        from claude_agent_sdk import ClaudeAgentOptions, query
+        from claude_agent_sdk import ClaudeAgentOptions, query  # noqa: F401
     except ImportError:
         console.print(
             "[red]The 'claude-agent-sdk' package is required for claude models.\n"
@@ -37,7 +37,7 @@ async def run_orchestrator(manager, prompt, profile: ModelProfile, cwd, max_turn
     """Execute the orchestrator via Claude Agent SDK with subagent delegation."""
     from qa_ecosystem.agents import get_all_agents
     try:
-        from claude_agent_sdk import ClaudeAgentOptions, query
+        from claude_agent_sdk import ClaudeAgentOptions, query  # noqa: F401
     except ImportError:
         console.print(
             "[red]The 'claude-agent-sdk' package is required for claude models.\n"

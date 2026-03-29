@@ -1,6 +1,4 @@
 """Unit tests for qa_ecosystem/cli.py argument parsing."""
-import sys
-import pytest
 
 
 def test_build_parser_run_command():

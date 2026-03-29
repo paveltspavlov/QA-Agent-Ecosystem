@@ -10,7 +10,7 @@ from __future__ import annotations
 import asyncio
 from dataclasses import dataclass, field
 from pathlib import Path
-from typing import Any, Awaitable, Callable, Literal
+from typing import Awaitable, Callable, Literal
 
 import yaml
 from rich.console import Console

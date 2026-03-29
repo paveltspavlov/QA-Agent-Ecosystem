@@ -373,8 +373,8 @@ def _build_summary(parsed: ParsedTestOutput) -> str:
     total_fixtures = len(parsed.fixture_files)
     total_helpers = len(parsed.helper_files)
     lines.append("## Generated Artifacts\n")
-    lines.append(f"| Type | Count |")
-    lines.append(f"|------|-------|")
+    lines.append("| Type | Count |")
+    lines.append("|------|-------|")
     lines.append(f"| Test specs (`.spec.ts`) | {total_specs} |")
     lines.append(f"| Page objects (`.page.ts`) | {total_pages} |")
     if total_fixtures:
@@ -405,8 +405,8 @@ def _build_summary(parsed: ParsedTestOutput) -> str:
         total = len(parsed.test_results)
 
         lines.append("## Test Results\n")
-        lines.append(f"| Metric | Value |")
-        lines.append(f"|--------|-------|")
+        lines.append("| Metric | Value |")
+        lines.append("|--------|-------|")
         lines.append(f"| Total  | {total} |")
         lines.append(f"| Passed | {passed} |")
         lines.append(f"| Failed | {failed} |")
