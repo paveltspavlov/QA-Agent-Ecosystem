@@ -294,12 +294,23 @@ def _run_workflow_mode(args: argparse.Namespace, raw_input: str) -> None:
             model_override=model_override,
         )
 
+    # Wrap URL inputs with explicit instructions for URL-driven workflows
+    effective_input = raw_input
+    if raw_input.strip().startswith(("http://", "https://")):
+        target_url = raw_input.strip()
+        effective_input = (
+            f"TARGET URL: {target_url}\n\n"
+            f"Perform exploratory testing on the web application at {target_url}.\n"
+            f"Navigate the site, discover all pages, forms, and interactive elements, "
+            f"and generate comprehensive test cases with detailed steps."
+        )
+
     # Execute the workflow
     start_run()
 
     async def _run():
         executor = WorkflowExecutor(workflow, checkpoint=checkpoint)
-        return await executor.execute(delegate, raw_input)
+        return await executor.execute(delegate, effective_input)
 
     results = run_sync(_run())
 
@@ -566,7 +577,7 @@ def cmd_doctor(_args: argparse.Namespace) -> None:
 
 
 def cmd_list_workflows(_args: argparse.Namespace) -> None:
-    """Print all 20 orchestration workflows."""
+    """Print all 21 orchestration workflows."""
     WORKFLOWS = [
         ("1",  "New Feature Testing",          "PBI / user story",                   "requirements-analyst → [human input] → test-case-generator + synthetic-data-designer + test-oracle-creator → testware-creator → test-results-analyst"),
         ("2",  "Bug Prevention & Analysis",    "Bug reports / defect history",        "bug-pattern-analyst → requirements-analyst → test-case-generator → testware-creator"),
@@ -588,9 +599,10 @@ def cmd_list_workflows(_args: argparse.Namespace) -> None:
         ("18", "PR / Code Review QA Gate",     "PR diff + test files",                "pr-hygiene-checker → coverage-hunter → security-scout → testware-creator"),
         ("19", "Post-Deployment Smoke",        "App URL + environment name",          "playwright-test-generator → ui-test-designer → test-results-analyst → testware-creator"),
         ("20", "Requirements Traceability",    "Requirements doc + test suite",       "requirements-analyst → test-case-generator → testware-creator (traceability matrix)"),
+        ("21", "Exploratory Testing",          "App URL (--input)",                   "exploratory-tester → playwright-recorder → playwright-executor"),
     ]
 
-    table = Table(title="QA Agent Ecosystem — 20 Orchestration Workflows")
+    table = Table(title="QA Agent Ecosystem — 21 Orchestration Workflows")
     table.add_column("#", style="dim", width=3)
     table.add_column("Workflow", style="cyan", min_width=28)
     table.add_column("Input Required", style="yellow", min_width=28)
@@ -837,7 +849,7 @@ def build_parser() -> argparse.ArgumentParser:
     sub.add_parser("list-skills", help="List all available shared prompt skill fragments")
 
     # --- list-workflows ---
-    sub.add_parser("list-workflows", help="List all 20 orchestration workflows")
+    sub.add_parser("list-workflows", help="List all 21 orchestration workflows")
 
     # --- list-checkpoints ---
     sub.add_parser("list-checkpoints", help="List all saved orchestration checkpoint sessions")

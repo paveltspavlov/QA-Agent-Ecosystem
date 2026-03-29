@@ -289,6 +289,23 @@ workflows:
         description: "Generate contract compliance report"
         dependencies: [2, 4]
 
+  exploratory-testing:
+    name: "Exploratory Testing"
+    description: "Explore a web app, create test cases with steps, record Playwright tests, and execute them"
+    steps:
+      - index: 1
+        agent: exploratory-tester
+        description: "Explore the web application, discover pages and interactions, generate structured test cases with steps"
+        dependencies: []
+      - index: 2
+        agent: playwright-recorder
+        description: "Convert test cases into automated Playwright TypeScript tests using codegen CLI and POM pattern"
+        dependencies: [1]
+      - index: 3
+        agent: playwright-executor
+        description: "Run the recorded Playwright tests, diagnose failures, apply fixes, and produce execution report"
+        dependencies: [2]
+
   post-deploy-smoke:
     name: "Post-Deployment Smoke & Canary"
     description: "Run critical-path smoke tests against a live deployment"

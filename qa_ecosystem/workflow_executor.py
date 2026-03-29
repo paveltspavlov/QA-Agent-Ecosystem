@@ -259,10 +259,26 @@ class WorkflowExecutor:
                     self._completed[step.index] = cached
 
     def get_ready_steps(self) -> list[WorkflowStep]:
-        """Return steps whose dependencies are all completed and status is pending."""
+        """Return steps whose dependencies are all completed and status is pending.
+
+        Steps whose dependencies have failed are automatically skipped.
+        """
+        failed_indices = {
+            s.index for s in self.workflow.steps if s.status == "failed"
+        }
+
         ready = []
         for step in self.workflow.steps:
             if step.status != "pending":
+                continue
+            # If any dependency failed, skip this step entirely
+            if any(dep in failed_indices for dep in step.dependencies):
+                step.status = "skipped"
+                step.result = "(skipped — dependency failed)"
+                console.print(
+                    f"[yellow]Skipping step [{step.index}] {step.agent} — "
+                    f"dependency produced no output.[/yellow]\n"
+                )
                 continue
             if all(dep in self._completed for dep in step.dependencies):
                 ready.append(step)
@@ -333,6 +349,26 @@ class WorkflowExecutor:
 
         try:
             result = await delegate_fn(step.agent, context)
+
+            # Detect empty results — treat as failure to prevent cascading
+            # empty outputs through downstream agents
+            if not result or not result.strip():
+                step.status = "failed"
+                step.result = "(empty output)"
+                console.print(
+                    f"[red]Step [{step.index}] {step.agent} produced empty output — "
+                    f"marking as failed. Downstream steps depending on this will be "
+                    f"skipped.[/red]\n"
+                )
+                if self.checkpoint:
+                    self.checkpoint.append_step(
+                        agent_name=step.agent,
+                        prompt=context,
+                        result="(empty output)",
+                        status="failed",
+                    )
+                return
+
             step.status = "completed"
             step.result = result
             self._completed[step.index] = result
@@ -360,17 +396,35 @@ class WorkflowExecutor:
     def _build_context(self, step: WorkflowStep, user_prompt: str) -> str:
         """Build prompt context from dependency results and user input."""
         parts = []
+
         if user_prompt:
-            parts.append(f"Original user request:\n{user_prompt}")
-        parts.append(f"\nYour task: {step.description}")
+            parts.append(f"## Original User Input\n\n{user_prompt}")
+
+        # Provide a clear, directive task instruction
+        parts.append(f"\n## Your Task\n\n{step.description}")
+        parts.append(
+            f"You are step [{step.index}] in a {len(self.workflow.steps)}-step workflow: "
+            f"**{self.workflow.name}**."
+        )
+
+        if not step.dependencies:
+            parts.append(
+                "\nYou are the FIRST step. Use the user input above as your primary "
+                "input and produce detailed, structured output that downstream agents "
+                "can consume."
+            )
 
         if step.dependencies:
-            parts.append("\n--- Context from previous steps ---")
+            parts.append("\n## Context from Previous Steps\n")
+            parts.append(
+                "Use the output below from previous agents as your primary input. "
+                "Build upon their work — do NOT repeat discovery they already performed."
+            )
             for dep_idx in step.dependencies:
                 dep_step = self.workflow.get_step(dep_idx)
                 if dep_step and dep_idx in self._completed:
                     parts.append(
-                        f"\n### Output from {dep_step.agent} (step {dep_idx}):\n"
+                        f"\n### Output from [{dep_idx}] {dep_step.agent}:\n"
                         f"{self._completed[dep_idx]}"
                     )
 

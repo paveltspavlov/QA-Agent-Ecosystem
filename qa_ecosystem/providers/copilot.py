@@ -150,9 +150,16 @@ async def run_single(agent_def, prompt, profile: ModelProfile, cwd, max_turns) -
 
         while True:
             try:
-                await asyncio.wait_for(done.wait(), timeout=300)
+                await asyncio.wait_for(done.wait(), timeout=600)
             except asyncio.TimeoutError:
-                console.print("\n[yellow]Session timed out after 5 minutes.[/yellow]")
+                console.print("\n[yellow]Session timed out after 10 minutes.[/yellow]")
+                # Save any partial content collected before timeout
+                partial = "".join(collected)
+                if partial.strip():
+                    all_turns.append(partial)
+                    console.print(
+                        f"\n[dim]Partial output saved ({len(partial)} chars).[/dim]"
+                    )
                 break
 
             turn_text = "".join(collected)
@@ -175,7 +182,16 @@ async def run_single(agent_def, prompt, profile: ModelProfile, cwd, max_turns) -
         await client.stop()
 
     console.print()
-    return "\n\n".join(all_turns)
+    result = "\n\n".join(all_turns)
+
+    if not result.strip():
+        console.print(
+            "[yellow]Warning: Agent produced empty output. This may indicate "
+            "the model did not generate a response or the session ended "
+            "prematurely.[/yellow]"
+        )
+
+    return result
 
 
 async def run_orchestrator(manager, prompt, profile: ModelProfile, cwd, max_turns, resume_from=None, log_fn=None, save_workflow_fn=None) -> str:

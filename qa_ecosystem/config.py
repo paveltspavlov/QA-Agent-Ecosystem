@@ -69,6 +69,10 @@ AGENT_NAMES = [
     "api-contract-validator",
     "test-validator",
     "inventory-builder",
+    # Exploratory testing agents
+    "exploratory-tester",
+    "playwright-recorder",
+    "playwright-executor",
 ]
 
 # Playwright-specific agent names (for CLI filtering)
@@ -86,4 +90,7 @@ PLAYWRIGHT_AGENT_NAMES = [
     "api-contract-validator",
     "test-validator",
     "inventory-builder",
+    "exploratory-tester",
+    "playwright-recorder",
+    "playwright-executor",
 ]

@@ -67,4 +67,8 @@ def _ensure_loaded() -> None:
         api_contract_validator,
         test_validator,
         inventory_builder,
+        # Exploratory testing agents
+        exploratory_tester,
+        playwright_recorder,
+        playwright_executor,
     )
