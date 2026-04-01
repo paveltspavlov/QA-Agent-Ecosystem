@@ -334,6 +334,39 @@ def save_playwright_session(
 # ── Private helpers ──────────────────────────────────────────────────────────
 
 
+def parse_bug_data(raw: str) -> list[dict]:
+    """Extract structured bug data from agent output.
+
+    Looks for a JSON code block containing a ``bugs`` array, typically
+    produced by the playwright-executor agent's structured bug output step.
+    Returns a list of bug dicts, or an empty list if none found.
+    """
+    # Try // bug-data.json annotated block first
+    pattern = re.compile(
+        r'```(?:json)?\s*\n\s*//\s*bug-data\.json\s*\n(\{.*?\})\s*\n```',
+        re.DOTALL,
+    )
+    for match in pattern.finditer(raw):
+        try:
+            data = json.loads(match.group(1))
+            if isinstance(data, dict) and "bugs" in data:
+                return data["bugs"]
+        except (json.JSONDecodeError, ValueError):
+            continue
+
+    # Fallback: any JSON block with a "bugs" array
+    json_pattern = re.compile(r'```(?:json)?\s*\n(\{.*?\})\s*\n```', re.DOTALL)
+    for match in json_pattern.finditer(raw):
+        try:
+            data = json.loads(match.group(1))
+            if isinstance(data, dict) and "bugs" in data and isinstance(data["bugs"], list):
+                return data["bugs"]
+        except (json.JSONDecodeError, ValueError):
+            continue
+
+    return []
+
+
 def _sanitize_dirname(name: str) -> str:
     """Remove characters unsafe for directory names."""
     name = re.sub(r'[<>:"/\\|?*]', '-', name)

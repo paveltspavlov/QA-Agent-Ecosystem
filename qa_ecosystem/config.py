@@ -73,6 +73,10 @@ AGENT_NAMES = [
     "exploratory-tester",
     "playwright-recorder",
     "playwright-executor",
+    # Copilot bridge + reporting agents
+    "playwright-copilot",
+    "bug-reporter",
+    "report-creator",
 ]
 
 # Playwright-specific agent names (for CLI filtering)
@@ -93,4 +97,7 @@ PLAYWRIGHT_AGENT_NAMES = [
     "exploratory-tester",
     "playwright-recorder",
     "playwright-executor",
+    "playwright-copilot",
+    "bug-reporter",
+    "report-creator",
 ]

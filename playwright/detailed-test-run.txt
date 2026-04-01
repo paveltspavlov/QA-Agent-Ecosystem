@@ -1,0 +1,78 @@
+[dotenv@17.3.1] injecting env (0) from .env -- tip: ΓÜÖ∩╕Å  specify custom .env file path with { path: '/custom/path/.env' }
+
+Running 15 tests using 8 workers
+
+[dotenv@17.3.1] injecting env (0) from .env -- tip: ΓÜÖ∩╕Å  write to custom object with { processEnv: myObject }
+[dotenv@17.3.1] injecting env (0) from .env -- tip: ≡ƒñû agentic secret storage: https://dotenvx.com/as2
+[dotenv@17.3.1] injecting env (0) from .env -- tip: ΓÜÖ∩╕Å  suppress all logs with { quiet: true }
+[dotenv@17.3.1] injecting env (0) from .env -- tip: ≡ƒöÉ encrypt with Dotenvx: https://dotenvx.com
+[dotenv@17.3.1] injecting env (0) from .env -- tip: ≡ƒ¢í∩╕Å auth for agents: https://vestauth.com
+[dotenv@17.3.1] injecting env (0) from .env -- tip: ΓÜÖ∩╕Å  enable debug logging with { debug: true }
+[dotenv@17.3.1] injecting env (0) from .env -- tip: ΓÜÖ∩╕Å  specify custom .env file path with { path: '/custom/path/.env' }
+[dotenv@17.3.1] injecting env (0) from .env -- tip: ΓÜÖ∩╕Å  write to custom object with { processEnv: myObject }
+
+=== ROLES AVAILABLE ===
+Role "navigation": 0 elements
+Role "main": 0 elements
+Role "heading": 6 elements
+Role "link": 8 elements
+Role "button": 0 elements
+Role "contentinfo": 1 elements
+
+Total headings (h1-h3): 0
+Total links: 8
+Total buttons: 0
+
+Page title: demosite
+  Γ£ô   5 [chromium] ΓÇ║ tests\ui\smoke.spec.ts:4:7 ΓÇ║ Smoke Tests ΓÇ║ homepage loads successfully (1.4s)
+  Γ£ô   6 [chromium] ΓÇ║ tests\ui\smoke.spec.ts:21:7 ΓÇ║ Smoke Tests ΓÇ║ page has content sections (1.4s)
+  Γ£ô   3 [chromium] ΓÇ║ tests\ui\smoke.spec.ts:12:7 ΓÇ║ Smoke Tests ΓÇ║ navigation links are visible (1.5s)
+  Γ£ô   4 [chromium] ΓÇ║ tests\ui\explore-structure.spec.ts:3:5 ΓÇ║ explore page structure (1.5s)
+  Γ£ô   1 [chromium] ΓÇ║ tests\ui\demoqa-recorded.spec.ts:4:7 ΓÇ║ Exploratory Navigation ΓÇ║ [TC-001] Navigate through Elements section pages (2.6s)
+[dotenv@17.3.1] injecting env (0) from .env -- tip: ΓÜÖ∩╕Å  suppress all logs with { quiet: true }
+[dotenv@17.3.1] injecting env (0) from .env -- tip: ≡ƒ¢í∩╕Å auth for agents: https://vestauth.com
+[dotenv@17.3.1] injecting env (0) from .env -- tip: ≡ƒöÉ prevent committing .env to code: https://dotenvx.com/precommit
+[dotenv@17.3.1] injecting env (0) from .env -- tip: ΓÜÖ∩╕Å  suppress all logs with { quiet: true }
+
+=== ROLES AVAILABLE ===
+Role "navigation": 0 elements
+Role "main": 0 elements
+Role "heading": 6 elements
+Role "link": 8 elements
+Role "button": 0 elements
+Role "contentinfo": 1 elements
+
+Total headings (h1-h3): 0
+Total links: 8
+Total buttons: 0
+
+Page title: demosite
+  Γ£ô   7 [firefox] ΓÇ║ tests\ui\explore-structure.spec.ts:3:5 ΓÇ║ explore page structure (3.6s)
+[dotenv@17.3.1] injecting env (0) from .env -- tip: ΓÜÖ∩╕Å  load multiple .env files with { path: ['.env.local', '.env'] }
+  Γ£ô   2 [firefox] ΓÇ║ tests\ui\demoqa-recorded.spec.ts:4:7 ΓÇ║ Exploratory Navigation ΓÇ║ [TC-001] Navigate through Elements section pages (5.1s)
+
+=== ROLES AVAILABLE ===
+Role "navigation": 0 elements
+Role "main": 0 elements
+Role "heading": 6 elements
+Role "link": 8 elements
+Role "button": 0 elements
+Role "contentinfo": 1 elements
+
+Total headings (h1-h3): 0
+Total links: 8
+Total buttons: 0
+
+Page title: demosite
+  Γ£ô   8 [firefox] ΓÇ║ tests\ui\smoke.spec.ts:4:7 ΓÇ║ Smoke Tests ΓÇ║ homepage loads successfully (4.4s)
+  Γ£ô   9 [webkit] ΓÇ║ tests\ui\explore-structure.spec.ts:3:5 ΓÇ║ explore page structure (3.0s)
+  Γ£ô  13 [webkit] ΓÇ║ tests\ui\smoke.spec.ts:4:7 ΓÇ║ Smoke Tests ΓÇ║ homepage loads successfully (2.4s)
+  Γ£ô  10 [firefox] ΓÇ║ tests\ui\smoke.spec.ts:21:7 ΓÇ║ Smoke Tests ΓÇ║ page has content sections (3.4s)
+[dotenv@17.3.1] injecting env (0) from .env -- tip: ≡ƒñû agentic secret storage: https://dotenvx.com/as2
+  Γ£ô  12 [firefox] ΓÇ║ tests\ui\smoke.spec.ts:12:7 ΓÇ║ Smoke Tests ΓÇ║ navigation links are visible (3.3s)
+[dotenv@17.3.1] injecting env (0) from .env -- tip: ΓÜÖ∩╕Å  override existing env vars with { override: true }
+  Γ£ô  14 [webkit] ΓÇ║ tests\ui\smoke.spec.ts:12:7 ΓÇ║ Smoke Tests ΓÇ║ navigation links are visible (1.3s)
+  Γ£ô  15 [webkit] ΓÇ║ tests\ui\smoke.spec.ts:21:7 ΓÇ║ Smoke Tests ΓÇ║ page has content sections (1.3s)
+  Γ£ô  11 [webkit] ΓÇ║ tests\ui\demoqa-recorded.spec.ts:4:7 ΓÇ║ Exploratory Navigation ΓÇ║ [TC-001] Navigate through Elements section pages (7.8s)
+
+  15 passed (13.9s)

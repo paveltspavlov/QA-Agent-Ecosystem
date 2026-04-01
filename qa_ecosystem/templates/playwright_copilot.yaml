@@ -1,0 +1,49 @@
+agent: playwright-copilot
+templates:
+  - name: "default"
+    description: "Plan test scenarios for a web application using Playwright Copilot"
+    prompt: |
+      Action: plan
+
+      TARGET URL: {target_url}
+
+      Plan comprehensive test scenarios by exploring the target application.
+      Discover all pages, forms, and interactive elements, then write a
+      structured test plan to playwright/specs/plan.md.
+
+  - name: "generate"
+    description: "Generate Playwright tests from an existing test plan"
+    prompt: |
+      Action: generate
+
+      TARGET URL: {target_url}
+
+      Generate Playwright test files from the existing test plan.
+      Read playwright/specs/plan.md and create test files in
+      playwright/tests/generated/ with page objects in playwright/pages/.
+
+  - name: "heal"
+    description: "Debug and fix failing Playwright tests"
+    prompt: |
+      Action: heal
+
+      TARGET URL: {target_url}
+      Test directory: {test_dir}
+
+      Debug and fix failing Playwright tests. Run the test suite, identify
+      failures, diagnose root causes, and apply fixes. Use test.fixme()
+      for tests that cannot be fixed after 3 attempts.
+
+  - name: "full-cycle"
+    description: "Plan, generate, and heal in one session"
+    prompt: |
+      Action: plan
+
+      TARGET URL: {target_url}
+
+      Perform a full test cycle:
+      1. Plan test scenarios by exploring the application
+      2. Generate Playwright test files from the plan
+      3. Run the tests and fix any failures
+
+      Start with planning, then generate, then heal.

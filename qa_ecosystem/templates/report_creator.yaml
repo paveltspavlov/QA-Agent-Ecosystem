@@ -1,0 +1,56 @@
+agent: report-creator
+templates:
+  - name: "default"
+    description: "Generate test execution report from available data"
+    prompt: |
+      Generate a comprehensive test execution report.
+
+      Gather data from:
+      - Playwright JSON results: playwright/test-results.json
+      - Bug log: outputs/bugs/bugs.json
+      - Any execution report markdown from previous agents
+
+      Save reports to:
+      - outputs/reports/report.md (markdown)
+      - outputs/reports/report.html (self-contained HTML)
+
+  - name: "from-results"
+    description: "Generate report from specific test results"
+    prompt: |
+      Generate a comprehensive test execution report from these results:
+
+      {results_data}
+
+      Save reports to outputs/reports/report.md and outputs/reports/report.html.
+
+  - name: "executive-summary"
+    description: "Generate a concise executive summary report"
+    prompt: |
+      Generate a concise executive summary test report suitable for
+      stakeholder review.
+
+      Gather data from:
+      - Playwright JSON results: playwright/test-results.json
+      - Bug log: outputs/bugs/bugs.json
+
+      Focus on: pass rate, critical bugs, key risks, and top 3 recommendations.
+      Keep the report under 2 pages.
+
+      Save to outputs/reports/executive-summary.md and outputs/reports/executive-summary.html.
+
+  - name: "with-bugs"
+    description: "Generate report with specific bug data"
+    prompt: |
+      Generate a comprehensive test execution report.
+
+      Test results: {results_data}
+      Bug data file: {bug_file}
+
+      Read both data sources and produce a combined report with:
+      - Execution metrics
+      - Full test results table
+      - Bug summary with severity breakdown
+      - Failure analysis
+      - Recommendations
+
+      Save to outputs/reports/report.md and outputs/reports/report.html.

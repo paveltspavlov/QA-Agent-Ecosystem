@@ -404,6 +404,130 @@ def cmd_playwright_run(args: argparse.Namespace) -> None:
         ))
 
 
+def cmd_playwright_copilot(args: argparse.Namespace) -> None:
+    """Invoke Playwright's Copilot agent mode (plan/generate/heal) with LLM selection."""
+    from qa_ecosystem.runner import run_single_agent, run_sync
+    from qa_ecosystem.models import resolve_model
+
+    action = args.action
+    profile = resolve_model(cli_override=args.model, agent_role="playwright-copilot")
+
+    # Build the prompt based on action
+    parts: list[str] = [f"Action: {action}\n"]
+    parts.append(f"Model: {profile.model_id} (via {profile.provider})\n")
+
+    if action == "plan":
+        if not args.url:
+            console.print("[red]--url is required for the 'plan' action[/red]")
+            return
+        _validate_url(args.url)
+        parts.append(f"TARGET URL: {args.url}\n")
+        parts.append(
+            "Plan comprehensive test scenarios by exploring the target application. "
+            "Discover all pages, forms, and interactive elements, then write a "
+            "structured test plan to playwright/specs/plan.md."
+        )
+    elif action == "generate":
+        parts.append(
+            "Generate Playwright test files from the existing test plan. "
+            "Read playwright/specs/plan.md and create test files in "
+            "playwright/tests/generated/ with page objects in playwright/pages/."
+        )
+        if args.url:
+            parts.append(f"\nTARGET URL: {args.url}")
+    elif action == "heal":
+        test_dir = getattr(args, "test_dir", None) or "playwright/tests"
+        parts.append(
+            f"Debug and fix failing Playwright tests in {test_dir}. "
+            "Run the test suite, identify failures, diagnose root causes, "
+            "and apply fixes. Use test.fixme() for unfixable tests."
+        )
+        if args.url:
+            parts.append(f"\nTARGET URL: {args.url}")
+
+    prompt = "\n".join(parts)
+
+    run_sync(run_single_agent(
+        agent_name="playwright-copilot",
+        prompt=prompt,
+        cwd=args.cwd,
+        model_override=args.model,
+    ))
+
+
+def cmd_playwright_report(args: argparse.Namespace) -> None:
+    """Generate test execution reports from Playwright results."""
+    from pathlib import Path as _Path
+
+    report_format = getattr(args, "format", "both") or "both"
+    use_fast = getattr(args, "fast", False)
+
+    if use_fast:
+        # Fast mode — use report_generator.py directly (no LLM)
+        from qa_ecosystem.report_generator import from_playwright_json, from_agent_output, TestExecutionReport
+
+        json_input = getattr(args, "input", None)
+        bugs_input = getattr(args, "bugs", None)
+
+        report: TestExecutionReport | None = None
+
+        if json_input and _Path(json_input).is_file():
+            report = from_playwright_json(_Path(json_input))
+        else:
+            # Try default locations
+            default_json = _Path(args.cwd) / "test-results.json"
+            if default_json.is_file():
+                report = from_playwright_json(default_json)
+            else:
+                console.print(
+                    "[yellow]No test-results.json found. Use --input to specify the path, "
+                    "or run tests with JSON reporter first.[/yellow]"
+                )
+                return
+
+        # Merge bug data if available
+        if bugs_input and _Path(bugs_input).is_file():
+            import json as _json
+            bug_data = _json.loads(_Path(bugs_input).read_text(encoding="utf-8"))
+            report.bugs = bug_data.get("bugs", [])
+        else:
+            default_bugs = _Path("outputs/bugs/bugs.json")
+            if default_bugs.is_file():
+                import json as _json
+                bug_data = _json.loads(default_bugs.read_text(encoding="utf-8"))
+                report.bugs = bug_data.get("bugs", [])
+
+        output_dir = _Path("outputs/reports")
+        paths = report.save(output_dir)
+        for fmt, path in paths.items():
+            console.print(f"[green]Report saved: {path}[/green]")
+    else:
+        # Full mode — use report-creator agent (LLM-enriched)
+        from qa_ecosystem.runner import run_single_agent, run_sync
+
+        parts: list[str] = ["Generate a comprehensive test execution report.\n"]
+
+        json_input = getattr(args, "input", None)
+        if json_input:
+            parts.append(f"Playwright JSON results file: {json_input}")
+
+        bugs_input = getattr(args, "bugs", None)
+        if bugs_input:
+            parts.append(f"Bug log file: {bugs_input}")
+
+        parts.append(f"\nOutput format: {report_format}")
+        parts.append("Save reports to outputs/reports/")
+
+        prompt = "\n".join(parts)
+
+        run_sync(run_single_agent(
+            agent_name="report-creator",
+            prompt=prompt,
+            cwd=args.cwd,
+            model_override=args.model,
+        ))
+
+
 def cmd_playwright_analyze(args: argparse.Namespace) -> None:
     """Run an analysis agent on Playwright test code."""
     from qa_ecosystem.runner import run_single_agent, run_sync
@@ -598,7 +722,9 @@ def cmd_list_workflows(_args: argparse.Namespace) -> None:
         ("18", "PR / Code Review QA Gate",     "PR diff + test files",                "pr-hygiene-checker → coverage-hunter → security-scout → testware-creator"),
         ("19", "Post-Deployment Smoke",        "App URL + environment name",          "playwright-test-generator → ui-test-designer → test-results-analyst → testware-creator"),
         ("20", "Requirements Traceability",    "Requirements doc + test suite",       "requirements-analyst → test-case-generator → testware-creator (traceability matrix)"),
-        ("21", "Exploratory Testing",          "App URL (--input)",                   "exploratory-tester → playwright-recorder → playwright-executor"),
+        ("21", "Exploratory Testing",          "App URL (--input)",                   "exploratory-tester → playwright-recorder → playwright-executor → bug-reporter → report-creator"),
+        ("22", "Playwright Copilot Flow",     "App URL",                             "playwright-copilot (plan) → playwright-copilot (generate) → playwright-executor → bug-reporter → report-creator"),
+        ("23", "Full QA Pipeline",            "App URL",                             "exploratory-tester → playwright-recorder → playwright-executor → bug-reporter + test-results-analyst → report-creator → testware-creator"),
     ]
 
     table = Table(title="QA Agent Ecosystem — 21 Orchestration Workflows")
@@ -824,6 +950,36 @@ def build_parser() -> argparse.ArgumentParser:
                         help="Working directory (default: playwright/)")
     _add_model_arg(pw_run)
 
+    # --- playwright-copilot ---
+    pw_copilot = sub.add_parser("playwright-copilot",
+                                help="Invoke Playwright Copilot agent mode (plan/generate/heal)")
+    pw_copilot.add_argument("--action", "-a", required=True,
+                            choices=["plan", "generate", "heal"],
+                            help="Action to perform: plan, generate, or heal")
+    pw_copilot.add_argument("--url", default=None,
+                            help="Target URL (required for plan, optional for generate/heal)")
+    pw_copilot.add_argument("--test-dir", default=None,
+                            help="Test directory for heal action (default: playwright/tests)")
+    pw_copilot.add_argument("--cwd", default=".",
+                            help="Working directory")
+    _add_model_arg(pw_copilot)
+
+    # --- playwright-report ---
+    pw_report = sub.add_parser("playwright-report",
+                               help="Generate test execution reports from Playwright results")
+    pw_report.add_argument("--input", "-i", default=None,
+                           help="Path to Playwright JSON results file (test-results.json)")
+    pw_report.add_argument("--bugs", default=None,
+                           help="Path to bug log JSON file (bugs.json)")
+    pw_report.add_argument("--format", "-f", default="both",
+                           choices=["html", "markdown", "both"],
+                           help="Report format (default: both)")
+    pw_report.add_argument("--fast", action="store_true",
+                           help="Fast mode — generate report without LLM (deterministic)")
+    pw_report.add_argument("--cwd", default="playwright",
+                           help="Working directory (default: playwright/)")
+    _add_model_arg(pw_report)
+
     # --- playwright-analyze ---
     pw_analyze = sub.add_parser("playwright-analyze",
                                 help="Run analysis agents on Playwright test code")
@@ -905,6 +1061,8 @@ def main() -> None:
         "orchestrate": cmd_orchestrate,
         "playwright-gen": cmd_playwright_gen,
         "playwright-run": cmd_playwright_run,
+        "playwright-copilot": cmd_playwright_copilot,
+        "playwright-report": cmd_playwright_report,
         "playwright-analyze": cmd_playwright_analyze,
         "init": cmd_init,
         "doctor": cmd_doctor,

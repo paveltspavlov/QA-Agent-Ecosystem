@@ -12,7 +12,7 @@ export default defineConfig({
   forbidOnly: CI,
   retries: CI ? 2 : 0,
   workers: CI ? 1 : undefined,
-  reporter: CI ? 'github' : 'html',
+  reporter: CI ? 'github' : [['html'], ['json', { outputFile: 'test-results.json' }]],
   timeout: Number(process.env.TEST_TIMEOUT) || 30_000,
 
   use: {

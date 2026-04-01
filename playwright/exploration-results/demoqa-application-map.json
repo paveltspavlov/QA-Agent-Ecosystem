@@ -1,0 +1,874 @@
+{
+  "baseUrl": "https://demoqa.com",
+  "explorationType": "Full Website Structure Analysis",
+  "timestamp": "2026-03-25T08:30:39.514Z",
+  "pages": {
+    "/": {
+      "url": "https://demoqa.com/",
+      "title": "demosite"
+    },
+    "/elements": {
+      "url": "https://demoqa.com/elements",
+      "title": "demosite",
+      "elements": [
+        {
+          "selector": ".navbar-toggler",
+          "text": "",
+          "type": "button",
+          "ariaLabel": null,
+          "dataTestid": null,
+          "placeholder": null
+        }
+      ]
+    },
+    "/forms": {
+      "url": "https://demoqa.com/forms",
+      "title": "demosite",
+      "elements": [
+        {
+          "selector": ".navbar-toggler",
+          "text": "",
+          "type": "button",
+          "ariaLabel": null,
+          "dataTestid": null,
+          "placeholder": null
+        }
+      ]
+    },
+    "/alertsWindows": {
+      "url": "https://demoqa.com/alertsWindows",
+      "title": "demosite",
+      "elements": [
+        {
+          "selector": ".navbar-toggler",
+          "text": "",
+          "type": "button",
+          "ariaLabel": null,
+          "dataTestid": null,
+          "placeholder": null
+        }
+      ]
+    },
+    "/widgets": {
+      "url": "https://demoqa.com/widgets",
+      "title": "demosite",
+      "elements": [
+        {
+          "selector": ".navbar-toggler",
+          "text": "",
+          "type": "button",
+          "ariaLabel": null,
+          "dataTestid": null,
+          "placeholder": null
+        }
+      ]
+    },
+    "/interaction": {
+      "url": "https://demoqa.com/interaction",
+      "title": "demosite",
+      "elements": [
+        {
+          "selector": ".navbar-toggler",
+          "text": "",
+          "type": "button",
+          "ariaLabel": null,
+          "dataTestid": null,
+          "placeholder": null
+        }
+      ]
+    },
+    "/books": {
+      "url": "https://demoqa.com/books",
+      "title": "demosite",
+      "elements": [
+        {
+          "selector": ".navbar-toggler",
+          "text": "",
+          "type": "button",
+          "ariaLabel": null,
+          "dataTestid": null,
+          "placeholder": null
+        },
+        {
+          "selector": ".btn",
+          "text": "",
+          "type": "button",
+          "ariaLabel": null,
+          "dataTestid": null,
+          "placeholder": null
+        },
+        {
+          "selector": ".btn",
+          "text": "Login",
+          "type": "button",
+          "ariaLabel": null,
+          "dataTestid": null,
+          "placeholder": null
+        },
+        {
+          "selector": ".btn",
+          "text": "Previous",
+          "type": "button",
+          "ariaLabel": null,
+          "dataTestid": null,
+          "placeholder": null
+        },
+        {
+          "selector": ".btn",
+          "text": "Next",
+          "type": "button",
+          "ariaLabel": null,
+          "dataTestid": null,
+          "placeholder": null
+        }
+      ],
+      "tables": [
+        {
+          "selector": "table:nth-of-type(1)",
+          "columns": [
+            "Image",
+            "Title",
+            "Author",
+            "Publisher"
+          ]
+        }
+      ]
+    },
+    "/text-box": {
+      "url": "https://demoqa.com/text-box",
+      "title": "demosite",
+      "forms": [
+        {
+          "fields": [
+            {
+              "selector": "userName",
+              "type": "input",
+              "inputType": "text",
+              "ariaLabel": null,
+              "placeholder": "Full Name",
+              "dataTestid": null
+            },
+            {
+              "selector": "userEmail",
+              "type": "input",
+              "inputType": "email",
+              "ariaLabel": null,
+              "placeholder": "name@example.com",
+              "dataTestid": null
+            },
+            {
+              "selector": "currentAddress",
+              "type": "textarea",
+              "inputType": null,
+              "ariaLabel": null,
+              "placeholder": "Current Address",
+              "dataTestid": null
+            },
+            {
+              "selector": "permanentAddress",
+              "type": "textarea",
+              "inputType": null,
+              "ariaLabel": null,
+              "placeholder": null,
+              "dataTestid": null
+            }
+          ]
+        }
+      ],
+      "elements": [
+        {
+          "selector": ".navbar-toggler",
+          "text": "",
+          "type": "button",
+          "ariaLabel": null,
+          "dataTestid": null,
+          "placeholder": null
+        },
+        {
+          "selector": ".btn",
+          "text": "Submit",
+          "type": "button",
+          "ariaLabel": null,
+          "dataTestid": null,
+          "placeholder": null
+        }
+      ]
+    },
+    "/checkbox": {
+      "url": "https://demoqa.com/checkbox",
+      "title": "demosite",
+      "elements": [
+        {
+          "selector": ".navbar-toggler",
+          "text": "",
+          "type": "button",
+          "ariaLabel": null,
+          "dataTestid": null,
+          "placeholder": null
+        }
+      ]
+    },
+    "/radio-button": {
+      "url": "https://demoqa.com/radio-button",
+      "title": "demosite",
+      "elements": [
+        {
+          "selector": ".navbar-toggler",
+          "text": "",
+          "type": "button",
+          "ariaLabel": null,
+          "dataTestid": null,
+          "placeholder": null
+        }
+      ]
+    },
+    "/webtables": {
+      "url": "https://demoqa.com/webtables",
+      "title": "demosite",
+      "elements": [
+        {
+          "selector": ".navbar-toggler",
+          "text": "",
+          "type": "button",
+          "ariaLabel": null,
+          "dataTestid": null,
+          "placeholder": null
+        },
+        {
+          "selector": ".btn",
+          "text": "Add",
+          "type": "button",
+          "ariaLabel": null,
+          "dataTestid": null,
+          "placeholder": null
+        },
+        {
+          "selector": ".btn",
+          "text": "",
+          "type": "button",
+          "ariaLabel": null,
+          "dataTestid": null,
+          "placeholder": null
+        },
+        {
+          "selector": ".mr-2",
+          "text": "First",
+          "type": "button",
+          "ariaLabel": null,
+          "dataTestid": null,
+          "placeholder": null
+        },
+        {
+          "selector": ".mr-2",
+          "text": "Previous",
+          "type": "button",
+          "ariaLabel": null,
+          "dataTestid": null,
+          "placeholder": null
+        },
+        {
+          "selector": ".mr-2",
+          "text": "Next",
+          "type": "button",
+          "ariaLabel": null,
+          "dataTestid": null,
+          "placeholder": null
+        },
+        {
+          "selector": ".btn",
+          "text": "Last",
+          "type": "button",
+          "ariaLabel": null,
+          "dataTestid": null,
+          "placeholder": null
+        }
+      ],
+      "tables": [
+        {
+          "selector": "table:nth-of-type(1)",
+          "columns": [
+            "First Name",
+            "Last Name",
+            "Age",
+            "Email",
+            "Salary",
+            "Department",
+            "Action"
+          ]
+        }
+      ]
+    },
+    "/buttons": {
+      "url": "https://demoqa.com/buttons",
+      "title": "demosite",
+      "elements": [
+        {
+          "selector": ".navbar-toggler",
+          "text": "",
+          "type": "button",
+          "ariaLabel": null,
+          "dataTestid": null,
+          "placeholder": null
+        },
+        {
+          "selector": ".btn",
+          "text": "Double Click Me",
+          "type": "button",
+          "ariaLabel": null,
+          "dataTestid": null,
+          "placeholder": null
+        },
+        {
+          "selector": ".btn",
+          "text": "Right Click Me",
+          "type": "button",
+          "ariaLabel": null,
+          "dataTestid": null,
+          "placeholder": null
+        },
+        {
+          "selector": ".btn",
+          "text": "Click Me",
+          "type": "button",
+          "ariaLabel": null,
+          "dataTestid": null,
+          "placeholder": null
+        }
+      ]
+    },
+    "/links": {
+      "url": "https://demoqa.com/links",
+      "title": "demosite",
+      "elements": [
+        {
+          "selector": ".navbar-toggler",
+          "text": "",
+          "type": "button",
+          "ariaLabel": null,
+          "dataTestid": null,
+          "placeholder": null
+        }
+      ]
+    },
+    "/broken": {
+      "url": "https://demoqa.com/broken",
+      "title": "demosite",
+      "elements": [
+        {
+          "selector": ".navbar-toggler",
+          "text": "",
+          "type": "button",
+          "ariaLabel": null,
+          "dataTestid": null,
+          "placeholder": null
+        }
+      ]
+    },
+    "/upload-download": {
+      "url": "https://demoqa.com/upload-download",
+      "title": "demosite",
+      "forms": [
+        {
+          "fields": [
+            {
+              "selector": "uploadFile",
+              "type": "input",
+              "inputType": "file",
+              "ariaLabel": null,
+              "placeholder": null,
+              "dataTestid": null
+            }
+          ]
+        }
+      ],
+      "elements": [
+        {
+          "selector": ".navbar-toggler",
+          "text": "",
+          "type": "button",
+          "ariaLabel": null,
+          "dataTestid": null,
+          "placeholder": null
+        },
+        {
+          "selector": ".btn",
+          "text": "Download",
+          "type": null,
+          "ariaLabel": null,
+          "dataTestid": null,
+          "placeholder": null
+        }
+      ]
+    },
+    "/dynamic-properties": {
+      "url": "https://demoqa.com/dynamic-properties",
+      "title": "demosite",
+      "elements": [
+        {
+          "selector": ".navbar-toggler",
+          "text": "",
+          "type": "button",
+          "ariaLabel": null,
+          "dataTestid": null,
+          "placeholder": null
+        },
+        {
+          "selector": ".mt-4",
+          "text": "Will enable 5 seconds",
+          "type": "button",
+          "ariaLabel": null,
+          "dataTestid": null,
+          "placeholder": null
+        },
+        {
+          "selector": ".mt-4",
+          "text": "Color Change",
+          "type": "button",
+          "ariaLabel": null,
+          "dataTestid": null,
+          "placeholder": null
+        }
+      ]
+    },
+    "/automation-practice-form": {
+      "url": "https://demoqa.com/automation-practice-form",
+      "title": "demosite",
+      "forms": [
+        {
+          "fields": [
+            {
+              "selector": "firstName",
+              "type": "input",
+              "inputType": "text",
+              "ariaLabel": null,
+              "placeholder": "First Name",
+              "dataTestid": null
+            },
+            {
+              "selector": "lastName",
+              "type": "input",
+              "inputType": "text",
+              "ariaLabel": null,
+              "placeholder": "Last Name",
+              "dataTestid": null
+            },
+            {
+              "selector": "userEmail",
+              "type": "input",
+              "inputType": "text",
+              "ariaLabel": null,
+              "placeholder": "name@example.com",
+              "dataTestid": null
+            },
+            {
+              "selector": "gender",
+              "type": "input",
+              "inputType": "radio",
+              "ariaLabel": null,
+              "placeholder": null,
+              "dataTestid": null
+            },
+            {
+              "selector": "gender",
+              "type": "input",
+              "inputType": "radio",
+              "ariaLabel": null,
+              "placeholder": null,
+              "dataTestid": null
+            },
+            {
+              "selector": "gender",
+              "type": "input",
+              "inputType": "radio",
+              "ariaLabel": null,
+              "placeholder": null,
+              "dataTestid": null
+            },
+            {
+              "selector": "userNumber",
+              "type": "input",
+              "inputType": "text",
+              "ariaLabel": null,
+              "placeholder": "Mobile Number",
+              "dataTestid": null
+            },
+            {
+              "selector": "dateOfBirthInput",
+              "type": "input",
+              "inputType": "text",
+              "ariaLabel": null,
+              "placeholder": null,
+              "dataTestid": null
+            },
+            {
+              "selector": "subjectsInput",
+              "type": "input",
+              "inputType": "text",
+              "ariaLabel": null,
+              "placeholder": null,
+              "dataTestid": null
+            },
+            {
+              "selector": "hobbies-checkbox-1",
+              "type": "input",
+              "inputType": "checkbox",
+              "ariaLabel": null,
+              "placeholder": null,
+              "dataTestid": null
+            },
+            {
+              "selector": "hobbies-checkbox-2",
+              "type": "input",
+              "inputType": "checkbox",
+              "ariaLabel": null,
+              "placeholder": null,
+              "dataTestid": null
+            },
+            {
+              "selector": "hobbies-checkbox-3",
+              "type": "input",
+              "inputType": "checkbox",
+              "ariaLabel": null,
+              "placeholder": null,
+              "dataTestid": null
+            },
+            {
+              "selector": "uploadPicture",
+              "type": "input",
+              "inputType": "file",
+              "ariaLabel": null,
+              "placeholder": null,
+              "dataTestid": null
+            },
+            {
+              "selector": "currentAddress",
+              "type": "textarea",
+              "inputType": null,
+              "ariaLabel": null,
+              "placeholder": "Current Address",
+              "dataTestid": null
+            },
+            {
+              "selector": "react-select-3-input",
+              "type": "input",
+              "inputType": "text",
+              "ariaLabel": null,
+              "placeholder": null,
+              "dataTestid": null
+            },
+            {
+              "selector": "react-select-4-input",
+              "type": "input",
+              "inputType": "text",
+              "ariaLabel": null,
+              "placeholder": null,
+              "dataTestid": null
+            },
+            {
+              "selector": "submit",
+              "type": "button",
+              "inputType": "submit",
+              "ariaLabel": null,
+              "placeholder": null,
+              "dataTestid": null
+            }
+          ]
+        }
+      ],
+      "elements": [
+        {
+          "selector": ".navbar-toggler",
+          "text": "",
+          "type": "button",
+          "ariaLabel": null,
+          "dataTestid": null,
+          "placeholder": null
+        },
+        {
+          "selector": ".btn",
+          "text": "Submit",
+          "type": "submit",
+          "ariaLabel": null,
+          "dataTestid": null,
+          "placeholder": null
+        }
+      ]
+    },
+    "/browser-windows": {
+      "url": "https://demoqa.com/browser-windows",
+      "title": "demosite",
+      "elements": [
+        {
+          "selector": ".navbar-toggler",
+          "text": "",
+          "type": "button",
+          "ariaLabel": null,
+          "dataTestid": null,
+          "placeholder": null
+        },
+        {
+          "selector": ".btn",
+          "text": "New Tab",
+          "type": "button",
+          "ariaLabel": null,
+          "dataTestid": null,
+          "placeholder": null
+        },
+        {
+          "selector": ".mt-4",
+          "text": "New Window",
+          "type": "button",
+          "ariaLabel": null,
+          "dataTestid": null,
+          "placeholder": null
+        },
+        {
+          "selector": ".btn",
+          "text": "New Window Message",
+          "type": "button",
+          "ariaLabel": null,
+          "dataTestid": null,
+          "placeholder": null
+        }
+      ]
+    },
+    "/alerts": {
+      "url": "https://demoqa.com/alerts",
+      "title": "demosite",
+      "elements": [
+        {
+          "selector": ".navbar-toggler",
+          "text": "",
+          "type": "button",
+          "ariaLabel": null,
+          "dataTestid": null,
+          "placeholder": null
+        },
+        {
+          "selector": ".btn",
+          "text": "Click me",
+          "type": "button",
+          "ariaLabel": null,
+          "dataTestid": null,
+          "placeholder": null
+        },
+        {
+          "selector": ".btn",
+          "text": "Click me",
+          "type": "button",
+          "ariaLabel": null,
+          "dataTestid": null,
+          "placeholder": null
+        },
+        {
+          "selector": ".btn",
+          "text": "Click me",
+          "type": "button",
+          "ariaLabel": null,
+          "dataTestid": null,
+          "placeholder": null
+        },
+        {
+          "selector": ".btn",
+          "text": "Click me",
+          "type": "button",
+          "ariaLabel": null,
+          "dataTestid": null,
+          "placeholder": null
+        }
+      ]
+    },
+    "/frames": {
+      "url": "https://demoqa.com/frames",
+      "title": "demosite",
+      "elements": [
+        {
+          "selector": ".navbar-toggler",
+          "text": "",
+          "type": "button",
+          "ariaLabel": null,
+          "dataTestid": null,
+          "placeholder": null
+        }
+      ]
+    },
+    "/nestedframes": {
+      "url": "https://demoqa.com/nestedframes",
+      "title": "demosite",
+      "elements": [
+        {
+          "selector": ".navbar-toggler",
+          "text": "",
+          "type": "button",
+          "ariaLabel": null,
+          "dataTestid": null,
+          "placeholder": null
+        }
+      ]
+    },
+    "/modal-dialogs": {
+      "url": "https://demoqa.com/modal-dialogs",
+      "title": "demosite",
+      "elements": [
+        {
+          "selector": ".navbar-toggler",
+          "text": "",
+          "type": "button",
+          "ariaLabel": null,
+          "dataTestid": null,
+          "placeholder": null
+        },
+        {
+          "selector": ".mr-4",
+          "text": "Small modal",
+          "type": "button",
+          "ariaLabel": null,
+          "dataTestid": null,
+          "placeholder": null
+        },
+        {
+          "selector": ".mt-2",
+          "text": "Large modal",
+          "type": "button",
+          "ariaLabel": null,
+          "dataTestid": null,
+          "placeholder": null
+        }
+      ]
+    },
+    "/accordian": {
+      "url": "https://demoqa.com/accordian",
+      "title": "demosite",
+      "elements": [
+        {
+          "selector": ".navbar-toggler",
+          "text": "",
+          "type": "button",
+          "ariaLabel": null,
+          "dataTestid": null,
+          "placeholder": null
+        },
+        {
+          "selector": ".accordion-button",
+          "text": "What is Lorem Ipsum?",
+          "type": "button",
+          "ariaLabel": null,
+          "dataTestid": null,
+          "placeholder": null
+        },
+        {
+          "selector": ".accordion-button",
+          "text": "Where does it come from?",
+          "type": "button",
+          "ariaLabel": null,
+          "dataTestid": null,
+          "placeholder": null
+        },
+        {
+          "selector": ".accordion-button",
+          "text": "Why do we use it?",
+          "type": "button",
+          "ariaLabel": null,
+          "dataTestid": null,
+          "placeholder": null
+        }
+      ]
+    },
+    "/auto-complete": {
+      "url": "https://demoqa.com/auto-complete",
+      "title": "demosite",
+      "elements": [
+        {
+          "selector": ".navbar-toggler",
+          "text": "",
+          "type": "button",
+          "ariaLabel": null,
+          "dataTestid": null,
+          "placeholder": null
+        }
+      ]
+    }
+  },
+  "navigationMap": {},
+  "allSelectors": {
+    "buttons": [
+      ".navbar-toggler",
+      ".navbar-toggler",
+      ".navbar-toggler",
+      ".navbar-toggler",
+      ".navbar-toggler",
+      ".navbar-toggler",
+      ".btn",
+      ".btn",
+      ".btn",
+      ".btn",
+      ".navbar-toggler",
+      ".btn",
+      ".navbar-toggler",
+      ".navbar-toggler",
+      ".navbar-toggler",
+      ".btn",
+      ".btn",
+      ".mr-2",
+      ".mr-2",
+      ".mr-2",
+      ".btn",
+      ".navbar-toggler",
+      ".btn",
+      ".btn",
+      ".btn",
+      ".navbar-toggler",
+      ".navbar-toggler",
+      ".navbar-toggler",
+      ".btn",
+      ".navbar-toggler",
+      ".mt-4",
+      ".mt-4",
+      ".navbar-toggler",
+      ".btn",
+      ".navbar-toggler",
+      ".btn",
+      ".mt-4",
+      ".btn",
+      ".navbar-toggler",
+      ".btn",
+      ".btn",
+      ".btn",
+      ".btn",
+      ".navbar-toggler",
+      ".navbar-toggler",
+      ".navbar-toggler",
+      ".mr-4",
+      ".mt-2",
+      ".navbar-toggler",
+      ".accordion-button",
+      ".accordion-button",
+      ".accordion-button",
+      ".navbar-toggler"
+    ],
+    "formFields": [
+      "userName",
+      "userEmail",
+      "currentAddress",
+      "permanentAddress",
+      "uploadFile",
+      "firstName",
+      "lastName",
+      "userEmail",
+      "gender",
+      "gender",
+      "gender",
+      "userNumber",
+      "dateOfBirthInput",
+      "subjectsInput",
+      "hobbies-checkbox-1",
+      "hobbies-checkbox-2",
+      "hobbies-checkbox-3",
+      "uploadPicture",
+      "currentAddress",
+      "react-select-3-input",
+      "react-select-4-input",
+      "submit"
+    ]
+  }
+}

@@ -26,6 +26,7 @@ roles:
   default: claude-sonnet-api        # planning subagents (direct API)
   orchestrator: claude-opus-api     # test-manager (direct API)
   playwright: copilot-gpt4o        # Playwright execution agents
+  playwright-copilot: copilot-gpt4o # Playwright Copilot agent mode (plan/generate/heal)
   analysis: copilot-o3-mini        # analysis agents (coverage, hygiene, security)
 
 # ── Model profiles ───────────────────────────────────────────────────────────

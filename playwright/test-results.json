@@ -1,0 +1,816 @@
+[dotenv@17.3.1] injecting env (0) from .env -- tip: ≡ƒñû agentic secret storage: https://dotenvx.com/as2
+{
+  "config": {
+    "configFile": "C:\\Users\\LEGION\\Downloads\\QA_app\\playwright\\playwright.config.ts",
+    "rootDir": "C:/Users/LEGION/Downloads/QA_app/playwright/tests",
+    "forbidOnly": false,
+    "fullyParallel": true,
+    "globalSetup": null,
+    "globalTeardown": null,
+    "globalTimeout": 0,
+    "grep": {},
+    "grepInvert": null,
+    "maxFailures": 0,
+    "metadata": {
+      "actualWorkers": 8
+    },
+    "preserveOutput": "always",
+    "projects": [
+      {
+        "outputDir": "C:/Users/LEGION/Downloads/QA_app/playwright/test-results",
+        "repeatEach": 1,
+        "retries": 0,
+        "metadata": {
+          "actualWorkers": 8
+        },
+        "id": "setup",
+        "name": "setup",
+        "testDir": "C:/Users/LEGION/Downloads/QA_app/playwright/tests",
+        "testIgnore": [],
+        "testMatch": [
+          "/.*\\.setup\\.ts/"
+        ],
+        "timeout": 30000
+      },
+      {
+        "outputDir": "C:/Users/LEGION/Downloads/QA_app/playwright/test-results",
+        "repeatEach": 1,
+        "retries": 0,
+        "metadata": {
+          "actualWorkers": 8
+        },
+        "id": "chromium",
+        "name": "chromium",
+        "testDir": "C:/Users/LEGION/Downloads/QA_app/playwright/tests",
+        "testIgnore": [],
+        "testMatch": [
+          "**/*.@(spec|test).?(c|m)[jt]s?(x)"
+        ],
+        "timeout": 30000
+      },
+      {
+        "outputDir": "C:/Users/LEGION/Downloads/QA_app/playwright/test-results",
+        "repeatEach": 1,
+        "retries": 0,
+        "metadata": {
+          "actualWorkers": 8
+        },
+        "id": "firefox",
+        "name": "firefox",
+        "testDir": "C:/Users/LEGION/Downloads/QA_app/playwright/tests",
+        "testIgnore": [],
+        "testMatch": [
+          "**/*.@(spec|test).?(c|m)[jt]s?(x)"
+        ],
+        "timeout": 30000
+      },
+      {
+        "outputDir": "C:/Users/LEGION/Downloads/QA_app/playwright/test-results",
+        "repeatEach": 1,
+        "retries": 0,
+        "metadata": {
+          "actualWorkers": 8
+        },
+        "id": "webkit",
+        "name": "webkit",
+        "testDir": "C:/Users/LEGION/Downloads/QA_app/playwright/tests",
+        "testIgnore": [],
+        "testMatch": [
+          "**/*.@(spec|test).?(c|m)[jt]s?(x)"
+        ],
+        "timeout": 30000
+      },
+      {
+        "outputDir": "C:/Users/LEGION/Downloads/QA_app/playwright/test-results",
+        "repeatEach": 1,
+        "retries": 0,
+        "metadata": {
+          "actualWorkers": 8
+        },
+        "id": "api",
+        "name": "api",
+        "testDir": "C:/Users/LEGION/Downloads/QA_app/playwright/tests",
+        "testIgnore": [],
+        "testMatch": [
+          "/.*\\/api\\/.*\\.spec\\.ts/"
+        ],
+        "timeout": 30000
+      }
+    ],
+    "quiet": false,
+    "reporter": [
+      [
+        "json"
+      ]
+    ],
+    "reportSlowTests": {
+      "max": 5,
+      "threshold": 300000
+    },
+    "runAgents": "none",
+    "shard": null,
+    "tags": [],
+    "updateSnapshots": "missing",
+    "updateSourceMethod": "patch",
+    "version": "1.58.2",
+    "workers": 8,
+    "webServer": null
+  },
+  "suites": [
+    {
+      "title": "ui\\demoqa-recorded.spec.ts",
+      "file": "ui/demoqa-recorded.spec.ts",
+      "column": 0,
+      "line": 0,
+      "specs": [],
+      "suites": [
+        {
+          "title": "Exploratory Navigation",
+          "file": "ui/demoqa-recorded.spec.ts",
+          "line": 3,
+          "column": 6,
+          "specs": [
+            {
+              "title": "[TC-001] Navigate through Elements section pages",
+              "ok": true,
+              "tags": [],
+              "tests": [
+                {
+                  "timeout": 30000,
+                  "annotations": [],
+                  "expectedStatus": "passed",
+                  "projectId": "chromium",
+                  "projectName": "chromium",
+                  "results": [
+                    {
+                      "workerIndex": 0,
+                      "parallelIndex": 0,
+                      "status": "passed",
+                      "duration": 3099,
+                      "errors": [],
+                      "stdout": [],
+                      "stderr": [],
+                      "retry": 0,
+                      "startTime": "2026-03-29T15:25:40.537Z",
+                      "annotations": [],
+                      "attachments": []
+                    }
+                  ],
+                  "status": "expected"
+                }
+              ],
+              "id": "a7a09b9fb6e1732d3181-4f005c273d1032551c2a",
+              "file": "ui/demoqa-recorded.spec.ts",
+              "line": 4,
+              "column": 7
+            },
+            {
+              "title": "[TC-001] Navigate through Elements section pages",
+              "ok": true,
+              "tags": [],
+              "tests": [
+                {
+                  "timeout": 30000,
+                  "annotations": [],
+                  "expectedStatus": "passed",
+                  "projectId": "firefox",
+                  "projectName": "firefox",
+                  "results": [
+                    {
+                      "workerIndex": 5,
+                      "parallelIndex": 5,
+                      "status": "passed",
+                      "duration": 7331,
+                      "errors": [],
+                      "stdout": [],
+                      "stderr": [],
+                      "retry": 0,
+                      "startTime": "2026-03-29T15:25:40.531Z",
+                      "annotations": [],
+                      "attachments": []
+                    }
+                  ],
+                  "status": "expected"
+                }
+              ],
+              "id": "a7a09b9fb6e1732d3181-f81529e10bf49c574b67",
+              "file": "ui/demoqa-recorded.spec.ts",
+              "line": 4,
+              "column": 7
+            },
+            {
+              "title": "[TC-001] Navigate through Elements section pages",
+              "ok": false,
+              "tags": [],
+              "tests": [
+                {
+                  "timeout": 30000,
+                  "annotations": [],
+                  "expectedStatus": "passed",
+                  "projectId": "webkit",
+                  "projectName": "webkit",
+                  "results": [
+                    {
+                      "workerIndex": 10,
+                      "parallelIndex": 4,
+                      "status": "timedOut",
+                      "duration": 30442,
+                      "error": {
+                        "message": "\u001b[31mTest timeout of 30000ms exceeded.\u001b[39m",
+                        "stack": "\u001b[31mTest timeout of 30000ms exceeded.\u001b[39m"
+                      },
+                      "errors": [
+                        {
+                          "message": "\u001b[31mTest timeout of 30000ms exceeded.\u001b[39m"
+                        },
+                        {
+                          "location": {
+                            "file": "C:\\Users\\LEGION\\Downloads\\QA_app\\playwright\\tests\\ui\\demoqa-recorded.spec.ts",
+                            "column": 56,
+                            "line": 13
+                          },
+                          "message": "Error: locator.click: Test timeout of 30000ms exceeded.\nCall log:\n\u001b[2m  - waiting for getByRole('link', { name: 'Text Box' })\u001b[22m\n\u001b[2m    - locator resolved to <a href=\"/text-box\" class=\"router-link\" data-discover=\"true\">ΓÇª</a>\u001b[22m\n\u001b[2m  - attempting click action\u001b[22m\n\u001b[2m    - waiting for element to be visible, enabled and stable\u001b[22m\n\u001b[2m    - element is visible, enabled and stable\u001b[22m\n\u001b[2m    - scrolling into view if needed\u001b[22m\n\u001b[2m    - done scrolling\u001b[22m\n\u001b[2m    - performing click action\u001b[22m\n\u001b[2m    - <iframe width=\"970\" height=\"250\" tabindex=\"0\" scrolling=\"no\" marginwidth=\"0\" frameborder=\"0\" marginheight=\"0\" data-load-complete=\"true\" aria-label=\"Advertisement\" title=\"3rd party ad content\" data-google-container-id=\"2\" id=\"google_ads_iframe_/21849154601,22343295815/Ad.Plus-970x250-2_0\" name=\"google_ads_iframe_/21849154601,22343295815/Ad.Plus-970x250-2_0\"></iframe> from <div class=\"col-12 mt-4 col-md-6 col-xl-7\">ΓÇª</div> subtree intercepts pointer events\u001b[22m\n\u001b[2m  - retrying click action\u001b[22m\n\u001b[2m    - waiting for element to be visible, enabled and stable\u001b[22m\n\u001b[2m    - element is visible, enabled and stable\u001b[22m\n\u001b[2m    - scrolling into view if needed\u001b[22m\n\u001b[2m    - done scrolling\u001b[22m\n\u001b[2m    - <iframe width=\"970\" height=\"250\" tabindex=\"0\" scrolling=\"no\" marginwidth=\"0\" frameborder=\"0\" marginheight=\"0\" data-load-complete=\"true\" aria-label=\"Advertisement\" title=\"3rd party ad content\" data-google-container-id=\"2\" id=\"google_ads_iframe_/21849154601,22343295815/Ad.Plus-970x250-2_0\" name=\"google_ads_iframe_/21849154601,22343295815/Ad.Plus-970x250-2_0\"></iframe> from <div class=\"col-12 mt-4 col-md-6 col-xl-7\">ΓÇª</div> subtree intercepts pointer events\u001b[22m\n\u001b[2m  - retrying click action\u001b[22m\n\u001b[2m    - waiting 20ms\u001b[22m\n\u001b[2m    2 ├ù waiting for element to be visible, enabled and stable\u001b[22m\n\u001b[2m      - element is visible, enabled and stable\u001b[22m\n\u001b[2m      - scrolling into view if needed\u001b[22m\n\u001b[2m      - done scrolling\u001b[22m\n\u001b[2m      - <iframe width=\"970\" height=\"250\" tabindex=\"0\" scrolling=\"no\" marginwidth=\"0\" frameborder=\"0\" marginheight=\"0\" data-load-complete=\"true\" aria-label=\"Advertisement\" title=\"3rd party ad content\" data-google-container-id=\"2\" id=\"google_ads_iframe_/21849154601,22343295815/Ad.Plus-970x250-2_0\" name=\"google_ads_iframe_/21849154601,22343295815/Ad.Plus-970x250-2_0\"></iframe> from <div class=\"col-12 mt-4 col-md-6 col-xl-7\">ΓÇª</div> subtree intercepts pointer events\u001b[22m\n\u001b[2m    - retrying click action\u001b[22m\n\u001b[2m      - waiting 100ms\u001b[22m\n\u001b[2m    - waiting for element to be visible, enabled and stable\u001b[22m\n\u001b[2m    - element is not stable\u001b[22m\n\u001b[2m  34 ├ù retrying click action\u001b[22m\n\u001b[2m       - waiting 500ms\u001b[22m\n\u001b[2m       - waiting for element to be visible, enabled and stable\u001b[22m\n\u001b[2m       - element is visible, enabled and stable\u001b[22m\n\u001b[2m       - scrolling into view if needed\u001b[22m\n\u001b[2m       - done scrolling\u001b[22m\n\u001b[2m       - <iframe width=\"970\" height=\"250\" tabindex=\"0\" scrolling=\"no\" marginwidth=\"0\" frameborder=\"0\" marginheight=\"0\" data-load-complete=\"true\" aria-label=\"Advertisement\" title=\"3rd party ad content\" data-google-container-id=\"2\" id=\"google_ads_iframe_/21849154601,22343295815/Ad.Plus-970x250-2_0\" name=\"google_ads_iframe_/21849154601,22343295815/Ad.Plus-970x250-2_0\"></iframe> from <div class=\"col-12 mt-4 col-md-6 col-xl-7\">ΓÇª</div> subtree intercepts pointer events\u001b[22m\n\u001b[2m  - retrying click action\u001b[22m\n\u001b[2m    - waiting 500ms\u001b[22m\n\u001b[2m    - waiting for element to be visible, enabled and stable\u001b[22m\n\n\n  11 |     \n  12 |     // Act: Visit Text Box page\n> 13 |     await page.getByRole('link', { name: 'Text Box' }).click();\n     |                                                        ^\n  14 |     await expect(page).toHaveURL(/.*text-box/i);\n  15 |     \n  16 |     // Act: Navigate to Buttons page\n    at C:\\Users\\LEGION\\Downloads\\QA_app\\playwright\\tests\\ui\\demoqa-recorded.spec.ts:13:56"
+                        }
+                      ],
+                      "stdout": [],
+                      "stderr": [],
+                      "retry": 0,
+                      "startTime": "2026-03-29T15:25:45.097Z",
+                      "annotations": [],
+                      "attachments": [
+                        {
+                          "name": "screenshot",
+                          "contentType": "image/png",
+                          "path": "C:\\Users\\LEGION\\Downloads\\QA_app\\playwright\\test-results\\ui-demoqa-recorded-Explora-39922-ough-Elements-section-pages-webkit\\test-failed-1.png"
+                        },
+                        {
+                          "name": "video",
+                          "contentType": "video/webm",
+                          "path": "C:\\Users\\LEGION\\Downloads\\QA_app\\playwright\\test-results\\ui-demoqa-recorded-Explora-39922-ough-Elements-section-pages-webkit\\video.webm"
+                        },
+                        {
+                          "name": "error-context",
+                          "contentType": "text/markdown",
+                          "path": "C:\\Users\\LEGION\\Downloads\\QA_app\\playwright\\test-results\\ui-demoqa-recorded-Explora-39922-ough-Elements-section-pages-webkit\\error-context.md"
+                        }
+                      ]
+                    }
+                  ],
+                  "status": "unexpected"
+                }
+              ],
+              "id": "a7a09b9fb6e1732d3181-c278f2193b175db0a0ee",
+              "file": "ui/demoqa-recorded.spec.ts",
+              "line": 4,
+              "column": 7
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "title": "ui\\explore-structure.spec.ts",
+      "file": "ui/explore-structure.spec.ts",
+      "column": 0,
+      "line": 0,
+      "specs": [
+        {
+          "title": "explore page structure",
+          "ok": true,
+          "tags": [],
+          "tests": [
+            {
+              "timeout": 30000,
+              "annotations": [],
+              "expectedStatus": "passed",
+              "projectId": "chromium",
+              "projectName": "chromium",
+              "results": [
+                {
+                  "workerIndex": 1,
+                  "parallelIndex": 1,
+                  "status": "passed",
+                  "duration": 1410,
+                  "errors": [],
+                  "stdout": [
+                    {
+                      "text": "\n=== ROLES AVAILABLE ===\n"
+                    },
+                    {
+                      "text": "Role \"navigation\": 0 elements\n"
+                    },
+                    {
+                      "text": "Role \"main\": 0 elements\n"
+                    },
+                    {
+                      "text": "Role \"heading\": 6 elements\n"
+                    },
+                    {
+                      "text": "Role \"link\": 8 elements\n"
+                    },
+                    {
+                      "text": "Role \"button\": 0 elements\n"
+                    },
+                    {
+                      "text": "Role \"contentinfo\": 1 elements\n"
+                    },
+                    {
+                      "text": "\nTotal headings (h1-h3): 0\n"
+                    },
+                    {
+                      "text": "Total links: 8\n"
+                    },
+                    {
+                      "text": "Total buttons: 0\n"
+                    },
+                    {
+                      "text": "\nPage title: demosite\n"
+                    }
+                  ],
+                  "stderr": [],
+                  "retry": 0,
+                  "startTime": "2026-03-29T15:25:40.491Z",
+                  "annotations": [],
+                  "attachments": []
+                }
+              ],
+              "status": "expected"
+            }
+          ],
+          "id": "fca3619c32e6baa07755-9558b14638db35f34a26",
+          "file": "ui/explore-structure.spec.ts",
+          "line": 3,
+          "column": 5
+        },
+        {
+          "title": "explore page structure",
+          "ok": true,
+          "tags": [],
+          "tests": [
+            {
+              "timeout": 30000,
+              "annotations": [],
+              "expectedStatus": "passed",
+              "projectId": "firefox",
+              "projectName": "firefox",
+              "results": [
+                {
+                  "workerIndex": 6,
+                  "parallelIndex": 6,
+                  "status": "passed",
+                  "duration": 3529,
+                  "errors": [],
+                  "stdout": [
+                    {
+                      "text": "\n=== ROLES AVAILABLE ===\n"
+                    },
+                    {
+                      "text": "Role \"navigation\": 0 elements\n"
+                    },
+                    {
+                      "text": "Role \"main\": 0 elements\n"
+                    },
+                    {
+                      "text": "Role \"heading\": 6 elements\n"
+                    },
+                    {
+                      "text": "Role \"link\": 8 elements\n"
+                    },
+                    {
+                      "text": "Role \"button\": 0 elements\n"
+                    },
+                    {
+                      "text": "Role \"contentinfo\": 1 elements\n"
+                    },
+                    {
+                      "text": "\nTotal headings (h1-h3): 0\n"
+                    },
+                    {
+                      "text": "Total links: 8\n"
+                    },
+                    {
+                      "text": "Total buttons: 0\n"
+                    },
+                    {
+                      "text": "\nPage title: demosite\n"
+                    }
+                  ],
+                  "stderr": [],
+                  "retry": 0,
+                  "startTime": "2026-03-29T15:25:40.561Z",
+                  "annotations": [],
+                  "attachments": []
+                }
+              ],
+              "status": "expected"
+            }
+          ],
+          "id": "fca3619c32e6baa07755-2848eeda563e4684285f",
+          "file": "ui/explore-structure.spec.ts",
+          "line": 3,
+          "column": 5
+        },
+        {
+          "title": "explore page structure",
+          "ok": true,
+          "tags": [],
+          "tests": [
+            {
+              "timeout": 30000,
+              "annotations": [],
+              "expectedStatus": "passed",
+              "projectId": "webkit",
+              "projectName": "webkit",
+              "results": [
+                {
+                  "workerIndex": 11,
+                  "parallelIndex": 3,
+                  "status": "passed",
+                  "duration": 3062,
+                  "errors": [],
+                  "stdout": [
+                    {
+                      "text": "\n=== ROLES AVAILABLE ===\n"
+                    },
+                    {
+                      "text": "Role \"navigation\": 0 elements\n"
+                    },
+                    {
+                      "text": "Role \"main\": 0 elements\n"
+                    },
+                    {
+                      "text": "Role \"heading\": 6 elements\n"
+                    },
+                    {
+                      "text": "Role \"link\": 8 elements\n"
+                    },
+                    {
+                      "text": "Role \"button\": 0 elements\n"
+                    },
+                    {
+                      "text": "Role \"contentinfo\": 1 elements\n"
+                    },
+                    {
+                      "text": "\nTotal headings (h1-h3): 0\n"
+                    },
+                    {
+                      "text": "Total links: 8\n"
+                    },
+                    {
+                      "text": "Total buttons: 0\n"
+                    },
+                    {
+                      "text": "\nPage title: demosite\n"
+                    }
+                  ],
+                  "stderr": [],
+                  "retry": 0,
+                  "startTime": "2026-03-29T15:25:45.483Z",
+                  "annotations": [],
+                  "attachments": []
+                }
+              ],
+              "status": "expected"
+            }
+          ],
+          "id": "fca3619c32e6baa07755-97db2793675d5bb2549d",
+          "file": "ui/explore-structure.spec.ts",
+          "line": 3,
+          "column": 5
+        }
+      ]
+    },
+    {
+      "title": "ui\\smoke.spec.ts",
+      "file": "ui/smoke.spec.ts",
+      "column": 0,
+      "line": 0,
+      "specs": [],
+      "suites": [
+        {
+          "title": "Smoke Tests",
+          "file": "ui/smoke.spec.ts",
+          "line": 3,
+          "column": 6,
+          "specs": [
+            {
+              "title": "homepage loads successfully",
+              "ok": true,
+              "tags": [],
+              "tests": [
+                {
+                  "timeout": 30000,
+                  "annotations": [],
+                  "expectedStatus": "passed",
+                  "projectId": "chromium",
+                  "projectName": "chromium",
+                  "results": [
+                    {
+                      "workerIndex": 2,
+                      "parallelIndex": 2,
+                      "status": "passed",
+                      "duration": 1434,
+                      "errors": [],
+                      "stdout": [],
+                      "stderr": [],
+                      "retry": 0,
+                      "startTime": "2026-03-29T15:25:40.532Z",
+                      "annotations": [],
+                      "attachments": []
+                    }
+                  ],
+                  "status": "expected"
+                }
+              ],
+              "id": "e124e0711d3bd3f25f92-599a1f047e71bdd0dd44",
+              "file": "ui/smoke.spec.ts",
+              "line": 4,
+              "column": 7
+            },
+            {
+              "title": "navigation links are visible",
+              "ok": true,
+              "tags": [],
+              "tests": [
+                {
+                  "timeout": 30000,
+                  "annotations": [],
+                  "expectedStatus": "passed",
+                  "projectId": "chromium",
+                  "projectName": "chromium",
+                  "results": [
+                    {
+                      "workerIndex": 3,
+                      "parallelIndex": 3,
+                      "status": "passed",
+                      "duration": 1638,
+                      "errors": [],
+                      "stdout": [],
+                      "stderr": [],
+                      "retry": 0,
+                      "startTime": "2026-03-29T15:25:40.520Z",
+                      "annotations": [],
+                      "attachments": []
+                    }
+                  ],
+                  "status": "expected"
+                }
+              ],
+              "id": "e124e0711d3bd3f25f92-d23df3382f32372e722d",
+              "file": "ui/smoke.spec.ts",
+              "line": 12,
+              "column": 7
+            },
+            {
+              "title": "page has content sections",
+              "ok": true,
+              "tags": [],
+              "tests": [
+                {
+                  "timeout": 30000,
+                  "annotations": [],
+                  "expectedStatus": "passed",
+                  "projectId": "chromium",
+                  "projectName": "chromium",
+                  "results": [
+                    {
+                      "workerIndex": 4,
+                      "parallelIndex": 4,
+                      "status": "passed",
+                      "duration": 1456,
+                      "errors": [],
+                      "stdout": [],
+                      "stderr": [],
+                      "retry": 0,
+                      "startTime": "2026-03-29T15:25:40.531Z",
+                      "annotations": [],
+                      "attachments": []
+                    }
+                  ],
+                  "status": "expected"
+                }
+              ],
+              "id": "e124e0711d3bd3f25f92-c97bff45b84c88eedb68",
+              "file": "ui/smoke.spec.ts",
+              "line": 21,
+              "column": 7
+            },
+            {
+              "title": "homepage loads successfully",
+              "ok": true,
+              "tags": [],
+              "tests": [
+                {
+                  "timeout": 30000,
+                  "annotations": [],
+                  "expectedStatus": "passed",
+                  "projectId": "firefox",
+                  "projectName": "firefox",
+                  "results": [
+                    {
+                      "workerIndex": 7,
+                      "parallelIndex": 7,
+                      "status": "passed",
+                      "duration": 4543,
+                      "errors": [],
+                      "stdout": [],
+                      "stderr": [],
+                      "retry": 0,
+                      "startTime": "2026-03-29T15:25:40.540Z",
+                      "annotations": [],
+                      "attachments": []
+                    }
+                  ],
+                  "status": "expected"
+                }
+              ],
+              "id": "e124e0711d3bd3f25f92-64ccfa9c691a3504cc2d",
+              "file": "ui/smoke.spec.ts",
+              "line": 4,
+              "column": 7
+            },
+            {
+              "title": "navigation links are visible",
+              "ok": true,
+              "tags": [],
+              "tests": [
+                {
+                  "timeout": 30000,
+                  "annotations": [],
+                  "expectedStatus": "passed",
+                  "projectId": "firefox",
+                  "projectName": "firefox",
+                  "results": [
+                    {
+                      "workerIndex": 9,
+                      "parallelIndex": 1,
+                      "status": "passed",
+                      "duration": 4179,
+                      "errors": [],
+                      "stdout": [],
+                      "stderr": [],
+                      "retry": 0,
+                      "startTime": "2026-03-29T15:25:45.219Z",
+                      "annotations": [],
+                      "attachments": []
+                    }
+                  ],
+                  "status": "expected"
+                }
+              ],
+              "id": "e124e0711d3bd3f25f92-8ebbff7d4868aa749723",
+              "file": "ui/smoke.spec.ts",
+              "line": 12,
+              "column": 7
+            },
+            {
+              "title": "page has content sections",
+              "ok": true,
+              "tags": [],
+              "tests": [
+                {
+                  "timeout": 30000,
+                  "annotations": [],
+                  "expectedStatus": "passed",
+                  "projectId": "firefox",
+                  "projectName": "firefox",
+                  "results": [
+                    {
+                      "workerIndex": 8,
+                      "parallelIndex": 2,
+                      "status": "passed",
+                      "duration": 4069,
+                      "errors": [],
+                      "stdout": [],
+                      "stderr": [],
+                      "retry": 0,
+                      "startTime": "2026-03-29T15:25:45.086Z",
+                      "annotations": [],
+                      "attachments": []
+                    }
+                  ],
+                  "status": "expected"
+                }
+              ],
+              "id": "e124e0711d3bd3f25f92-4900c747d9efb0b85b9e",
+              "file": "ui/smoke.spec.ts",
+              "line": 21,
+              "column": 7
+            },
+            {
+              "title": "homepage loads successfully",
+              "ok": true,
+              "tags": [],
+              "tests": [
+                {
+                  "timeout": 30000,
+                  "annotations": [],
+                  "expectedStatus": "passed",
+                  "projectId": "webkit",
+                  "projectName": "webkit",
+                  "results": [
+                    {
+                      "workerIndex": 12,
+                      "parallelIndex": 0,
+                      "status": "passed",
+                      "duration": 2540,
+                      "errors": [],
+                      "stdout": [],
+                      "stderr": [],
+                      "retry": 0,
+                      "startTime": "2026-03-29T15:25:47.119Z",
+                      "annotations": [],
+                      "attachments": []
+                    }
+                  ],
+                  "status": "expected"
+                }
+              ],
+              "id": "e124e0711d3bd3f25f92-e24f7e2ab010651ec649",
+              "file": "ui/smoke.spec.ts",
+              "line": 4,
+              "column": 7
+            },
+            {
+              "title": "navigation links are visible",
+              "ok": true,
+              "tags": [],
+              "tests": [
+                {
+                  "timeout": 30000,
+                  "annotations": [],
+                  "expectedStatus": "passed",
+                  "projectId": "webkit",
+                  "projectName": "webkit",
+                  "results": [
+                    {
+                      "workerIndex": 13,
+                      "parallelIndex": 6,
+                      "status": "passed",
+                      "duration": 2479,
+                      "errors": [],
+                      "stdout": [],
+                      "stderr": [],
+                      "retry": 0,
+                      "startTime": "2026-03-29T15:25:48.816Z",
+                      "annotations": [],
+                      "attachments": []
+                    }
+                  ],
+                  "status": "expected"
+                }
+              ],
+              "id": "e124e0711d3bd3f25f92-65bfb3e4c2d008151006",
+              "file": "ui/smoke.spec.ts",
+              "line": 12,
+              "column": 7
+            },
+            {
+              "title": "page has content sections",
+              "ok": true,
+              "tags": [],
+              "tests": [
+                {
+                  "timeout": 30000,
+                  "annotations": [],
+                  "expectedStatus": "passed",
+                  "projectId": "webkit",
+                  "projectName": "webkit",
+                  "results": [
+                    {
+                      "workerIndex": 14,
+                      "parallelIndex": 7,
+                      "status": "passed",
+                      "duration": 1226,
+                      "errors": [],
+                      "stdout": [],
+                      "stderr": [],
+                      "retry": 0,
+                      "startTime": "2026-03-29T15:25:51.458Z",
+                      "annotations": [],
+                      "attachments": []
+                    }
+                  ],
+                  "status": "expected"
+                }
+              ],
+              "id": "e124e0711d3bd3f25f92-08f23ad14fe0dc069343",
+              "file": "ui/smoke.spec.ts",
+              "line": 21,
+              "column": 7
+            }
+          ]
+        }
+      ]
+    }
+  ],
+  "errors": [],
+  "stats": {
+    "startTime": "2026-03-29T15:25:38.949Z",
+    "duration": 36768.727,
+    "expected": 14,
+    "skipped": 0,
+    "unexpected": 1,
+    "flaky": 0
+  }
+}

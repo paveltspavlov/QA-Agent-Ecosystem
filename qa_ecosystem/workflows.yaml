@@ -291,7 +291,7 @@ workflows:
 
   exploratory-testing:
     name: "Exploratory Testing"
-    description: "Explore a web app, create test cases with steps, record Playwright tests, and execute them"
+    description: "Explore a web app, create test cases, record and execute Playwright tests, log bugs, and report"
     steps:
       - index: 1
         agent: exploratory-tester
@@ -305,6 +305,72 @@ workflows:
         agent: playwright-executor
         description: "Run the recorded Playwright tests, diagnose failures, apply fixes, and produce execution report"
         dependencies: [2]
+      - index: 4
+        agent: bug-reporter
+        description: "Extract and log structured bug entries from test failures"
+        dependencies: [3]
+      - index: 5
+        agent: report-creator
+        description: "Generate formal HTML/markdown test execution report with bug summary"
+        dependencies: [3, 4]
+
+  playwright-copilot-flow:
+    name: "Playwright Copilot Full Flow"
+    description: "Plan, generate, execute, log bugs, and create reports using Playwright Copilot agents"
+    steps:
+      - index: 1
+        agent: playwright-copilot
+        description: "Plan test scenarios by browsing the target application"
+        dependencies: []
+      - index: 2
+        agent: playwright-copilot
+        description: "Generate Playwright tests from the test plan"
+        dependencies: [1]
+      - index: 3
+        agent: playwright-executor
+        description: "Execute generated tests with trace collection and failure diagnosis"
+        dependencies: [2]
+      - index: 4
+        agent: bug-reporter
+        description: "Extract structured bug entries from test failures"
+        dependencies: [3]
+      - index: 5
+        agent: report-creator
+        description: "Generate comprehensive HTML/markdown test execution report"
+        dependencies: [3, 4]
+
+  full-qa-pipeline:
+    name: "Full QA Pipeline"
+    description: "End-to-end: explore, generate, execute, analyze, log bugs, and report"
+    steps:
+      - index: 1
+        agent: exploratory-tester
+        description: "Explore app, discover pages, generate test cases"
+        dependencies: []
+      - index: 2
+        agent: playwright-recorder
+        description: "Convert test cases to Playwright tests"
+        dependencies: [1]
+      - index: 3
+        agent: playwright-executor
+        description: "Execute tests, diagnose and fix failures"
+        dependencies: [2]
+      - index: 4
+        agent: bug-reporter
+        description: "Log structured bug entries from failures"
+        dependencies: [3]
+      - index: 5
+        agent: test-results-analyst
+        description: "Analyze failure patterns and quality trends"
+        dependencies: [3]
+      - index: 6
+        agent: report-creator
+        description: "Generate comprehensive execution report"
+        dependencies: [3, 4, 5]
+      - index: 7
+        agent: testware-creator
+        description: "Generate formal ISTQB test report and defect report"
+        dependencies: [4, 5, 6]
 
   post-deploy-smoke:
     name: "Post-Deployment Smoke & Canary"

@@ -1,0 +1,35 @@
+agent: bug-reporter
+templates:
+  - name: "default"
+    description: "Extract bugs from test execution results"
+    prompt: |
+      Analyze the following test execution results and extract structured bug
+      entries for every failed test case.
+
+      {results_data}
+
+      Save the bug report to outputs/bugs/bugs.json and outputs/bugs/bug-report.md.
+
+  - name: "with-github-issues"
+    description: "Extract bugs and create GitHub issues for Critical/High severity"
+    prompt: |
+      Analyze the following test execution results and extract structured bug
+      entries for every failed test case.
+
+      {results_data}
+
+      Save the bug report to outputs/bugs/bugs.json and outputs/bugs/bug-report.md.
+
+      IMPORTANT: Also create GitHub issues for all bugs with Critical or High severity.
+      Use `gh issue create` with the --label "bug,automated-qa" flag.
+
+  - name: "from-file"
+    description: "Extract bugs from a test results file"
+    prompt: |
+      Read the test execution results from the following file and extract
+      structured bug entries for every failed test case:
+
+      File: {file_path}
+
+      Read the file using the Read tool, then analyze failures and produce
+      bug entries. Save to outputs/bugs/bugs.json and outputs/bugs/bug-report.md.

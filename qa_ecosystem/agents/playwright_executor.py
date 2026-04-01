@@ -130,6 +130,39 @@ Which tests were fixed, what changed, how many iterations.
 ### 6. Recommendations
 Tests needing manual review, environment issues, reliability suggestions.
 
+## Step 8: Structured Bug Data (MANDATORY for failures)
+
+If ANY tests failed after all fix iterations, append a JSON code block at the END
+of your report with this exact format. This enables downstream agents (bug-reporter,
+report-creator) to parse failures without re-analysis:
+
+```json
+// bug-data.json
+{
+  "bugs": [
+    {
+      "bug_id": "BUG-001",
+      "title": "Short descriptive title of the failure",
+      "test_case_id": "TC-XXX",
+      "severity": "High",
+      "error_message": "Exact error from test output",
+      "category": "Selector|Assertion|Navigation|Timeout",
+      "steps": ["Step 1", "Step 2", "Step 3"],
+      "expected": "What should have happened",
+      "actual": "What actually happened"
+    }
+  ]
+}
+```
+
+Category assignment:
+- **Selector**: Element not found, locator resolution failed
+- **Assertion**: Expected value mismatch (toBeVisible, toHaveText, etc.)
+- **Navigation**: Wrong URL, page load failure, redirect issue
+- **Timeout**: Action exceeded timeout, waitFor timeout
+
+If ALL tests passed, skip this step entirely (no empty bugs array needed).
+
 RULES:
 - Never add new tests — only run and fix existing ones
 - Never delete tests — use test.fixme() for unfixable tests

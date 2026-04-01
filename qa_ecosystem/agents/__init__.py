@@ -71,4 +71,8 @@ def _ensure_loaded() -> None:
         exploratory_tester,
         playwright_recorder,
         playwright_executor,
+        # Copilot bridge + reporting agents
+        playwright_copilot_bridge,
+        bug_reporter,
+        report_creator,
     )
