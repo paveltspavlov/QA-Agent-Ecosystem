@@ -78,8 +78,8 @@ class BugLog:
         lines.append("# Bug Report\n")
         lines.append(f"**Generated:** {self.execution_timestamp}\n")
         lines.append("## Execution Summary\n")
-        lines.append(f"| Metric | Count |")
-        lines.append(f"|--------|-------|")
+        lines.append("| Metric | Count |")
+        lines.append("|--------|-------|")
         lines.append(f"| Total tests | {self.total_tests} |")
         lines.append(f"| Passed | {self.passed} |")
         lines.append(f"| Failed | {self.failed} |")
@@ -93,7 +93,7 @@ class BugLog:
 
         lines.append("## Bug Details\n")
         for bug in self.bugs:
-            lines.append(f"---\n")
+            lines.append("---\n")
             lines.append(f"### {bug.bug_id}: {bug.title}\n")
             lines.append(f"- **Severity:** {bug.severity}")
             lines.append(f"- **Priority:** {bug.priority}")
@@ -111,7 +111,7 @@ class BugLog:
             lines.append(f"**Actual Result:** {bug.actual_result}")
             lines.append(f"**Error Message:** `{bug.error_message}`")
             if bug.stack_trace:
-                lines.append(f"\n<details><summary>Stack Trace</summary>\n")
+                lines.append("\n<details><summary>Stack Trace</summary>\n")
                 lines.append(f"```\n{bug.stack_trace}\n```\n")
                 lines.append("</details>\n")
             lines.append("")

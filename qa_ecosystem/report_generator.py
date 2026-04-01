@@ -68,8 +68,8 @@ class TestExecutionReport:
         lines.append("## Executive Summary\n")
         s = self.summary
         pass_rate = (s.passed / s.total * 100) if s.total else 0
-        lines.append(f"| Metric | Value |")
-        lines.append(f"|--------|-------|")
+        lines.append("| Metric | Value |")
+        lines.append("|--------|-------|")
         lines.append(f"| Total Tests | {s.total} |")
         lines.append(f"| Passed | {s.passed} |")
         lines.append(f"| Failed | {s.failed} |")
@@ -148,13 +148,10 @@ class TestExecutionReport:
         # SVG donut chart
         passed_pct = s.passed / s.total * 100 if s.total else 0
         failed_pct = s.failed / s.total * 100 if s.total else 0
-        other_pct = 100 - passed_pct - failed_pct
         passed_dash = passed_pct * 2.51327
         failed_dash = failed_pct * 2.51327
-        other_dash = other_pct * 2.51327
         passed_offset = 0
         failed_offset = passed_dash
-        other_offset = passed_dash + failed_dash
 
         recs_html = ""
         if self.recommendations:

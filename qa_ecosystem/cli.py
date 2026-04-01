@@ -464,7 +464,7 @@ def cmd_playwright_report(args: argparse.Namespace) -> None:
 
     if use_fast:
         # Fast mode — use report_generator.py directly (no LLM)
-        from qa_ecosystem.report_generator import from_playwright_json, from_agent_output, TestExecutionReport
+        from qa_ecosystem.report_generator import from_playwright_json, TestExecutionReport
 
         json_input = getattr(args, "input", None)
         bugs_input = getattr(args, "bugs", None)
