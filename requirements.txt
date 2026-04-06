@@ -11,3 +11,4 @@ rich>=13.0
 
 # OpenAI / local models (Ollama, LM Studio, vLLM, Together, Groq)
 # openai>=1.0
+pygments>=2.20.0 # not directly required, pinned by Snyk to avoid a vulnerability
