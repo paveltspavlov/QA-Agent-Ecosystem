@@ -6,12 +6,13 @@ from rich.console import Console
 from rich.markdown import Markdown
 
 from qa_ecosystem.config import DEFAULT_PERMISSION_MODE
+from qa_ecosystem.metrics import TokenUsage
 from qa_ecosystem.models import ModelProfile
 
 console = Console()
 
 
-async def run_single(agent_def, prompt, profile: ModelProfile, cwd, max_turns) -> str:
+async def run_single(agent_def, prompt, profile: ModelProfile, cwd, max_turns) -> tuple[str, TokenUsage]:
     """Execute a single agent via Claude Agent SDK."""
     try:
         from claude_agent_sdk import ClaudeAgentOptions, query  # noqa: F401
@@ -33,7 +34,7 @@ async def run_single(agent_def, prompt, profile: ModelProfile, cwd, max_turns) -
     return await _stream(prompt, options)
 
 
-async def run_orchestrator(manager, prompt, profile: ModelProfile, cwd, max_turns) -> str:
+async def run_orchestrator(manager, prompt, profile: ModelProfile, cwd, max_turns) -> tuple[str, TokenUsage]:
     """Execute the orchestrator via Claude Agent SDK with subagent delegation."""
     from qa_ecosystem.agents import get_all_agents
     try:
@@ -59,7 +60,7 @@ async def run_orchestrator(manager, prompt, profile: ModelProfile, cwd, max_turn
     return await _stream(prompt, options)
 
 
-async def _stream(prompt: str, options) -> str:
+async def _stream(prompt: str, options) -> tuple[str, TokenUsage]:
     """Stream responses from the Claude Agent SDK."""
     from claude_agent_sdk import query
 
@@ -69,7 +70,13 @@ async def _stream(prompt: str, options) -> str:
         if text:
             collected.append(text)
             console.print(Markdown(text))
-    return "\n".join(collected)
+    result = "\n".join(collected)
+    usage = TokenUsage(
+        input_tokens=(len(options.system_prompt) + len(prompt)) // 4,
+        output_tokens=len(result) // 4,
+        is_estimated=True,
+    )
+    return result, usage
 
 
 def _extract_text(message: object) -> str | None:

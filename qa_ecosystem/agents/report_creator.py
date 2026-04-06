@@ -36,6 +36,12 @@ Read all available data sources:
 
 3. Parse the previous agent's output (execution report markdown) from the input.
 
+4. Scan for all generated artifacts (test specs, page objects, fixtures, results, bug reports):
+   ```bash
+   find outputs/ playwright/tests/ -type f 2>/dev/null | head -100
+   ls -la playwright/test-results.json 2>/dev/null
+   ```
+
 Read whichever files exist:
 ```bash
 cat playwright/test-results.json 2>/dev/null | head -500
@@ -87,6 +93,18 @@ Write the report to `outputs/reports/report.md` using the Write tool:
 |--------|-------|----------|----------|----------|
 | BUG-001 | ... | High | P2 | Assertion |
 
+## Generated Files
+
+List ALL files produced by the pipeline (test specs, page objects, fixtures, results, bug reports):
+
+| # | File | Category | Size |
+|---|------|----------|------|
+| 1 | `path/to/file.spec.ts` | Test Spec | 2.4 KB |
+
+Categories: Test Spec, Page Object, Fixture, Helper, Test Result, Bug Report, Report, Other
+
+**Total: N files (X KB)**
+
 ## Failure Analysis
 
 For each failed test, provide:
@@ -132,6 +150,7 @@ Use this HTML structure:
   <!-- SVG chart -->
   <!-- Results table -->
   <!-- Bug table -->
+  <!-- Generated files table -->
   <!-- Recommendations -->
 </body>
 </html>
@@ -158,6 +177,7 @@ RULES:
 - Include ALL test results, not just failures
 - Bug data should be included if available, but the report is valid without it
 - Reports must be professional and suitable for stakeholder review
+- Include a "Generated Files" section listing ALL artifacts produced by the pipeline (test specs, page objects, fixtures, test results, bug reports) with file path, category, and size
 - Use the Write tool to save files — do not just output to the conversation
 """
 

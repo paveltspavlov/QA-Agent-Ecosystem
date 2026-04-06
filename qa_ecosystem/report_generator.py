@@ -26,6 +26,15 @@ class TestCaseResult:
 
 
 @dataclass
+class GeneratedFileEntry:
+    """A file produced during the test pipeline."""
+
+    path: str          # relative path from project root
+    category: str      # test-spec | page-object | fixture | helper | test-result | bug-report | report | other
+    size_bytes: int = 0
+
+
+@dataclass
 class ExecutionSummary:
     """Aggregate execution metrics."""
 
@@ -53,6 +62,7 @@ class TestExecutionReport:
     bugs: list[dict] = field(default_factory=list)
     coverage_metrics: dict | None = None
     recommendations: list[str] = field(default_factory=list)
+    generated_files: list[GeneratedFileEntry] = field(default_factory=list)
 
     def to_markdown(self) -> str:
         lines: list[str] = []
@@ -104,6 +114,19 @@ class TestExecutionReport:
                 )
             lines.append("")
 
+        # Generated files
+        if self.generated_files:
+            lines.append("## Generated Files\n")
+            lines.append("| # | File | Category | Size |")
+            lines.append("|---|------|----------|------|")
+            total_size = 0
+            for i, f in enumerate(self.generated_files, 1):
+                label = _CATEGORY_LABELS.get(f.category, f.category)
+                lines.append(f"| {i} | `{f.path}` | {label} | {_format_size(f.size_bytes)} |")
+                total_size += f.size_bytes
+            lines.append("")
+            lines.append(f"**Total: {len(self.generated_files)} files ({_format_size(total_size)})**\n")
+
         # Recommendations
         if self.recommendations:
             lines.append("## Recommendations\n")
@@ -153,6 +176,27 @@ class TestExecutionReport:
         passed_offset = 0
         failed_offset = passed_dash
 
+        # Build generated files rows
+        files_html = ""
+        if self.generated_files:
+            file_rows = ""
+            total_size = 0
+            for i, f in enumerate(self.generated_files, 1):
+                label = _CATEGORY_LABELS.get(f.category, f.category)
+                file_rows += f"""<tr>
+              <td>{i}</td>
+              <td><code>{_html_escape(f.path)}</code></td>
+              <td><span class="category">{label}</span></td>
+              <td>{_format_size(f.size_bytes)}</td>
+            </tr>\n"""
+                total_size += f.size_bytes
+            files_html = f"""<h2>Generated Files</h2>
+<table>
+  <thead><tr><th>#</th><th>File</th><th>Category</th><th>Size</th></tr></thead>
+  <tbody>{file_rows}</tbody>
+</table>
+<p class="meta"><strong>Total: {len(self.generated_files)} files ({_format_size(total_size)})</strong></p>"""
+
         recs_html = ""
         if self.recommendations:
             items = "".join(f"<li>{_html_escape(r)}</li>" for r in self.recommendations)
@@ -199,6 +243,8 @@ class TestExecutionReport:
             overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }}
   .chart {{ display: flex; align-items: center; gap: 1rem; }}
   svg {{ transform: rotate(-90deg); }}
+  .category {{ display:inline-block; padding:0.125rem 0.5rem; border-radius:4px;
+              background:#f1f5f9; font-size:0.75rem; color:#475569; }}
   ul {{ padding-left: 1.5rem; }}
   li {{ margin-bottom: 0.5rem; }}
 </style>
@@ -234,6 +280,8 @@ class TestExecutionReport:
 </table>
 
 {"<h2>Bugs Found</h2><table><thead><tr><th>Bug ID</th><th>Title</th><th>Severity</th><th>Priority</th><th>Category</th></tr></thead><tbody>" + bug_rows + "</tbody></table>" if bug_rows else ""}
+
+{files_html}
 
 {recs_html}
 
@@ -279,10 +327,15 @@ def from_playwright_json(json_path: Path) -> TestExecutionReport:
     s.flaky = sum(1 for r in report.test_results if r.status == "flaky")
     s.duration_s = sum(r.duration_ms for r in report.test_results) / 1000
 
+    # Auto-discover generated files from the project directory
+    project_root = json_path.parent.parent  # playwright/test-results.json -> project root
+    if project_root.is_dir():
+        report.generated_files = discover_generated_files(project_root)
+
     return report
 
 
-def from_agent_output(raw_output: str, bug_log_data: dict | None = None) -> TestExecutionReport:
+def from_agent_output(raw_output: str, bug_log_data: dict | None = None, output_dir: Path | None = None) -> TestExecutionReport:
     """Build a TestExecutionReport from agent execution output and optional bug log."""
     from qa_ecosystem.bug_logger import parse_execution_failures
 
@@ -302,6 +355,9 @@ def from_agent_output(raw_output: str, bug_log_data: dict | None = None) -> Test
         report.bugs = bug_log_data["bugs"]
     else:
         report.bugs = [b.to_dict() for b in bug_log.bugs]
+
+    if output_dir and output_dir.is_dir():
+        report.generated_files = discover_generated_files(output_dir)
 
     return report
 
@@ -338,6 +394,95 @@ def _walk_suites(suites: list[dict], report: TestExecutionReport) -> None:
         # Recurse into nested suites
         if "suites" in suite:
             _walk_suites(suite["suites"], report)
+
+
+def discover_generated_files(base_dir: Path) -> list[GeneratedFileEntry]:
+    """Walk output and test directories to discover all generated pipeline files."""
+    entries: list[GeneratedFileEntry] = []
+    seen: set[str] = set()
+
+    scan_dirs = [
+        base_dir / "outputs",
+        base_dir / "playwright" / "tests",
+    ]
+    # Also check for standalone test-results.json
+    standalone_json = base_dir / "playwright" / "test-results.json"
+    if standalone_json.is_file():
+        rel = standalone_json.relative_to(base_dir).as_posix()
+        entries.append(GeneratedFileEntry(
+            path=rel,
+            category="test-result",
+            size_bytes=standalone_json.stat().st_size,
+        ))
+        seen.add(rel)
+
+    for scan_dir in scan_dirs:
+        if not scan_dir.is_dir():
+            continue
+        for fpath in scan_dir.rglob("*"):
+            if not fpath.is_file():
+                continue
+            rel = fpath.relative_to(base_dir).as_posix()
+            if rel in seen:
+                continue
+            seen.add(rel)
+            entries.append(GeneratedFileEntry(
+                path=rel,
+                category=_classify_file(fpath),
+                size_bytes=fpath.stat().st_size,
+            ))
+
+    entries.sort(key=lambda e: (e.category, e.path))
+    return entries
+
+
+def _classify_file(fpath: Path) -> str:
+    """Classify a file into a pipeline artifact category."""
+    name = fpath.name.lower()
+    suffix = fpath.suffix.lower()
+
+    if name.endswith(".spec.ts"):
+        return "test-spec"
+    if name.endswith(".page.ts") or name.endswith(".component.ts"):
+        return "page-object"
+    if name.endswith(".fixture.ts"):
+        return "fixture"
+    if "helper" in name or name.startswith("utils"):
+        return "helper"
+    if name in ("test-results.json",) or "test-results" in str(fpath):
+        return "test-result"
+    if name in ("bugs.json", "bug-report.md"):
+        return "bug-report"
+    if name in ("report.md", "report.html"):
+        return "report"
+    if suffix in (".ts", ".js"):
+        return "test-spec"
+    if suffix in (".json",):
+        return "test-result"
+    if suffix in (".md", ".html"):
+        return "report"
+    return "other"
+
+
+_CATEGORY_LABELS = {
+    "test-spec": "Test Spec",
+    "page-object": "Page Object",
+    "fixture": "Fixture",
+    "helper": "Helper",
+    "test-result": "Test Result",
+    "bug-report": "Bug Report",
+    "report": "Report",
+    "other": "Other",
+}
+
+
+def _format_size(size_bytes: int) -> str:
+    """Format byte count as human-readable size."""
+    if size_bytes < 1024:
+        return f"{size_bytes} B"
+    if size_bytes < 1024 * 1024:
+        return f"{size_bytes / 1024:.1f} KB"
+    return f"{size_bytes / (1024 * 1024):.1f} MB"
 
 
 def _html_escape(text: str) -> str:

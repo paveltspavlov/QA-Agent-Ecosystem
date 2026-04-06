@@ -497,6 +497,11 @@ def cmd_playwright_report(args: argparse.Namespace) -> None:
                 bug_data = _json.loads(default_bugs.read_text(encoding="utf-8"))
                 report.bugs = bug_data.get("bugs", [])
 
+        # Discover all generated pipeline files
+        from qa_ecosystem.report_generator import discover_generated_files
+        project_root = _Path(args.cwd)
+        report.generated_files = discover_generated_files(project_root)
+
         output_dir = _Path("outputs/reports")
         paths = report.save(output_dir)
         for fmt, path in paths.items():

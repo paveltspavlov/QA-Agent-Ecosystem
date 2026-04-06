@@ -9,7 +9,9 @@ from rich.markdown import Markdown
 from rich.panel import Panel
 
 from qa_ecosystem.config import MAX_DELEGATION_DEPTH
+from qa_ecosystem.metrics import TokenUsage
 from qa_ecosystem.models import ModelProfile, resolve_model
+from qa_ecosystem.providers._common import has_question, prompt_user
 
 console = Console()
 
@@ -100,7 +102,7 @@ def on_permission_request(request, invocation=None):
         return PermissionRequestResult(kind="denied-interactively-by-user")
 
 
-async def run_single(agent_def, prompt, profile: ModelProfile, cwd, max_turns) -> str:
+async def run_single(agent_def, prompt, profile: ModelProfile, cwd, max_turns) -> tuple[str, TokenUsage]:
     """Execute a single agent via the GitHub Copilot SDK."""
     try:
         from copilot import CopilotClient
@@ -164,10 +166,10 @@ async def run_single(agent_def, prompt, profile: ModelProfile, cwd, max_turns) -
             turn_text = "".join(collected)
             all_turns.append(turn_text)
 
-            if not _has_question(turn_text):
+            if not has_question(turn_text):
                 break
 
-            user_reply = await _prompt_user()
+            user_reply = await prompt_user()
             if user_reply is None:
                 break
 
@@ -190,10 +192,15 @@ async def run_single(agent_def, prompt, profile: ModelProfile, cwd, max_turns) -
             "prematurely.[/yellow]"
         )
 
-    return result
+    usage = TokenUsage(
+        input_tokens=(len(agent_def.prompt) + len(prompt)) // 4,
+        output_tokens=len(result) // 4,
+        is_estimated=True,
+    )
+    return result, usage
 
 
-async def run_orchestrator(manager, prompt, profile: ModelProfile, cwd, max_turns, resume_from=None, log_fn=None, save_workflow_fn=None) -> str:
+async def run_orchestrator(manager, prompt, profile: ModelProfile, cwd, max_turns, resume_from=None, log_fn=None, save_workflow_fn=None) -> tuple[str, TokenUsage]:
     """Execute the orchestrator via the GitHub Copilot SDK with delegation support."""
     try:
         from copilot import CopilotClient, define_tool  # noqa: F401
@@ -260,7 +267,13 @@ async def run_orchestrator(manager, prompt, profile: ModelProfile, cwd, max_turn
         await client.stop()
 
     console.print()
-    return "".join(collected)
+    result = "".join(collected)
+    usage = TokenUsage(
+        input_tokens=(len(manager.prompt) + len(prompt)) // 4,
+        output_tokens=len(result) // 4,
+        is_estimated=True,
+    )
+    return result, usage
 
 
 # ---------------------------------------------------------------------------
@@ -440,7 +453,7 @@ def build_human_input_tool():
                 border_style="yellow",
             )
         )
-        reply = await _prompt_user()
+        reply = await prompt_user()
         return reply or "(no reply provided)"
 
     return request_human_input
@@ -536,26 +549,6 @@ def build_plan_approval_tool():
 def _resolve_tools(tool_names: list[str]) -> list:
     """Map abstract tool-set names to Copilot SDK tool identifiers."""
     return [t for t in tool_names if t != "Agent"]
-
-
-def _has_question(text: str) -> bool:
-    """Return True if the agent's response ends with a question."""
-    lines = [ln.strip() for ln in text.strip().splitlines() if ln.strip()]
-    if not lines:
-        return False
-    return lines[-1].endswith("?")
-
-
-async def _prompt_user() -> str | None:
-    """Prompt the user for a reply in the terminal."""
-    console.print("\n[bold yellow]Agent is asking a question. Type your reply (or press Enter to skip):[/bold yellow]")
-    loop = asyncio.get_event_loop()
-    reply = await loop.run_in_executor(None, lambda: input("> ").strip())
-    if not reply:
-        console.print("[dim]No reply given — continuing without response.[/dim]\n")
-        return None
-    console.print()
-    return reply
 
 
 async def _prompt_user_plan() -> str | None:

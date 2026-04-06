@@ -2,16 +2,16 @@
 
 from __future__ import annotations
 
-import asyncio
-
 from rich.console import Console
 
+from qa_ecosystem.metrics import TokenUsage
 from qa_ecosystem.models import ModelProfile
+from qa_ecosystem.providers._common import has_question, prompt_user
 
 console = Console()
 
 
-async def run(system_prompt: str, user_prompt: str, profile: ModelProfile) -> str:
+async def run(system_prompt: str, user_prompt: str, profile: ModelProfile) -> tuple[str, TokenUsage]:
     """Execute via the OpenAI Chat Completions API."""
     try:
         from openai import AsyncOpenAI
@@ -38,59 +38,72 @@ async def run(system_prompt: str, user_prompt: str, profile: ModelProfile) -> st
 
     console.print(f"[dim]Streaming from {profile.provider}:{profile.model_id} ...[/dim]\n")
 
+    # Only request usage stats from the official OpenAI API;
+    # compatible endpoints (Ollama, LM Studio, etc.) may not support it.
+    use_real_usage = profile.provider == "openai"
+
     messages: list[dict] = [
         {"role": "system", "content": system_prompt},
         {"role": "user", "content": user_prompt},
     ]
     all_turns: list[str] = []
+    total_input_tokens = 0
+    total_output_tokens = 0
 
     while True:
         collected: list[str] = []
-        stream = await client.chat.completions.create(
+        create_kwargs: dict = dict(
             model=profile.model_id,
             messages=messages,
             temperature=profile.temperature,
             max_tokens=profile.max_tokens,
             stream=True,
         )
+        if use_real_usage:
+            create_kwargs["stream_options"] = {"include_usage": True}
 
+        stream = await client.chat.completions.create(**create_kwargs)
+
+        turn_usage = None
         async for chunk in stream:
+            if chunk.usage is not None:
+                turn_usage = chunk.usage
             delta = chunk.choices[0].delta if chunk.choices else None
             if delta and delta.content:
                 collected.append(delta.content)
                 console.print(delta.content, end="")
+
+        if turn_usage:
+            total_input_tokens += turn_usage.prompt_tokens
+            total_output_tokens += turn_usage.completion_tokens
 
         console.print()
         turn_text = "".join(collected)
         all_turns.append(turn_text)
         messages.append({"role": "assistant", "content": turn_text})
 
-        if not _has_question(turn_text):
+        if not has_question(turn_text):
             break
 
-        user_reply = await _prompt_user()
+        user_reply = await prompt_user()
         if user_reply is None:
             break
         messages.append({"role": "user", "content": user_reply})
 
-    return "\n\n".join(all_turns)
+    result = "\n\n".join(all_turns)
 
+    if use_real_usage and total_input_tokens > 0:
+        usage = TokenUsage(
+            input_tokens=total_input_tokens,
+            output_tokens=total_output_tokens,
+            is_estimated=False,
+        )
+    else:
+        # Fallback estimation for compatible endpoints
+        usage = TokenUsage(
+            input_tokens=(len(system_prompt) + len(user_prompt)) // 4,
+            output_tokens=len(result) // 4,
+            is_estimated=True,
+        )
 
-def _has_question(text: str) -> bool:
-    """Return True if the agent's response ends with a question."""
-    lines = [ln.strip() for ln in text.strip().splitlines() if ln.strip()]
-    if not lines:
-        return False
-    return lines[-1].endswith("?")
-
-
-async def _prompt_user() -> str | None:
-    """Prompt the user for a reply in the terminal."""
-    console.print("\n[bold yellow]Agent is asking a question. Type your reply (or press Enter to skip):[/bold yellow]")
-    loop = asyncio.get_event_loop()
-    reply = await loop.run_in_executor(None, lambda: input("> ").strip())
-    if not reply:
-        console.print("[dim]No reply given — continuing without response.[/dim]\n")
-        return None
-    console.print()
-    return reply
+    return result, usage

@@ -244,30 +244,27 @@ async def run_single_agent(
     if profile.is_copilot:
         from qa_ecosystem.providers.copilot import run_single, reset_approve_all
         reset_approve_all()
-        result = await run_single(agent_def, prompt, profile, cwd, max_turns)
+        result, token_usage = await run_single(agent_def, prompt, profile, cwd, max_turns)
     elif profile.is_claude:
         from qa_ecosystem.providers.claude import run_single
-        result = await run_single(agent_def, prompt, profile, cwd, max_turns)
+        result, token_usage = await run_single(agent_def, prompt, profile, cwd, max_turns)
     elif profile.is_anthropic_api:
         from qa_ecosystem.providers.anthropic_api import run
-        result = await run(agent_def.prompt, prompt, profile)
+        result, token_usage = await run(agent_def.prompt, prompt, profile)
     else:
         from qa_ecosystem.providers.openai import run
-        result = await run(agent_def.prompt, prompt, profile)
+        result, token_usage = await run(agent_def.prompt, prompt, profile)
 
     latency_ms = (time.monotonic() - t0) * 1000
 
-    # Record approximate metrics (exact token counts depend on provider response)
-    # For text-only responses, estimate ~4 chars per token as a rough approximation
-    est_input_tokens = len(prompt) // 4
-    est_output_tokens = len(result) // 4
     record_agent(
         agent_name=agent_name,
         model_id=profile.model_id,
         provider=profile.provider,
-        input_tokens=est_input_tokens,
-        output_tokens=est_output_tokens,
+        input_tokens=token_usage.input_tokens,
+        output_tokens=token_usage.output_tokens,
         latency_ms=latency_ms,
+        is_estimated=token_usage.is_estimated,
     )
 
     if VERBOSE:
@@ -306,10 +303,12 @@ async def run_orchestrator(
 
     _print_model_banner(profile, "test-manager (orchestrator)")
 
+    t0 = time.monotonic()
+
     if profile.is_copilot:
         from qa_ecosystem.providers.copilot import run_orchestrator, reset_approve_all
         reset_approve_all()
-        result = await run_orchestrator(
+        result, token_usage = await run_orchestrator(
             manager, prompt, profile, cwd, max_turns,
             resume_from=resume_from,
             log_fn=_log,
@@ -317,14 +316,14 @@ async def run_orchestrator(
         )
     elif profile.is_claude:
         from qa_ecosystem.providers.claude import run_orchestrator
-        result = await run_orchestrator(manager, prompt, profile, cwd, max_turns)
+        result, token_usage = await run_orchestrator(manager, prompt, profile, cwd, max_turns)
     elif profile.is_anthropic_api:
         console.print(
             "[yellow]Note: anthropic-api provider runs without tool use or subagent delegation. "
             "The Test Manager will produce a plan only.[/yellow]\n"
         )
         from qa_ecosystem.providers.anthropic_api import run
-        result = await run(manager.prompt, prompt, profile)
+        result, token_usage = await run(manager.prompt, prompt, profile)
     else:
         console.print(
             "[yellow]Note: Non-agentic model selected — running orchestrator without "
@@ -332,7 +331,18 @@ async def run_orchestrator(
             "plan but cannot invoke specialist agents.[/yellow]\n"
         )
         from qa_ecosystem.providers.openai import run
-        result = await run(manager.prompt, prompt, profile)
+        result, token_usage = await run(manager.prompt, prompt, profile)
+
+    latency_ms = (time.monotonic() - t0) * 1000
+    record_agent(
+        agent_name="test-manager",
+        model_id=profile.model_id,
+        provider=profile.provider,
+        input_tokens=token_usage.input_tokens,
+        output_tokens=token_usage.output_tokens,
+        latency_ms=latency_ms,
+        is_estimated=token_usage.is_estimated,
+    )
 
     _save_manager_instructions(result)
     _save_agent_result("test-manager", result)

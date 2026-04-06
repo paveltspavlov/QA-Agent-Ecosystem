@@ -2,16 +2,16 @@
 
 from __future__ import annotations
 
-import asyncio
-
 from rich.console import Console
 
+from qa_ecosystem.metrics import TokenUsage
 from qa_ecosystem.models import ModelProfile
+from qa_ecosystem.providers._common import has_question, prompt_user
 
 console = Console()
 
 
-async def run(system_prompt: str, user_prompt: str, profile: ModelProfile) -> str:
+async def run(system_prompt: str, user_prompt: str, profile: ModelProfile) -> tuple[str, TokenUsage]:
     """Execute via the Anthropic Messages API directly."""
     try:
         import anthropic as anthropic_sdk
@@ -35,6 +35,8 @@ async def run(system_prompt: str, user_prompt: str, profile: ModelProfile) -> st
 
     messages: list[dict] = [{"role": "user", "content": user_prompt}]
     all_turns: list[str] = []
+    total_input_tokens = 0
+    total_output_tokens = 0
 
     while True:
         collected: list[str] = []
@@ -48,38 +50,25 @@ async def run(system_prompt: str, user_prompt: str, profile: ModelProfile) -> st
             async for text in stream.text_stream:
                 collected.append(text)
                 console.print(text, end="")
+            final_message = await stream.get_final_message()
+            total_input_tokens += final_message.usage.input_tokens
+            total_output_tokens += final_message.usage.output_tokens
 
         console.print()
         turn_text = "".join(collected)
         all_turns.append(turn_text)
         messages.append({"role": "assistant", "content": turn_text})
 
-        if not _has_question(turn_text):
+        if not has_question(turn_text):
             break
 
-        user_reply = await _prompt_user()
+        user_reply = await prompt_user()
         if user_reply is None:
             break
         messages.append({"role": "user", "content": user_reply})
 
-    return "\n\n".join(all_turns)
-
-
-def _has_question(text: str) -> bool:
-    """Return True if the agent's response ends with a question."""
-    lines = [ln.strip() for ln in text.strip().splitlines() if ln.strip()]
-    if not lines:
-        return False
-    return lines[-1].endswith("?")
-
-
-async def _prompt_user() -> str | None:
-    """Prompt the user for a reply in the terminal."""
-    console.print("\n[bold yellow]Agent is asking a question. Type your reply (or press Enter to skip):[/bold yellow]")
-    loop = asyncio.get_event_loop()
-    reply = await loop.run_in_executor(None, lambda: input("> ").strip())
-    if not reply:
-        console.print("[dim]No reply given — continuing without response.[/dim]\n")
-        return None
-    console.print()
-    return reply
+    return "\n\n".join(all_turns), TokenUsage(
+        input_tokens=total_input_tokens,
+        output_tokens=total_output_tokens,
+        is_estimated=False,
+    )
