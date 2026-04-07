@@ -1,10 +1,10 @@
-import { Page, Locator } from '@playwright/test';
+import { test, Page, Locator } from '@playwright/test';
 import { BasePage } from './base.page';
 
 export class ElementsButtonsPage extends BasePage {
-  readonly clickMeButton: Locator = this.page.locator('button:has-text("Click Me")');
-  readonly doubleClickButton: Locator = this.page.locator('button:has-text("Double Click Me")');
-  readonly rightClickButton: Locator = this.page.locator('button:has-text("Right Click Me")');
+  readonly clickMeButton: Locator = this.page.getByRole('button', { name: /^Click Me$/i });
+  readonly doubleClickButton: Locator = this.page.getByRole('button', { name: /^Double Click Me$/i });
+  readonly rightClickButton: Locator = this.page.getByRole('button', { name: /^Right Click Me$/i });
   readonly singleClickMessage: Locator = this.page.locator('#dynamicClickMessage');
   readonly doubleClickMessage: Locator = this.page.locator('#doubleClickMessage');
   readonly rightClickMessage: Locator = this.page.locator('#rightClickMessage');
@@ -14,15 +14,21 @@ export class ElementsButtonsPage extends BasePage {
   }
 
   async clickClickMeButton(): Promise<void> {
-    await this.clickMeButton.click();
+    await test.step('Single click "Click Me" button', async () => {
+      await this.clickMeButton.click();
+    });
   }
 
   async doubleClickDoubleClickButton(): Promise<void> {
-    await this.doubleClickButton.dblclick();
+    await test.step('Double click button', async () => {
+      await this.doubleClickButton.dblclick();
+    });
   }
 
   async rightClickRightClickButton(): Promise<void> {
-    await this.rightClickButton.click({ button: 'right' });
+    await test.step('Right click button', async () => {
+      await this.rightClickButton.click({ button: 'right' });
+    });
   }
 
   getSingleClickMessage(): Locator {

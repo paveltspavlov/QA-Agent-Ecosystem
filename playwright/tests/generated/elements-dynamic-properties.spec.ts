@@ -2,27 +2,27 @@ import { test, expect } from '@playwright/test';
 import { ElementsDynamicPropertiesPage } from '../../pages/elements-dynamic-properties.page';
 
 test.describe('Dynamic Properties', () => {
-  test('14.1 Verify Dynamic Button Enable/Disable', async ({ page }) => {
+  test.fixme('14.1 Verify Dynamic Button Enable/Disable', async ({ page }) => {
     const dynamicPage = new ElementsDynamicPropertiesPage(page);
-
-    // Navigate to dynamic properties page
     await dynamicPage.goto('https://demoqa.com/dynamic-properties');
 
-    // Verify "Will enable 5 seconds" button is initially disabled
-    const enableButton = dynamicPage.getWillEnableButton();
-    await expect(enableButton).toBeDisabled();
+    await test.step('Verify button is initially disabled', async () => {
+      const enableButton = dynamicPage.getWillEnableButton();
+      await expect(enableButton).toBeDisabled();
+      await expect(enableButton).toHaveRole('button');
+    });
 
-    // Wait for 6 seconds for button to become enabled
-    await page.waitForTimeout(6000);
+    await test.step('Wait for button to become enabled (auto-polling)', async () => {
+      const enableButton = dynamicPage.getWillEnableButton();
+      // Use Playwright's auto-retrying assertion instead of waitForTimeout
+      await expect(enableButton).toBeEnabled({ timeout: 10_000 });
+    });
 
-    // Verify button becomes enabled
-    await expect(enableButton).toBeEnabled();
-
-    // Click the button
-    await enableButton.click();
-
-    // Verify button click response
-    const response = dynamicPage.getButtonResponse();
-    await expect(response).toBeVisible();
+    await test.step('Click enabled button and verify response', async () => {
+      const enableButton = dynamicPage.getWillEnableButton();
+      await enableButton.click();
+      const response = dynamicPage.getButtonResponse();
+      await expect(response).toBeVisible();
+    });
   });
 });

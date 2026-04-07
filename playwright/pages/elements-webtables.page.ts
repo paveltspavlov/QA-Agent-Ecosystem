@@ -1,4 +1,4 @@
-import { Page, Locator } from '@playwright/test';
+import { test, Page, Locator } from '@playwright/test';
 import { BasePage } from './base.page';
 
 export class ElementsWebTablesPage extends BasePage {
@@ -15,8 +15,10 @@ export class ElementsWebTablesPage extends BasePage {
   }
 
   async fillTableFormField(fieldName: string, value: string): Promise<void> {
-    const input = this.page.locator(`input[placeholder*="${fieldName}"], input#${fieldName}`);
-    await input.fill(value);
+    await test.step(`Fill table field "${fieldName}" with "${value}"`, async () => {
+      const input = this.page.locator(`input[placeholder*="${fieldName}"], input#${fieldName}`);
+      await input.fill(value);
+    });
   }
 
   async submitTableForm(): Promise<void> {
@@ -31,6 +33,11 @@ export class ElementsWebTablesPage extends BasePage {
     return this.tableRows.first();
   }
 
+  /** Get visible table rows only (filters out empty placeholder rows). */
+  getVisibleTableRows(): Locator {
+    return this.tableRows.filter({ visible: true });
+  }
+
   getTableCell(firstName: string, lastName: string): Locator {
     return this.page.locator(`text=${firstName}${lastName}`);
   }
@@ -41,12 +48,16 @@ export class ElementsWebTablesPage extends BasePage {
   }
 
   async clickEditButtonForRow(row: Locator): Promise<void> {
-    const editButton = row.locator('button[title="Edit"]');
-    await editButton.click();
+    await test.step('Click edit button for row', async () => {
+      const editButton = row.locator('[title="Edit"]').first();
+      await editButton.click();
+    });
   }
 
   async clickDeleteButtonForRow(row: Locator): Promise<void> {
-    const deleteButton = row.locator('button[title="Delete"]');
-    await deleteButton.click();
+    await test.step('Click delete button for row', async () => {
+      const deleteButton = row.locator('[title="Delete"]').first();
+      await deleteButton.click();
+    });
   }
 }

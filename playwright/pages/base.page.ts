@@ -1,4 +1,4 @@
-import { type Page, type Locator } from '@playwright/test';
+import { test, type Page, type Locator } from '@playwright/test';
 import { TIMEOUTS } from '../helpers/timeouts';
 
 /** Base page object — all page objects extend this. */
@@ -7,7 +7,9 @@ export class BasePage {
 
   /** Navigate to a path relative to baseURL. */
   async goto(path: string): Promise<void> {
-    await this.page.goto(path, { timeout: TIMEOUTS.NAVIGATION });
+    await test.step(`Navigate to ${path}`, async () => {
+      await this.page.goto(path, { timeout: TIMEOUTS.NAVIGATION });
+    });
   }
 
   /** Wait for the page to reach a stable network-idle state. */
@@ -33,5 +35,15 @@ export class BasePage {
   /** Get a locator by visible text. */
   getByText(text: string | RegExp): Locator {
     return this.page.getByText(text);
+  }
+
+  /** Get only visible elements matching a locator. (Playwright 1.51+) */
+  getVisible(locator: Locator): Locator {
+    return locator.filter({ visible: true });
+  }
+
+  /** Scroll element into view. */
+  async scrollToElement(locator: Locator): Promise<void> {
+    await locator.scrollIntoViewIfNeeded();
   }
 }

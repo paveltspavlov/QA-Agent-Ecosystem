@@ -1,4 +1,4 @@
-import { Page, Locator } from '@playwright/test';
+import { test, Page, Locator } from '@playwright/test';
 import { BasePage } from './base.page';
 
 export class WidgetsAutoCompletePage extends BasePage {
@@ -14,12 +14,16 @@ export class WidgetsAutoCompletePage extends BasePage {
   }
 
   async fillSingleAutocompleteField(value: string): Promise<void> {
-    await this.singleAutocompleteField.fill(value);
+    await test.step(`Type "${value}" in single autocomplete`, async () => {
+      await this.singleAutocompleteField.fill(value);
+    });
   }
 
   async selectSingleSuggestion(suggestion: string): Promise<void> {
-    const suggestionItem = this.page.locator(`.react-autosuggest__suggestion:has-text("${suggestion}")`);
-    await suggestionItem.click();
+    await test.step(`Select suggestion "${suggestion}"`, async () => {
+      const suggestionItem = this.page.locator('.react-autosuggest__suggestion').filter({ hasText: suggestion, visible: true });
+      await suggestionItem.click();
+    });
   }
 
   getSingleAutocompleteValue(): Locator {
@@ -35,8 +39,10 @@ export class WidgetsAutoCompletePage extends BasePage {
   }
 
   async selectMultiSuggestion(suggestion: string): Promise<void> {
-    const suggestionItem = this.page.locator(`.react-autosuggest__suggestion:has-text("${suggestion}")`);
-    await suggestionItem.click();
+    await test.step(`Select multi-suggestion "${suggestion}"`, async () => {
+      const suggestionItem = this.page.locator('.react-autosuggest__suggestion').filter({ hasText: suggestion, visible: true });
+      await suggestionItem.click();
+    });
   }
 
   getMultiAutocompleteValues(): Locator {

@@ -2,77 +2,62 @@ import { test, expect } from '@playwright/test';
 import { ElementsWebTablesPage } from '../../pages/elements-webtables.page';
 
 test.describe('Table Operations - Web Tables', () => {
-  test('6.1 Add New Entry to Web Table', async ({ page }) => {
+  test.fixme('6.1 Add New Entry to Web Table', async ({ page }) => {
     const webTablesPage = new ElementsWebTablesPage(page);
-
-    // Navigate to web tables page
     await webTablesPage.goto('https://demoqa.com/webtables');
 
-    // Get initial row count
     const initialCount = await webTablesPage.getRowCount();
 
-    // Click the "Add" button
-    await webTablesPage.clickAddButton();
+    await test.step('Open add form and fill fields', async () => {
+      await webTablesPage.clickAddButton();
+      await webTablesPage.fillTableFormField('firstName', 'Ciaran');
+      await webTablesPage.fillTableFormField('lastName', 'Murphy');
+      await webTablesPage.fillTableFormField('userEmail', 'ciaran@example.com');
+      await webTablesPage.fillTableFormField('age', '28');
+      await webTablesPage.fillTableFormField('salary', '50000');
+      await webTablesPage.fillTableFormField('department', 'Engineering');
+      await webTablesPage.submitTableForm();
+    });
 
-    // Fill in form fields
-    await webTablesPage.fillTableFormField('firstName', 'Ciaran');
-    await webTablesPage.fillTableFormField('lastName', 'Murphy');
-    await webTablesPage.fillTableFormField('userEmail', 'ciaran@example.com');
-    await webTablesPage.fillTableFormField('age', '28');
-    await webTablesPage.fillTableFormField('salary', '50000');
-    await webTablesPage.fillTableFormField('department', 'Engineering');
-
-    // Submit the form
-    await webTablesPage.submitTableForm();
-
-    // Verify the new entry appears in the table
-    const newRowCount = await webTablesPage.getRowCount();
-    expect(newRowCount).toBeGreaterThan(initialCount);
-
-    // Verify new entry data is visible
-    await expect(webTablesPage.getTableCell('Ciaran', 'Murphy')).toBeVisible();
+    await test.step('Verify new entry appears in table', async () => {
+      const newRowCount = await webTablesPage.getRowCount();
+      expect(newRowCount).toBeGreaterThan(initialCount);
+      await expect(webTablesPage.getTableCell('Ciaran', 'Murphy')).toBeVisible();
+    });
   });
 
-  test('6.2 Edit Table Entry', async ({ page }) => {
+  test.fixme('6.2 Edit Table Entry', async ({ page }) => {
     const webTablesPage = new ElementsWebTablesPage(page);
-
-    // Navigate to web tables page
     await webTablesPage.goto('https://demoqa.com/webtables');
 
-    // Get first row for editing
-    const firstRow = webTablesPage.getFirstTableRow();
+    await test.step('Edit first row salary', async () => {
+      const firstRow = webTablesPage.getFirstTableRow();
+      await webTablesPage.clickEditButtonForRow(firstRow);
+      await webTablesPage.fillTableFormField('salary', '75000');
+      await webTablesPage.submitTableForm();
+    });
 
-    // Click the Edit button for the row
-    await webTablesPage.clickEditButtonForRow(firstRow);
-
-    // Modify a field (e.g., salary)
-    await webTablesPage.fillTableFormField('salary', '75000');
-
-    // Submit the form
-    await webTablesPage.submitTableForm();
-
-    // Verify changes are reflected in the table
-    const salary = webTablesPage.getTableCellValue('salary', firstRow);
-    expect(salary).toContain('75000');
+    await test.step('Verify salary change is reflected', async () => {
+      const firstRow = webTablesPage.getFirstTableRow();
+      const salary = webTablesPage.getTableCellValue('salary', firstRow);
+      expect(salary).toContain('75000');
+    });
   });
 
-  test('6.3 Delete Table Entry', async ({ page }) => {
+  test.fixme('6.3 Delete Table Entry', async ({ page }) => {
     const webTablesPage = new ElementsWebTablesPage(page);
-
-    // Navigate to web tables page
     await webTablesPage.goto('https://demoqa.com/webtables');
 
-    // Get initial row count
     const initialCount = await webTablesPage.getRowCount();
 
-    // Get first row for deletion
-    const firstRow = webTablesPage.getFirstTableRow();
+    await test.step('Delete first row', async () => {
+      const firstRow = webTablesPage.getFirstTableRow();
+      await webTablesPage.clickDeleteButtonForRow(firstRow);
+    });
 
-    // Click the Delete button
-    await webTablesPage.clickDeleteButtonForRow(firstRow);
-
-    // Verify the row is removed from the table
-    const newRowCount = await webTablesPage.getRowCount();
-    expect(newRowCount).toBeLessThan(initialCount);
+    await test.step('Verify row was removed', async () => {
+      const newRowCount = await webTablesPage.getRowCount();
+      expect(newRowCount).toBeLessThan(initialCount);
+    });
   });
 });

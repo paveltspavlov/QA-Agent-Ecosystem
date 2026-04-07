@@ -1,4 +1,4 @@
-import { Page, Locator } from '@playwright/test';
+import { test, Page, Locator } from '@playwright/test';
 import { BasePage } from './base.page';
 
 export class FormsStudentRegistrationPage extends BasePage {
@@ -30,7 +30,8 @@ export class FormsStudentRegistrationPage extends BasePage {
   }
 
   async selectGender(gender: string): Promise<void> {
-    await this.page.locator(`label:has-text("${gender}")`).click();
+    const genderLabel = this.page.locator('label').filter({ hasText: gender }).filter({ has: this.page.locator('input[name="gender"]') });
+    await genderLabel.click();
   }
 
   async fillMobileNumber(number: string): Promise<void> {
@@ -47,7 +48,7 @@ export class FormsStudentRegistrationPage extends BasePage {
   }
 
   async selectHobby(hobby: string): Promise<void> {
-    const hobbyLabel = this.page.locator(`label:has-text("${hobby}")`);
+    const hobbyLabel = this.page.locator('label').filter({ hasText: hobby });
     const checkbox = hobbyLabel.locator('input[type="checkbox"]');
     await checkbox.check();
   }
@@ -72,10 +73,28 @@ export class FormsStudentRegistrationPage extends BasePage {
     await this.page.keyboard.press('Enter');
   }
 
+  /** Fill the entire registration form in a single traced step. */
+  async fillRegistrationForm(data: {
+    firstName: string;
+    lastName: string;
+    email?: string;
+    gender: string;
+    mobileNumber: string;
+  }): Promise<void> {
+    await test.step('Fill student registration form', async () => {
+      await this.fillFirstName(data.firstName);
+      await this.fillLastName(data.lastName);
+      if (data.email) await this.fillEmail(data.email);
+      await this.selectGender(data.gender);
+      await this.fillMobileNumber(data.mobileNumber);
+    });
+  }
+
   async submitForm(): Promise<void> {
-    // Scroll submit button into view
-    await this.submitButton.scrollIntoViewIfNeeded();
-    await this.submitButton.click();
+    await test.step('Submit registration form', async () => {
+      await this.submitButton.scrollIntoViewIfNeeded();
+      await this.submitButton.click();
+    });
   }
 
   getSuccessModal(): Locator {

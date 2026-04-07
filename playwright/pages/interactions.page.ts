@@ -1,4 +1,4 @@
-import { Page, Locator } from '@playwright/test';
+import { test, Page, Locator } from '@playwright/test';
 import { BasePage } from './base.page';
 
 /**
@@ -40,20 +40,19 @@ export class SortablePage extends BasePage {
   readonly gridItems = this.page.locator('.grid > div');
 
   async dragAndDropInList(fromIndex: number, toIndex: number) {
-    const items = await this.listItems.all();
-    if (items[fromIndex] && items[toIndex]) {
-      await items[fromIndex].dragTo(items[toIndex]);
-    }
+    await test.step(`Drag item ${fromIndex} to position ${toIndex}`, async () => {
+      const items = await this.listItems.all();
+      if (items[fromIndex] && items[toIndex]) {
+        await items[fromIndex].dragTo(items[toIndex]);
+      }
+    });
   }
 
   async getListItemsOrder(): Promise<string[]> {
     const items = await this.listItems.all();
-    const order = [];
-    for (const item of items) {
-      const text = await item.textContent();
-      if (text) order.push(text.trim());
-    }
-    return order;
+    return Promise.all(
+      items.map(async (item) => ((await item.textContent()) ?? '').trim()),
+    ).then((texts) => texts.filter(Boolean));
   }
 
   async getListItemCount(): Promise<number> {
@@ -82,12 +81,14 @@ export class SelectablePage extends BasePage {
   }
 
   async selectMultipleItems(...indices: number[]) {
-    for (const index of indices) {
-      const items = await this.listItems.all();
-      if (items[index]) {
-        await items[index].click({ modifiers: ['Control'] });
+    await test.step(`Select items at indices ${indices.join(', ')}`, async () => {
+      for (const index of indices) {
+        const items = await this.listItems.all();
+        if (items[index]) {
+          await items[index].click({ modifiers: ['Control'] });
+        }
       }
-    }
+    });
   }
 }
 
@@ -157,7 +158,7 @@ export class DragabblePage extends BasePage {
   readonly containerRestrictedTab = this.page.getByRole('tab', { name: 'Container Restricted' });
   readonly cursorStyleTab = this.page.getByRole('tab', { name: 'Cursor Style' });
 
-  readonly dragBox = this.page.locator('#dragBox');
+  readonly dragBoxElement = this.page.locator('#dragBox');
   readonly xAxisBox = this.page.locator('#dragBoxWithAxisRestriction-x');
   readonly yAxisBox = this.page.locator('#dragBoxWithAxisRestriction-y');
   readonly containerBox = this.page.locator('#dragBoxContainer');
@@ -168,9 +169,9 @@ export class DragabblePage extends BasePage {
 
   async dragBox(x: number, y: number) {
     // Get current position and drag relative to it
-    const currentPos = await this.dragBox.boundingBox();
+    const currentPos = await this.dragBoxElement.boundingBox();
     if (currentPos) {
-      await this.dragBox.dragTo(this.page.locator('body'), {
+      await this.dragBoxElement.dragTo(this.page.locator('body'), {
         targetPosition: {
           x: currentPos.x + x,
           y: currentPos.y + y,
@@ -180,7 +181,7 @@ export class DragabblePage extends BasePage {
   }
 
   async getBoxPosition(): Promise<{ x: number; y: number }> {
-    const box = await this.dragBox.boundingBox();
+    const box = await this.dragBoxElement.boundingBox();
     if (!box) return { x: 0, y: 0 };
     return { x: box.x, y: box.y };
   }

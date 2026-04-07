@@ -1,4 +1,4 @@
-import { Page, Locator } from '@playwright/test';
+import { test, Page, Locator } from '@playwright/test';
 import { BasePage } from './base.page';
 
 export class ElementsLinksPage extends BasePage {
@@ -7,7 +7,12 @@ export class ElementsLinksPage extends BasePage {
   }
 
   async clickLink(linkText: string): Promise<void> {
-    const link = this.page.getByRole('link', { name: linkText });
-    await link.click();
+    await test.step(`Click link "${linkText}"`, async () => {
+      if (linkText === 'Home') {
+        await this.page.locator('#simpleLink').click();
+      } else {
+        await this.page.getByRole('link', { name: linkText, exact: true }).click();
+      }
+    });
   }
 }

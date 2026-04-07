@@ -4,25 +4,23 @@ import { ElementsRadioButtonPage } from '../../pages/elements-radio-button.page'
 test.describe('Element Interactions - Radio Buttons', () => {
   test('3.1 Select Radio Button Options', async ({ page }) => {
     const radioButtonPage = new ElementsRadioButtonPage(page);
-
-    // Navigate to radio button page
     await radioButtonPage.goto('https://demoqa.com/radio-button');
 
-    // Verify radio buttons are visible
-    const yesButton = radioButtonPage.getRadioButton('Yes');
-    await expect(yesButton).toBeVisible();
+    await test.step('Verify radio buttons have correct roles', async () => {
+      const yesButton = radioButtonPage.getRadioButton('Yes');
+      await expect(yesButton).toBeVisible();
+      await expect(yesButton).toHaveRole('radio');
+    });
 
-    // Click on the first radio button (Yes)
-    await radioButtonPage.selectOption('Yes');
+    await test.step('Select "Yes" and verify checked state', async () => {
+      await radioButtonPage.selectOption('Yes');
+      await expect(radioButtonPage.getRadioButton('Yes')).toBeChecked();
+    });
 
-    // Verify the button is selected
-    await expect(radioButtonPage.getRadioButton('Yes')).toBeChecked();
-
-    // Click on another radio button (No)
-    await radioButtonPage.selectOption('No');
-
-    // Verify only the new button is selected
-    await expect(radioButtonPage.getRadioButton('No')).toBeChecked();
-    await expect(radioButtonPage.getRadioButton('Yes')).not.toBeChecked();
+    await test.step('Select "No" and verify mutual exclusion', async () => {
+      await radioButtonPage.selectOption('No');
+      await expect(radioButtonPage.getRadioButton('No')).toBeChecked();
+      await expect(radioButtonPage.getRadioButton('Yes')).not.toBeChecked();
+    });
   });
 });

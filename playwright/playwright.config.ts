@@ -1,61 +1,71 @@
 import { defineConfig, devices } from '@playwright/test';
 import { config } from 'dotenv';
+import path from 'path';
 
 config();
 
-const BASE_URL = process.env.BASE_URL || 'http://localhost:3000';
+const BASE_URL = process.env.BASE_URL || 'https://demoqa.com';
 const CI = !!process.env.CI;
 
 export default defineConfig({
   testDir: './tests',
+  testMatch: '**/*.spec.ts',
+  // Global setup and teardown for shared resources (disable for accessibility audit)
+  // globalSetup: path.join(__dirname, 'auth/auth.setup.ts'),
+
   fullyParallel: true,
   forbidOnly: CI,
   retries: CI ? 2 : 0,
   workers: CI ? 1 : undefined,
-  reporter: CI ? 'github' : [['html'], ['json', { outputFile: 'test-results.json' }]],
-  timeout: Number(process.env.TEST_TIMEOUT) || 30_000,
+  reporter: CI ? [['github'], ['json', { outputFile: 'test-results.json' }]] : [['html'], ['json', { outputFile: 'test-results.json' }]],
+  timeout: Number(process.env.TEST_TIMEOUT) || 60_000,
+
+  // Playwright 1.59 features
+  failOnFlakyTests: CI,
 
   use: {
     baseURL: BASE_URL,
     trace: 'on-first-retry',
-    screenshot: 'only-on-failure',
+    screenshot: 'on-first-failure',
     video: 'retain-on-failure',
+    actionTimeout: 10_000,
   },
 
   projects: [
-    // Auth setup — runs before all UI tests
-    { name: 'setup', testMatch: /.*\.setup\.ts/ },
-
+    // UI Tests — desktop browsers
     {
       name: 'chromium',
       use: {
         ...devices['Desktop Chrome'],
-        storageState: '.auth/state.json',
       },
-      dependencies: ['setup'],
     },
     {
       name: 'firefox',
       use: {
         ...devices['Desktop Firefox'],
-        storageState: '.auth/state.json',
       },
-      dependencies: ['setup'],
     },
     {
       name: 'webkit',
       use: {
         ...devices['Desktop Safari'],
-        storageState: '.auth/state.json',
       },
-      dependencies: ['setup'],
     },
 
-    // API tests — no browser needed
+    // Mobile viewport tests
     {
-      name: 'api',
-      testMatch: /.*\/api\/.*\.spec\.ts/,
-      use: { baseURL: process.env.API_BASE_URL || `${BASE_URL}/api` },
+      name: 'mobile-chrome',
+      use: {
+        ...devices['Pixel 5'],
+      },
+    },
+    {
+      name: 'mobile-safari',
+      use: {
+        ...devices['iPhone 12'],
+      },
     },
   ],
+
+  // webServer not needed - testing external site (demoqa.com)
 });

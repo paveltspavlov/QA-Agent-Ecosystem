@@ -1,4 +1,4 @@
-import { Page, Locator, expect } from '@playwright/test';
+import { test, Page, Locator, expect } from '@playwright/test';
 import { BasePage } from './base.page';
 
 /**
@@ -86,7 +86,7 @@ export class PracticeFormPage extends BasePage {
 
   async typeSubject(subject: string) {
     const subjectInput = this.page.locator('input[id="subjectsInput"]');
-    await subjectInput.type(subject);
+    await subjectInput.pressSequentially(subject);
   }
 
   getSubjectSuggestions(): Locator {
@@ -112,8 +112,10 @@ export class PracticeFormPage extends BasePage {
   }
 
   async submitForm() {
-    await this.page.evaluate(() => window.scrollBy(0, document.body.scrollHeight));
-    await this.submitButton.click();
+    await test.step('Submit practice form', async () => {
+      await this.submitButton.scrollIntoViewIfNeeded();
+      await this.submitButton.click();
+    });
   }
 
   async resetForm() {
@@ -272,7 +274,7 @@ export class DynamicPropertiesPage extends BasePage {
   }
 
   async waitForButtonToEnable() {
-    await this.enableButton.waitFor({ state: 'enabled', timeout: 6000 });
+    await this.enableButton.waitFor({ state: 'visible', timeout: 6000 });
   }
 
   async waitForButtonColorChange() {

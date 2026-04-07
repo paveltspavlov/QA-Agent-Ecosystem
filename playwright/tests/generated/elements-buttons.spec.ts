@@ -4,29 +4,27 @@ import { ElementsButtonsPage } from '../../pages/elements-buttons.page';
 test.describe('Element Interactions - Buttons', () => {
   test('4.1 Click Button and Verify Response', async ({ page }) => {
     const buttonsPage = new ElementsButtonsPage(page);
-
-    // Navigate to buttons page
     await buttonsPage.goto('https://demoqa.com/buttons');
 
-    // Click the "Click Me" button
-    await buttonsPage.clickClickMeButton();
+    await test.step('Verify button roles are correct', async () => {
+      await expect(buttonsPage.clickMeButton).toHaveRole('button');
+      await expect(buttonsPage.doubleClickButton).toHaveRole('button');
+      await expect(buttonsPage.rightClickButton).toHaveRole('button');
+    });
 
-    // Verify a response or message appears
-    const singleClickMessage = buttonsPage.getSingleClickMessage();
-    await expect(singleClickMessage).toBeVisible();
+    await test.step('Single click produces message', async () => {
+      await buttonsPage.clickClickMeButton();
+      await expect(buttonsPage.getSingleClickMessage()).toBeVisible();
+    });
 
-    // Click the "Double Click Me" button with a double-click
-    await buttonsPage.doubleClickDoubleClickButton();
+    await test.step('Double click produces message', async () => {
+      await buttonsPage.doubleClickDoubleClickButton();
+      await expect(buttonsPage.getDoubleClickMessage()).toBeVisible();
+    });
 
-    // Verify the double-click response
-    const doubleClickMessage = buttonsPage.getDoubleClickMessage();
-    await expect(doubleClickMessage).toBeVisible();
-
-    // Right-click on the "Right Click Me" button
-    await buttonsPage.rightClickRightClickButton();
-
-    // Verify the context menu response
-    const rightClickMessage = buttonsPage.getRightClickMessage();
-    await expect(rightClickMessage).toBeVisible();
+    await test.step('Right click produces message', async () => {
+      await buttonsPage.rightClickRightClickButton();
+      await expect(buttonsPage.getRightClickMessage()).toBeVisible();
+    });
   });
 });

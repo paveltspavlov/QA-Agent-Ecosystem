@@ -4,24 +4,16 @@ import { AlertsFramesPage } from '../../pages/alerts-frames.page';
 test.describe('Frames', () => {
   test('15.1 Interact with iframe Content', async ({ page }) => {
     const framesPage = new AlertsFramesPage(page);
-
-    // Navigate to frames page
     await framesPage.goto('https://demoqa.com/frames');
 
-    // Get the frame locator
-    const frame = framesPage.getMainFrame();
+    await test.step('Verify frame is loaded and contains content', async () => {
+      const frame = framesPage.getMainFrame();
+      const frameContent = frame.locator('body');
+      await expect(frameContent).toBeVisible();
 
-    // Verify frame is loaded
-    const frameContent = frame.locator('body');
-    await expect(frameContent).toBeVisible();
-
-    // Locate content within the frame
-    const frameText = frame.getByRole('heading');
-
-    // Verify frame content is accessible and readable
-    await expect(frameText).not.toHaveCount(0);
-
-    // Verify we can interact with frame content
-    await expect(frameText.first()).toContainText(/.+/);
+      const frameText = frame.getByRole('heading');
+      await expect(frameText).not.toHaveCount(0);
+      await expect(frameText.first()).toContainText(/.+/);
+    });
   });
 });

@@ -1,4 +1,4 @@
-import { Page, Locator } from '@playwright/test';
+import { test, Page, Locator } from '@playwright/test';
 import { BasePage } from './base.page';
 
 export class ElementsRadioButtonPage extends BasePage {
@@ -7,11 +7,13 @@ export class ElementsRadioButtonPage extends BasePage {
   }
 
   getRadioButton(label: string): Locator {
-    return this.page.locator(`label:has-text("${label}") input[type="radio"]`);
+    return this.page.getByRole('radio', { name: label });
   }
 
   async selectOption(label: string): Promise<void> {
-    const radioButton = this.getRadioButton(label);
-    await radioButton.check();
+    await test.step(`Select radio option "${label}"`, async () => {
+      const radioButton = this.getRadioButton(label);
+      await radioButton.check();
+    });
   }
 }

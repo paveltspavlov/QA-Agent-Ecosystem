@@ -1,4 +1,4 @@
-import { Page, Locator, expect } from '@playwright/test';
+import { test, Page, Locator, expect } from '@playwright/test';
 import { BasePage } from './base.page';
 
 /**
@@ -93,15 +93,17 @@ export class WebTablesPage extends BasePage {
   }
 
   async submitAddRowForm() {
-    const submitBtn = this.page.locator('.modal-dialog').first().getByRole('button', { name: 'Submit' });
+    const modal = this.page.locator('.modal-dialog').first();
+    const submitBtn = modal.getByRole('button', { name: 'Submit' });
     await submitBtn.click();
-    await this.page.waitForTimeout(500);
+    await modal.waitFor({ state: 'hidden' });
   }
 
   async submitEditRowForm() {
-    const submitBtn = this.page.locator('.modal-dialog').nth(1).getByRole('button', { name: 'Submit' });
+    const modal = this.page.locator('.modal-dialog').nth(1);
+    const submitBtn = modal.getByRole('button', { name: 'Submit' });
     await submitBtn.click();
-    await this.page.waitForTimeout(500);
+    await modal.waitFor({ state: 'hidden' });
   }
 
   async updateRowForm(data: Partial<{ salary: number; age: number; department: string }>) {
@@ -131,13 +133,13 @@ export class WebTablesPage extends BasePage {
   }
 
   async searchTable(query: string) {
-    await this.searchBox.fill(query);
-    await this.page.waitForTimeout(500);
+    await test.step(`Search table for "${query}"`, async () => {
+      await this.searchBox.fill(query);
+    });
   }
 
   async clearSearch() {
     await this.searchBox.clear();
-    await this.page.waitForTimeout(500);
   }
 
   getNextPageButton(): Locator {
@@ -150,12 +152,12 @@ export class WebTablesPage extends BasePage {
 }
 
 /**
- * ButtonsPage - Click interactions (single, double, right-click)
+ * ExtendedButtonsPage - Click interactions (single, double, right-click)
  */
-export class ButtonsPage extends BasePage {
-  readonly singleClickButton = this.page.locator('#doubleClickBtn');
-  readonly doubleClickButton = this.page.locator('#doubleClickBtn');
-  readonly rightClickButton = this.page.locator('#rightClickBtn');
+export class ExtendedButtonsPage extends BasePage {
+  readonly singleClickButton = this.page.locator('#simpleClickBtn');
+  readonly doubleClickButtonElement = this.page.locator('#doubleClickBtn');
+  readonly rightClickButtonElement = this.page.locator('#rightClickBtn');
   readonly clickResultContainer = this.page.locator('#clickMessage');
 
   async navigateToButtons() {
@@ -175,7 +177,7 @@ export class ButtonsPage extends BasePage {
   async doubleClickButton() {
     // Double-click interaction
     const doubleBtn = this.page.getByRole('button', { name: /double click/i });
-    await doubleBtn.dblClick();
+    await doubleBtn.dblclick();
   }
 
   async rightClickButton() {
