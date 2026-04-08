@@ -1,6 +1,6 @@
 # Orchestration Workflows
 
-The Test Manager supports 20 orchestration workflows. When you run `qa-agent orchestrate`, the Test Manager analyzes the objective, selects the appropriate workflow, and delegates to specialist agents.
+The Test Manager supports 21 orchestration workflows. When you run `qa-agent orchestrate`, the Test Manager analyzes the objective, selects the appropriate workflow, and delegates to specialist agents.
 
 > **Copilot users:** the Test Manager will pause mid-workflow and prompt you for input when requirements need clarification (after the `requirements-analyst` step).
 
@@ -665,4 +665,106 @@ Requirements document: requirements/pbi-backlog.md
 Existing test directory: playwright/tests/
 Desired output: Traceability Matrix showing which tests cover which requirements,
 and a list of requirements with zero test coverage.
+```
+
+---
+
+## Workflow 21 -- PBI to Report — Full Pipeline
+
+**When to use:** You have a PBI or user story and want the full journey: analyze requirements, generate test cases, automate and execute Playwright tests, log bugs, and get a comprehensive report with token consumption.
+
+```
+requirements-analyst  (analyze PBI for ambiguities and testable requirements)
+  -> test-case-generator  (ISTQB test cases from clarified requirements)
+  -> playwright-test-generator  (create automated Playwright tests from test cases)
+  -> playwright-executor  (run tests, collect traces, diagnose failures)
+  -> bug-reporter + test-results-analyst  (parallel: log bugs and analyze results)
+  -> report-creator  (comprehensive report with task descriptions, results, and total consumed tokens)
+```
+
+**CLI:**
+```bash
+qa-agent workflow pbi-to-report -i inputs/pbi-to-report.md -m copilot-gpt4o
+```
+
+**Or via the Test Manager orchestrator:**
+```bash
+qa-agent orchestrate -i inputs/pbi-to-report.md -m copilot-gpt4o
+```
+
+**Test Manager prompt (natural language — the orchestrator selects the right agents):**
+```
+Analyze the following PBI, generate test cases, create and execute automated
+Playwright tests, log any bugs found, and produce a final execution report
+including token consumption.
+
+PBI: "As a registered user I want to reset my password via email so that
+I can regain access to my account."
+
+Acceptance criteria:
+1. User receives a reset email within 30 seconds
+2. Reset link expires after 24 hours
+3. New password must meet complexity requirements
+
+App URL: https://demoqa.com
+Playwright project path: playwright/
+```
+
+**Prompt template** (contents of `inputs/pbi-to-report.md`):
+```
+Run the PBI-to-Report workflow — end-to-end from requirements analysis
+to final execution report.
+
+PBI / User Story:
+  [Paste the full PBI or user story]
+
+Acceptance Criteria:
+  1. [Criterion 1]
+  2. [Criterion 2]
+  3. [Criterion 3]
+
+App URL: [https://myapp.com]
+Tech stack: [e.g., React frontend, Node.js REST API]
+Playwright project path: playwright/
+Test credentials: [e.g., test@example.com / Test1234]
+Priority flows: [e.g., "Happy path, invalid email, expired link"]
+Severity threshold: [e.g., "Log all, create issues for Critical/High only"]
+```
+
+### Step-by-Step Breakdown
+
+| Step | Agent | Input | Output |
+|------|-------|-------|--------|
+| 1 | `requirements-analyst` | Raw PBI / user story | Clarified requirements with gap analysis |
+| 2 | `test-case-generator` | Clarified requirements | ISTQB test cases (IDs, steps, expected results) |
+| 3 | `playwright-test-generator` | Test cases + app URL | Playwright TypeScript test files (.spec.ts) |
+| 4 | `playwright-executor` | Generated test files | Execution results (pass/fail, traces, logs) |
+| 5 | `bug-reporter` | Execution results (failures) | Structured bug reports (JSON + markdown) |
+| 6 | `test-results-analyst` | Execution results (all) | Failure patterns, quality trends, flaky test flags |
+| 7 | `report-creator` | Results from steps 4-6 | Final HTML/markdown report with token consumption |
+
+### Using the Test Manager as Orchestrator
+
+The Test Manager (`test-manager` agent) can orchestrate this entire pipeline from a single natural-language instruction. It will:
+
+1. Parse your objective and select the `pbi-to-report` workflow
+2. Present the execution plan for your approval
+3. Delegate to each agent in sequence, passing outputs forward
+4. Pause after `requirements-analyst` if ambiguities are found (human-in-the-loop)
+5. Run `bug-reporter` and `test-results-analyst` in parallel after execution
+6. Consolidate all outputs into the final `report-creator` step
+
+**Example orchestrator command:**
+```bash
+qa-agent orchestrate -m copilot-gpt4o -i - <<'EOF'
+I have a PBI for password reset functionality on https://demoqa.com.
+Analyze the requirements, generate test cases, automate them with Playwright,
+execute the tests, log all bugs, and give me a final report with token usage.
+
+PBI: As a registered user, I want to reset my password via email link.
+Acceptance criteria:
+- Reset email sent within 30 seconds
+- Link expires after 24 hours
+- New password must be 8+ chars with uppercase, lowercase, and number
+EOF
 ```

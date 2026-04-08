@@ -368,7 +368,7 @@ Once you choose **approve all**, subsequent actions are auto-approved for the re
 
 ## 10. DAG Workflow Engine (New in v2.0)
 
-The ecosystem now includes a **DAG-based workflow engine** that executes agents in dependency order, with parallel execution for independent steps. 12 predefined workflows are available in `workflows.yaml`.
+The ecosystem now includes a **DAG-based workflow engine** that executes agents in dependency order, with parallel execution for independent steps. 13 predefined workflows are available in `workflows.yaml`.
 
 ### Using Predefined Workflows
 

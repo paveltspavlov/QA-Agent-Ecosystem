@@ -372,6 +372,39 @@ workflows:
         description: "Generate formal ISTQB test report and defect report"
         dependencies: [4, 5, 6]
 
+  pbi-to-report:
+    name: "PBI to Report — Full Pipeline"
+    description: "End-to-end: analyze PBI requirements, generate test cases, create and execute Playwright tests, log bugs, and produce a final report with token consumption"
+    steps:
+      - index: 1
+        agent: requirements-analyst
+        description: "Analyze PBI/user story for ambiguities, missing acceptance criteria, and testable requirements"
+        dependencies: []
+      - index: 2
+        agent: test-case-generator
+        description: "Generate ISTQB-aligned test cases from the clarified requirements"
+        dependencies: [1]
+      - index: 3
+        agent: playwright-test-generator
+        description: "Create automated Playwright TypeScript tests from the test cases"
+        dependencies: [2]
+      - index: 4
+        agent: playwright-executor
+        description: "Execute the generated Playwright tests, diagnose failures, and collect traces"
+        dependencies: [3]
+      - index: 5
+        agent: bug-reporter
+        description: "Extract structured bug entries from test failures"
+        dependencies: [4]
+      - index: 6
+        agent: test-results-analyst
+        description: "Analyze test results for failure patterns, quality trends, and flaky tests"
+        dependencies: [4]
+      - index: 7
+        agent: report-creator
+        description: "Generate comprehensive execution report with task descriptions, results, and total consumed tokens"
+        dependencies: [4, 5, 6]
+
   post-deploy-smoke:
     name: "Post-Deployment Smoke & Canary"
     description: "Run critical-path smoke tests against a live deployment"

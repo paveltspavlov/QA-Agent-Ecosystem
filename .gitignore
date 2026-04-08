@@ -31,3 +31,33 @@ Thumbs.db
 
 # Generated agent outputs
 outputs/
+
+# Root-level execution reports and traceability artifacts
+EXECUTION_REPORT.md
+TEST_CASE_MAPPING.md
+TEST_CASE_TRACEABILITY.md
+TEST_EXECUTION_SUMMARY.txt
+TRACEABILITY_MAP.md
+
+# Playwright output and reporting artifacts
+playwright/playwright-report/
+playwright/test-results/
+playwright/test-results.json
+playwright/test-run.log
+playwright/test-run-output.json
+playwright/test-run-results.json
+playwright/test-output-full.txt
+playwright/detailed-test-run.txt
+playwright/accessibility-report.json
+playwright/accessibility-audit.log
+playwright/accessibility-audit-optimized.log
+
+# Playwright step/session reports (generated during workflow runs)
+playwright/STEP3_*.md
+playwright/STEP3_*.txt
+playwright/ACCESSIBILITY_AUDIT_REPORT.md
+playwright/DELIVERABLES_MANIFEST.md
+playwright/TEST_DATA_SETUP_SUMMARY.md
+playwright/TEST_FIXTURES_GUIDE.md
+playwright/00_START_HERE.md
+playwright/STEP3_COMPLETION_REPORT.md

@@ -1,6 +1,9 @@
+/* @ts-nocheck */
 /**
  * Detailed page mapping for demoqa.com
  * Identifies all testable surfaces and interactions
+ * 
+ * @ts-nocheck - Exploratory file with optional type safety
  */
 import { chromium } from '@playwright/test';
 
@@ -138,3 +141,4 @@ async function mapDemoQA() {
 }
 
 mapDemoQA().catch(console.error);
+

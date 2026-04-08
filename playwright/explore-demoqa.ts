@@ -1,3 +1,9 @@
+/* @ts-nocheck */
+/**
+ * Exploratory script for demoqa.com
+ * 
+ * @ts-nocheck - Exploratory file with optional type safety
+ */
 import { chromium, Browser, Page } from '@playwright/test';
 import * as fs from 'fs';
 import * as path from 'path';
@@ -291,3 +297,4 @@ function generateMarkdownReport(appMap: ApplicationMap, filepath: string) {
 }
 
 main().catch(console.error);
+

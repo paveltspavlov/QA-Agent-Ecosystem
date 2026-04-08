@@ -295,7 +295,7 @@ QA_app/
 │   ├── models.yaml                    # Model configuration (edit this!)
 │   ├── runner.py                      # Thin orchestration layer
 │   ├── workflow_executor.py           # DAG-based workflow engine
-│   ├── workflows.yaml                 # 12 predefined workflow definitions
+│   ├── workflows.yaml                 # 13 predefined workflow definitions
 │   ├── checkpoint.py                  # Session persistence with per-step status
 │   ├── metrics.py                     # Token usage and cost tracking
 │   ├── notifications.py              # Webhook notifications (Slack support)

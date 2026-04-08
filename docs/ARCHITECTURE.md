@@ -46,7 +46,7 @@ qa_ecosystem/
 ├── sdk_adapter.py        # AgentDefinition + AgentResult dataclasses
 ├── runner.py             # Thin orchestration layer delegating to providers
 ├── workflow_executor.py  # DAG-based workflow engine with parallel execution
-├── workflows.yaml        # 12 predefined workflow definitions
+├── workflows.yaml        # 13 predefined workflow definitions
 ├── checkpoint.py         # Session persistence with per-step status tracking
 ├── metrics.py            # Token usage and cost tracking
 ├── notifications.py      # Webhook notifications (Slack Block Kit support)

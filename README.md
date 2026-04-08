@@ -12,7 +12,7 @@ You can run agents individually or let the Test Manager orchestrator decompose a
 |----------|-------------|
 | [Architecture](docs/ARCHITECTURE.md) | System overview, project structure, provider behavior, Python API, extending the ecosystem |
 | [Agents](docs/AGENTS.md) | All 21 agents: purpose, skills, tool sets, v2.1 improvements |
-| [Workflows](docs/WORKFLOWS.md) | 20 orchestration workflows with CLI commands and prompt templates |
+| [Workflows](docs/WORKFLOWS.md) | 21 orchestration workflows with CLI commands and prompt templates |
 | [Models](docs/MODELS.md) | Provider configuration, model profiles, role mapping, environment variables |
 | [CLI](docs/CLI.md) | All 13 subcommands: discovery, execution, orchestration, Playwright |
 | [Skills](docs/SKILLS.md) | Shared skills system: how it works, available skills, adding new ones |
@@ -24,8 +24,8 @@ You can run agents individually or let the Test Manager orchestrator decompose a
 
 ## What's New in v2.0
 
-- **DAG-based workflow engine** -- 12 predefined workflows in `workflows.yaml` with dependency management and parallel execution via `asyncio.gather()`.
-- **20 orchestration workflows** -- covering feature testing, bug analysis, regression, Playwright automation, mockup comparison, API coverage, security audit, cross-browser, responsive, AI/ML, release sign-off, and more.
+- **DAG-based workflow engine** -- 13 predefined workflows in `workflows.yaml` with dependency management and parallel execution via `asyncio.gather()`.
+- **21 orchestration workflows** -- covering feature testing, bug analysis, regression, Playwright automation, mockup comparison, API coverage, security audit, cross-browser, responsive, AI/ML, release sign-off, PBI-to-Report full pipeline, and more.
 - **Execution plan approval** -- the Test Manager presents its proposed agent sequence for user review before delegation begins.
 - **Human-in-the-loop pause** -- the Test Manager can pause mid-workflow to present requirements-analyst findings and wait for updated requirements.
 - **GitHub Copilot SDK** -- primary provider with multi-model support (GPT-4o, Claude Sonnet, o3-mini, Gemini).
