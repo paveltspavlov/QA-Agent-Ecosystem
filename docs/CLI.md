@@ -1,11 +1,11 @@
 # CLI Reference
 
-The `qa-agent` CLI provides 13 subcommands covering discovery, execution, orchestration, workflow management, and Playwright workflows.
+The `qa-agent` CLI provides subcommands covering discovery, execution, orchestration, workflow management, and Playwright workflows.
 
 **Common flags:**
-- `--input / -i` -- path to a file OR inline text (required for `run` and `orchestrate`)
+- `--input / -i` -- path to a file OR inline text (required for `run`, `orchestrate`, `workflow`)
 - `--template / -t` -- template name (default: `default`)
-- `--model / -m` -- model profile from `models.yaml`
+- `--model / -m` -- model profile from `models.yaml` (e.g. `copilot-claude-haiku`, `copilot-gpt4o`)
 
 ---
 
@@ -27,7 +27,7 @@ qa-agent list-models
 # List all shared skills
 qa-agent list-skills
 
-# List all predefined workflows
+# List all predefined workflows (shows keys for use with `workflow` command)
 qa-agent list-workflows
 ```
 
@@ -42,6 +42,9 @@ qa-agent run test-case-generator -i requirements.md
 # Use a specific template and model
 qa-agent run test-case-generator -i requirements.md -t risk-based -m copilot-gpt4o
 
+# Use the fast copilot-claude-haiku model
+qa-agent run test-case-generator -i requirements.md -m copilot-claude-haiku
+
 # Use a local model
 qa-agent run test-case-generator -i requirements.md -m ollama-llama3
 
@@ -51,14 +54,54 @@ qa-agent run requirements-analyst -i "As a user I want to reset my password"
 
 ---
 
-## Orchestrate (Test Manager Delegates to Agents)
+## Run a Workflow (shorthand)
+
+The `workflow` command is a shorthand for `orchestrate --workflow`. It runs a predefined DAG workflow from `workflows.yaml`.
+
+```bash
+# Run a workflow with a file input
+qa-agent workflow feature-testing -i requirements.md
+
+# Run with a URL (auto-detected for web-focused workflows)
+qa-agent workflow exploratory-testing -i "https://demoqa.com"
+
+# Use copilot-claude-haiku for fast, cost-efficient execution
+qa-agent workflow pbi-to-report -i inputs/pbi-to-report.md -m copilot-claude-haiku
+
+# Preview execution plan without running
+qa-agent workflow feature-testing -i requirements.md --dry-run
+
+# Skip specific agents
+qa-agent workflow playwright-gen -i "https://myapp.com" --skip accessibility-auditor performance-profiler
+
+# Resume from a checkpoint after a failure
+qa-agent workflow pbi-to-report -i pbi.md --resume outputs/checkpoints/<session-id>.json
+
+# Send a Slack notification on completion
+qa-agent workflow full-qa-pipeline -i "https://myapp.com" --notify https://hooks.slack.com/services/T00/B00/xxx
+
+# Multi-line input via heredoc
+qa-agent workflow pbi-to-report -i - <<'EOF'
+PBI: As a registered user, I want to reset my password via email link.
+Acceptance criteria:
+- Reset email sent within 30 seconds
+- Link expires after 24 hours
+App URL: https://demoqa.com
+EOF
+```
+
+See the full [Workflow Guide](WORKFLOW_GUIDE.md) for all 16 workflows with input templates.
+
+---
+
+## Orchestrate (full form with advanced options)
 
 ```bash
 # Full orchestration -- Test Manager decomposes and delegates
 qa-agent orchestrate -i project_context.md
 
-# Use a predefined DAG workflow
-qa-agent orchestrate -i requirements.md --workflow feature-testing
+# Use a predefined DAG workflow (equivalent to `workflow` command)
+qa-agent orchestrate -i requirements.md --workflow feature-testing -m copilot-claude-haiku
 
 # Use a custom workflow YAML file
 qa-agent orchestrate -i requirements.md --workflow-file custom.yaml
@@ -82,9 +125,15 @@ qa-agent orchestrate -i requirements.md --workflow feature-testing \
 ## Workflow Management
 
 ```bash
+# List all predefined workflows with their keys
+qa-agent list-workflows
+
 # List and manage checkpoints
 qa-agent list-checkpoints
 qa-agent clean-checkpoints --keep 10
+
+# Chain agents linearly (no DAG, simple pipe)
+qa-agent chain requirements-analyst test-case-generator testware-creator -i requirements.md
 ```
 
 ---
@@ -96,7 +145,7 @@ qa-agent clean-checkpoints --keep 10
 qa-agent playwright-gen --url https://myapp.com
 
 # Generate with a specific agent and model
-qa-agent playwright-gen --url https://myapp.com --agent ui-test-designer -m copilot-gpt4o
+qa-agent playwright-gen --url https://myapp.com --agent ui-test-designer -m copilot-claude-haiku
 
 # Run Playwright tests with optional analysis
 qa-agent playwright-run --project chromium --analyze
@@ -106,6 +155,10 @@ qa-agent playwright-run --project api --reporter json
 qa-agent playwright-analyze --agent pr-hygiene-checker -i playwright/tests/
 qa-agent playwright-analyze --agent security-scout -i playwright/
 qa-agent playwright-analyze --agent flake-triage -i playwright/tests/ui/login.spec.ts
+
+# Generate test execution reports
+qa-agent playwright-report --fast                          # deterministic, no LLM
+qa-agent playwright-report -m copilot-claude-haiku         # LLM-enriched report
 ```
 
 ---
@@ -113,12 +166,15 @@ qa-agent playwright-analyze --agent flake-triage -i playwright/tests/ui/login.sp
 ## Diagnostics
 
 ```bash
+# Interactive setup wizard
+qa-agent init
+
 # Run the diagnostic command
 qa-agent doctor
 
 # Verbose mode for debugging
-qa-agent run <agent> --input <file> --verbose
+qa-agent --verbose workflow pbi-to-report -i pbi.md
 
 # Capture structured logs
-qa-agent run <agent> --input <file> --log-file debug.log
+qa-agent --log-file debug.log workflow feature-testing -i requirements.md
 ```

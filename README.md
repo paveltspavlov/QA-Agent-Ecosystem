@@ -12,9 +12,10 @@ You can run agents individually or let the Test Manager orchestrator decompose a
 |----------|-------------|
 | [Architecture](docs/ARCHITECTURE.md) | System overview, project structure, provider behavior, Python API, extending the ecosystem |
 | [Agents](docs/AGENTS.md) | All 21 agents: purpose, skills, tool sets, v2.1 improvements |
-| [Workflows](docs/WORKFLOWS.md) | 21 orchestration workflows with CLI commands and prompt templates |
+| [Workflow Guide](docs/WORKFLOW_GUIDE.md) | How to run workflows from the terminal — input methods, flags, all 16 workflows with examples |
+| [Workflow Reference](docs/WORKFLOWS.md) | 21 orchestration workflows with CLI commands and prompt templates |
 | [Models](docs/MODELS.md) | Provider configuration, model profiles, role mapping, environment variables |
-| [CLI](docs/CLI.md) | All 13 subcommands: discovery, execution, orchestration, Playwright |
+| [CLI](docs/CLI.md) | All subcommands: discovery, execution, orchestration, workflows, Playwright |
 | [Skills](docs/SKILLS.md) | Shared skills system: how it works, available skills, adding new ones |
 | [Prompt Library](docs/PROMPT_LIBRARY.md) | Copy-paste prompts for all 21 agents |
 | [Playwright Conventions](docs/QA_CONTEXT.md) | Selector strategy, wait patterns, POM, test isolation, CI integration |
@@ -118,7 +119,35 @@ export OPENAI_API_KEY=sk-...
 qa-agent run test-case-generator --input examples/sample_pbi.md
 ```
 
-See the full [CLI Reference](docs/CLI.md) for all commands.
+### Run a workflow
+
+```bash
+# List all available workflows
+qa-agent list-workflows
+
+# Run a workflow with a file input
+qa-agent workflow feature-testing -i requirements.md
+
+# Run with a URL input (auto-detected for web-focused workflows)
+qa-agent workflow exploratory-testing -i "https://demoqa.com"
+
+# Run the full PBI-to-Report pipeline
+qa-agent workflow pbi-to-report -i inputs/pbi-to-report.md
+
+# Use the fast, cost-efficient copilot-claude-haiku model
+qa-agent workflow feature-testing -i requirements.md -m copilot-claude-haiku
+
+# Preview execution plan without running (dry run)
+qa-agent workflow playwright-gen -i "https://myapp.com" --dry-run
+
+# Skip specific agents
+qa-agent workflow playwright-gen -i "https://myapp.com" --skip accessibility-auditor performance-profiler
+
+# Full form via orchestrate (advanced options: reorder, deps, custom YAML)
+qa-agent orchestrate -w feature-testing -i requirements.md -m copilot-claude-haiku
+```
+
+See the full [CLI Reference](docs/CLI.md), [Workflow Guide](docs/WORKFLOW_GUIDE.md), and [Workflow Reference](docs/WORKFLOWS.md) for all commands and templates.
 
 ---
 

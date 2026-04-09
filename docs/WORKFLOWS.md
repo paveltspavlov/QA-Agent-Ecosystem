@@ -1,8 +1,18 @@
 # Orchestration Workflows
 
-The Test Manager supports 21 orchestration workflows. When you run `qa-agent orchestrate`, the Test Manager analyzes the objective, selects the appropriate workflow, and delegates to specialist agents.
+The QA Agent Ecosystem supports 16 predefined DAG-based workflows (defined in `workflows.yaml`) plus orchestrator-driven workflows via the Test Manager. Each workflow can be run directly from the terminal.
+
+> **Quick start:** `qa-agent workflow <key> -i <input> -m copilot-claude-haiku`
+>
+> Run `qa-agent list-workflows` to see all available workflow keys.
+>
+> See [WORKFLOW_GUIDE.md](WORKFLOW_GUIDE.md) for the full terminal execution guide with all input methods and advanced options.
 
 > **Copilot users:** the Test Manager will pause mid-workflow and prompt you for input when requirements need clarification (after the `requirements-analyst` step).
+
+### Model Selection
+
+All workflow examples below use `-m copilot-claude-haiku` (fast, cost-efficient) or `-m copilot-gpt4o` (highest quality). You can substitute any model profile from `models.yaml`. Run `qa-agent list-models` to see all options.
 
 ---
 
@@ -23,7 +33,9 @@ requirements-analyst
 
 **CLI:**
 ```bash
-qa-agent orchestrate -i feature_requirements.md -m copilot-gpt4o
+qa-agent workflow feature-testing -i feature_requirements.md -m copilot-claude-haiku
+# or full form:
+qa-agent orchestrate -w feature-testing -i feature_requirements.md -m copilot-gpt4o
 ```
 
 **Prompt template** (contents of `feature_requirements.md`):
@@ -57,7 +69,8 @@ bug-pattern-analyst
 
 **CLI:**
 ```bash
-qa-agent orchestrate -i bug_reports.md -m copilot-gpt4o
+qa-agent workflow bug-prevention -i bug_reports.md -m copilot-claude-haiku
+# or: qa-agent orchestrate -w bug-prevention -i bug_reports.md -m copilot-gpt4o
 ```
 
 **Prompt template:**
@@ -88,7 +101,8 @@ regression-optimizer
 
 **CLI:**
 ```bash
-qa-agent orchestrate -i sprint_context.md -m copilot-gpt4o
+qa-agent workflow sprint-regression -i sprint_context.md -m copilot-claude-haiku
+# or: qa-agent orchestrate -i sprint_context.md -m copilot-gpt4o
 ```
 
 **Prompt template:**
@@ -118,9 +132,11 @@ playwright-test-generator  (explore site via CLI, discover pages and user journe
 
 **CLI:**
 ```bash
-qa-agent orchestrate -i playwright_task.md -m copilot-gpt4o
+qa-agent workflow playwright-gen -i "https://myapp.com" -m copilot-claude-haiku
+# or with a task file:
+qa-agent workflow playwright-gen -i playwright_task.md -m copilot-gpt4o
 # or use the dedicated shortcut:
-qa-agent playwright-gen --url https://myapp.com -m copilot-gpt4o
+qa-agent playwright-gen --url https://myapp.com -m copilot-claude-haiku
 ```
 
 **Prompt template:**
@@ -149,9 +165,9 @@ flake-triage  (diagnose root causes — race conditions, timing, external depend
 
 **CLI:**
 ```bash
-qa-agent orchestrate -i flaky_tests.md -m copilot-gpt4o
-# or:
-qa-agent playwright-analyze --agent flake-triage -i playwright/tests/
+qa-agent workflow flake-investigation -i flaky_tests.md -m copilot-claude-haiku
+# or single-agent:
+qa-agent playwright-analyze --agent flake-triage -i playwright/tests/ -m copilot-claude-haiku
 ```
 
 **Prompt template:**
@@ -182,7 +198,7 @@ requirements-analyst  (review requirements + mockup for ambiguities)
 
 **CLI:**
 ```bash
-qa-agent orchestrate -i mockup_comparison_task.md -m copilot-gpt4o
+qa-agent workflow mockup-comparison -i mockup_comparison_task.md -m copilot-claude-haiku
 ```
 
 **Prompt template:**
@@ -223,9 +239,9 @@ requirements-analyst  (validate API requirements and spec completeness)
 
 **CLI:**
 ```bash
-qa-agent orchestrate -i api_coverage_task.md -m copilot-gpt4o
-# or:
-qa-agent playwright-analyze --agent api-coverage-planner -i src/routes/
+qa-agent workflow api-coverage -i api_coverage_task.md -m copilot-claude-haiku
+# or single-agent:
+qa-agent playwright-analyze --agent api-coverage-planner -i src/routes/ -m copilot-claude-haiku
 ```
 
 **Prompt template:**
@@ -259,9 +275,9 @@ security-scout  (scan for hardcoded secrets, unsafe patterns, committed .env fil
 
 **CLI:**
 ```bash
-qa-agent orchestrate -i security_audit_task.md -m copilot-gpt4o
-# or:
-qa-agent playwright-analyze --agent security-scout -i playwright/
+qa-agent workflow security-audit -i security_audit_task.md -m copilot-claude-haiku
+# or single-agent:
+qa-agent playwright-analyze --agent security-scout -i playwright/ -m copilot-claude-haiku
 ```
 
 **Prompt template:**
@@ -290,7 +306,7 @@ requirements-analyst  (extract data entities and edge-case values from PBIs)
 
 **CLI:**
 ```bash
-qa-agent orchestrate -i data_bootstrap_task.md -m copilot-gpt4o
+qa-agent workflow data-bootstrap -i data_bootstrap_task.md -m copilot-claude-haiku
 ```
 
 **Prompt template:**
@@ -327,7 +343,7 @@ flake-triage  (diagnose unstable tests)
 
 **CLI:**
 ```bash
-qa-agent orchestrate -i health_audit_task.md -m copilot-gpt4o
+qa-agent workflow test-debt -i health_audit_task.md -m copilot-claude-haiku
 ```
 
 **Prompt template:**
@@ -356,7 +372,7 @@ ui-test-designer  (configure multi-browser matrix)
 
 **CLI:**
 ```bash
-qa-agent orchestrate -i cross_browser_task.md -m copilot-gpt4o
+qa-agent workflow cross-browser -i cross_browser_task.md -m copilot-claude-haiku
 ```
 
 **Prompt template:**
@@ -385,7 +401,7 @@ ui-test-designer  (configure viewport sizes: 375px, 768px, 1280px)
 
 **CLI:**
 ```bash
-qa-agent orchestrate -i responsive_task.md -m copilot-gpt4o
+qa-agent workflow responsive-testing -i responsive_task.md -m copilot-claude-haiku
 ```
 
 **Prompt template:**
@@ -416,7 +432,7 @@ requirements-analyst  (identify non-determinism risks, bias, compliance)
 
 **CLI:**
 ```bash
-qa-agent orchestrate -i ai_feature_task.md -m copilot-gpt4o
+qa-agent workflow ai-testing -i ai_feature_task.md -m copilot-claude-haiku
 ```
 
 **Prompt template:**
@@ -448,7 +464,7 @@ requirements-analyst  (verify all in-scope requirements have test coverage)
 
 **CLI:**
 ```bash
-qa-agent orchestrate -i release_signoff_task.md -m copilot-gpt4o
+qa-agent workflow release-signoff -i release_signoff_task.md -m copilot-claude-haiku
 ```
 
 **Prompt template:**
@@ -481,7 +497,7 @@ requirements-analyst  (extract user journeys from personas)
 
 **CLI:**
 ```bash
-qa-agent orchestrate -i user_journey_task.md -m copilot-gpt4o
+qa-agent workflow user-journey -i user_journey_task.md -m copilot-claude-haiku
 ```
 
 **Prompt template:**
@@ -518,7 +534,7 @@ coverage-hunter  (audit fixtures: stale, duplicate, or incomplete)
 
 **CLI:**
 ```bash
-qa-agent orchestrate -i data_cleanup_task.md -m copilot-gpt4o
+qa-agent workflow data-cleanup -i data_cleanup_task.md -m copilot-claude-haiku
 ```
 
 **Prompt template:**
@@ -549,7 +565,7 @@ requirements-analyst  (identify ambiguous, high-risk areas)
 
 **CLI:**
 ```bash
-qa-agent orchestrate -i exploratory_task.md -m copilot-gpt4o
+qa-agent workflow exploratory-planner -i exploratory_task.md -m copilot-claude-haiku
 ```
 
 **Prompt template:**
@@ -580,9 +596,9 @@ pr-hygiene-checker  (11-check quality gate)
 
 **CLI:**
 ```bash
-qa-agent orchestrate -i pr_gate_task.md -m copilot-gpt4o
-# or:
-qa-agent playwright-analyze --agent pr-hygiene-checker -i playwright/tests/
+qa-agent workflow pr-qa-gate -i pr_gate_task.md -m copilot-claude-haiku
+# or single-agent:
+qa-agent playwright-analyze --agent pr-hygiene-checker -i playwright/tests/ -m copilot-claude-haiku
 ```
 
 **Prompt template:**
@@ -612,8 +628,8 @@ playwright-test-generator  (identify or generate critical smoke tests)
 
 **CLI:**
 ```bash
-qa-agent orchestrate -i smoke_task.md -m copilot-gpt4o
-# or:
+qa-agent workflow post-deploy-smoke -i smoke_task.md -m copilot-claude-haiku
+# or run existing smoke tests directly:
 qa-agent playwright-run --project chromium --grep "@smoke" --analyze
 ```
 
@@ -648,7 +664,7 @@ requirements-analyst  (catalogue all requirements and acceptance criteria)
 
 **CLI:**
 ```bash
-qa-agent orchestrate -i traceability_task.md -m copilot-gpt4o
+qa-agent workflow traceability -i traceability_task.md -m copilot-claude-haiku
 ```
 
 **Prompt template:**
@@ -684,12 +700,12 @@ requirements-analyst  (analyze PBI for ambiguities and testable requirements)
 
 **CLI:**
 ```bash
-qa-agent workflow pbi-to-report -i inputs/pbi-to-report.md -m copilot-gpt4o
+qa-agent workflow pbi-to-report -i inputs/pbi-to-report.md -m copilot-claude-haiku
 ```
 
 **Or via the Test Manager orchestrator:**
 ```bash
-qa-agent orchestrate -i inputs/pbi-to-report.md -m copilot-gpt4o
+qa-agent orchestrate -w pbi-to-report -i inputs/pbi-to-report.md -m copilot-claude-haiku
 ```
 
 **Test Manager prompt (natural language — the orchestrator selects the right agents):**
@@ -756,7 +772,7 @@ The Test Manager (`test-manager` agent) can orchestrate this entire pipeline fro
 
 **Example orchestrator command:**
 ```bash
-qa-agent orchestrate -m copilot-gpt4o -i - <<'EOF'
+qa-agent workflow pbi-to-report -m copilot-claude-haiku -i - <<'EOF'
 I have a PBI for password reset functionality on https://demoqa.com.
 Analyze the requirements, generate test cases, automate them with Playwright,
 execute the tests, log all bugs, and give me a final report with token usage.

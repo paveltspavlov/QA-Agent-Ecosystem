@@ -37,6 +37,7 @@ roles:
 | `copilot-gpt4o` | GitHub Copilot | GPT-4o | |
 | `copilot-o3-mini` | GitHub Copilot | o3-mini | |
 | `copilot-gemini` | GitHub Copilot | Gemini 2.5 Pro | |
+| `copilot-claude-haiku` | GitHub Copilot | Claude Haiku 4.5 | Fast & cost-efficient via Copilot |
 | `claude-sonnet-api` | Anthropic API | claude-sonnet-4-5 | **Default** -- no CLI needed |
 | `claude-opus-api` | Anthropic API | claude-opus-4-5 | **Default orchestrator** |
 | `claude-haiku-api` | Anthropic API | claude-haiku-4-5 | Fastest/cheapest Claude |
@@ -76,10 +77,16 @@ export QA_MODELS_CONFIG=/path/to/custom/models.yaml
 ## Using a Different Model Per Run
 
 ```bash
-qa-agent run test-case-generator --input examples/sample_pbi.md --model claude-haiku-api
+# Single agent with model override
+qa-agent run test-case-generator --input examples/sample_pbi.md --model copilot-claude-haiku
 qa-agent run bug-pattern-analyst --input bugs.csv --model gpt-4o
 qa-agent run requirements-analyst --input story.md --model ollama-llama3
 qa-agent run ui-test-designer --input spec.md --model copilot-gpt4o
+
+# Workflow with model override (all agents in the workflow use this model)
+qa-agent workflow feature-testing -i requirements.md -m copilot-claude-haiku
+qa-agent workflow pbi-to-report -i pbi.md -m copilot-gpt4o
+qa-agent workflow exploratory-testing -i "https://demoqa.com" -m copilot-claude-haiku
 ```
 
 ---

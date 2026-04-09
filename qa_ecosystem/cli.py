@@ -705,44 +705,33 @@ def cmd_doctor(_args: argparse.Namespace) -> None:
 
 
 def cmd_list_workflows(_args: argparse.Namespace) -> None:
-    """Print all 21 orchestration workflows."""
-    WORKFLOWS = [
-        ("1",  "New Feature Testing",          "PBI / user story",                   "requirements-analyst → [human input] → test-case-generator + synthetic-data-designer + test-oracle-creator → testware-creator → test-results-analyst"),
-        ("2",  "Bug Prevention & Analysis",    "Bug reports / defect history",        "bug-pattern-analyst → requirements-analyst → test-case-generator → testware-creator"),
-        ("3",  "Sprint Regression Optimisation","Sprint scope + existing suite",       "regression-optimizer → test-case-generator → testware-creator → test-results-analyst"),
-        ("4",  "Playwright Test Generation",   "App URL",                             "playwright-test-generator → ui-test-designer → seed-data-manager → coverage-hunter → pr-hygiene-checker"),
-        ("5",  "Flaky Test Investigation",     "Flaky test files + CI logs",          "flake-triage → playwright-test-generator → pr-hygiene-checker"),
-        ("6",  "UI Mockup Comparison",         "Mockup image/file + App URL",         "requirements-analyst + ui-test-designer → playwright-test-generator → testware-creator (bug reports)"),
-        ("7",  "Full API Test Coverage",       "OpenAPI spec / endpoint list",        "api-coverage-planner → playwright-test-generator → coverage-hunter → pr-hygiene-checker"),
-        ("8",  "Security Audit",               "Codebase path / test directory",      "security-scout → requirements-analyst → testware-creator"),
-        ("9",  "Test Data Bootstrap",          "PBIs / data requirements",            "synthetic-data-designer → seed-data-manager → test-oracle-creator"),
-        ("10", "Full Test Health Audit",       "Test directory + recent results",     "coverage-hunter → flake-triage → pr-hygiene-checker → test-results-analyst → testware-creator"),
-        ("11", "Cross-Browser Testing",        "App URL + feature list",              "ui-test-designer → playwright-test-generator → test-results-analyst → testware-creator"),
-        ("12", "Responsive / Mobile Testing",  "App URL + breakpoints",               "ui-test-designer → playwright-test-generator → test-results-analyst → testware-creator"),
-        ("13", "AI/ML Feature Testing",        "AI feature requirements",             "ai-test-architect → test-case-generator → synthetic-data-designer → test-oracle-creator → testware-creator"),
-        ("14", "Release Sign-off",             "Release version + test scope",        "regression-optimizer → test-results-analyst → testware-creator (sign-off report)"),
-        ("15", "User Journey Mapping",         "User personas + App URL",             "requirements-analyst → test-case-generator → ui-test-designer → playwright-test-generator"),
-        ("16", "Test Data Cleanup & Maintenance","Test data directory",               "seed-data-manager → synthetic-data-designer → testware-creator"),
-        ("17", "Exploratory Testing Planner",  "Feature scope + risk areas",          "requirements-analyst → bug-pattern-analyst → testware-creator (charters)"),
-        ("18", "PR / Code Review QA Gate",     "PR diff + test files",                "pr-hygiene-checker → coverage-hunter → security-scout → testware-creator"),
-        ("19", "Post-Deployment Smoke",        "App URL + environment name",          "playwright-test-generator → ui-test-designer → test-results-analyst → testware-creator"),
-        ("20", "Requirements Traceability",    "Requirements doc + test suite",       "requirements-analyst → test-case-generator → testware-creator (traceability matrix)"),
-        ("21", "Exploratory Testing",          "App URL (--input)",                   "exploratory-tester → playwright-recorder → playwright-executor → bug-reporter → report-creator"),
-        ("22", "Playwright Copilot Flow",     "App URL",                             "playwright-copilot (plan) → playwright-copilot (generate) → playwright-executor → bug-reporter → report-creator"),
-        ("23", "Full QA Pipeline",            "App URL",                             "exploratory-tester → playwright-recorder → playwright-executor → bug-reporter + test-results-analyst → report-creator → testware-creator"),
-    ]
+    """Print all orchestration workflows loaded from workflows.yaml."""
+    from qa_ecosystem.workflow_executor import list_workflows
 
-    table = Table(title="QA Agent Ecosystem — 21 Orchestration Workflows")
+    workflows = list_workflows()
+    if not workflows:
+        console.print("[yellow]No workflows found in workflows.yaml.[/yellow]")
+        return
+
+    table = Table(title=f"QA Agent Ecosystem — Orchestration Workflows ({len(workflows)})")
     table.add_column("#", style="dim", width=3)
-    table.add_column("Workflow", style="cyan", min_width=28)
-    table.add_column("Input Required", style="yellow", min_width=28)
+    table.add_column("Key", style="bold green", no_wrap=True, min_width=22)
+    table.add_column("Name", style="cyan", min_width=28)
+    table.add_column("Steps", style="yellow", justify="right", width=5)
     table.add_column("Agent Sequence", style="white", min_width=50)
 
-    for row in WORKFLOWS:
-        table.add_row(*row)
+    for idx, (key, wf) in enumerate(workflows.items(), 1):
+        agents = " → ".join(s.agent for s in sorted(wf.steps, key=lambda s: s.index))
+        table.add_row(str(idx), key, wf.name, str(len(wf.steps)), agents)
 
     console.print(table)
-    console.print("\n[dim]Run: qa-agent orchestrate -i <input> -t <workflow-template>[/dim]\n")
+    console.print(
+        "\n[bold]Usage:[/bold]\n"
+        "  qa-agent workflow <key> -i <input>          [dim]# shorthand[/dim]\n"
+        "  qa-agent orchestrate -w <key> -i <input>    [dim]# full form[/dim]\n"
+        "\n[dim]Example: qa-agent workflow feature-testing -i requirements.md[/dim]\n"
+        "[dim]Dry run: qa-agent workflow feature-testing -i requirements.md --dry-run[/dim]\n"
+    )
 
 
 def cmd_list_checkpoints(_args: argparse.Namespace) -> None:
@@ -811,6 +800,20 @@ def cmd_list_skills(_args: argparse.Namespace) -> None:
 
     console.print(table)
     console.print("\n[dim]Skills directory: qa_ecosystem/skills/[/dim]\n")
+
+
+def cmd_workflow(args: argparse.Namespace) -> None:
+    """Run a predefined workflow by key — shorthand for orchestrate --workflow."""
+    # Reuse the orchestrate logic by injecting the workflow name
+    args.workflow = args.workflow_name
+    args.workflow_file = None
+    args.template = getattr(args, "template", "default") or "default"
+    args.reorder = None
+    args.deps = None
+    args.skip = getattr(args, "skip", None)
+    args.notify = getattr(args, "notify", None)
+    args.resume = getattr(args, "resume", None)
+    cmd_orchestrate(args)
 
 
 def cmd_chain(args: argparse.Namespace) -> None:
@@ -1019,6 +1022,36 @@ def build_parser() -> argparse.ArgumentParser:
     clean_cp.add_argument("--keep", type=int, default=5,
                           help="Number of most recent checkpoints to keep (default: 5)")
 
+    # --- workflow (shorthand for orchestrate --workflow) ---
+    wf = sub.add_parser(
+        "workflow",
+        help="Run a predefined workflow by key (shorthand for orchestrate --workflow)",
+    )
+    wf.add_argument(
+        "workflow_name",
+        metavar="WORKFLOW",
+        help=(
+            "Workflow key from workflows.yaml "
+            "(e.g. feature-testing, playwright-gen, pbi-to-report). "
+            "Run 'qa-agent list-workflows' to see all available keys."
+        ),
+    )
+    wf.add_argument("--input", "-i", required=True,
+                    help="Input text, file path, or URL — the instructions for the workflow")
+    wf.add_argument("--cwd", default=".",
+                    help="Working directory for the agents")
+    wf.add_argument("--dry-run", action="store_true", default=False,
+                    help="Show execution plan without running")
+    wf.add_argument("--skip", nargs="*", default=None,
+                    help="Skip specific agents from the workflow")
+    wf.add_argument("--resume", default=None,
+                    metavar="CHECKPOINT_FILE",
+                    help="Resume from a checkpoint file")
+    wf.add_argument("--notify", default=None,
+                    metavar="WEBHOOK_URL",
+                    help="POST a summary to this webhook URL on completion")
+    _add_model_arg(wf)
+
     # --- chain ---
     chain = sub.add_parser("chain", help="Execute a linear agent sequence (pipe output→input)")
     chain.add_argument("agents", nargs="+", choices=AGENT_NAMES,
@@ -1075,6 +1108,7 @@ def main() -> None:
         "list-workflows": cmd_list_workflows,
         "list-checkpoints": cmd_list_checkpoints,
         "clean-checkpoints": cmd_clean_checkpoints,
+        "workflow": cmd_workflow,
         "chain": cmd_chain,
     }
     dispatch[args.command](args)
