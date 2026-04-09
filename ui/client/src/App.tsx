@@ -13,6 +13,8 @@ import Reports from "./pages/Reports";
 import Settings from "./pages/Settings";
 import NotFound from "./pages/not-found";
 
+// Router MUST wrap AppSidebar so that Link and useLocation in the sidebar
+// share the same hash-location router context as the Switch routes.
 function AppShell() {
   return (
     <SidebarProvider defaultOpen={true}>
@@ -22,17 +24,15 @@ function AppShell() {
           <SidebarTrigger className="-ml-1" />
         </header>
         <main className="flex-1 overflow-auto">
-          <Router hook={useHashLocation}>
-            <Switch>
-              <Route path="/" component={Dashboard} />
-              <Route path="/agents" component={Agents} />
-              <Route path="/workflows" component={Workflows} />
-              <Route path="/run/:type/:name" component={RunPage} />
-              <Route path="/reports" component={Reports} />
-              <Route path="/settings" component={Settings} />
-              <Route component={NotFound} />
-            </Switch>
-          </Router>
+          <Switch>
+            <Route path="/" component={Dashboard} />
+            <Route path="/agents" component={Agents} />
+            <Route path="/workflows" component={Workflows} />
+            <Route path="/run/:type/:name" component={RunPage} />
+            <Route path="/reports" component={Reports} />
+            <Route path="/settings" component={Settings} />
+            <Route component={NotFound} />
+          </Switch>
         </main>
       </SidebarInset>
     </SidebarProvider>
@@ -42,7 +42,10 @@ function AppShell() {
 export default function App() {
   return (
     <QueryClientProvider client={queryClient}>
-      <AppShell />
+      {/* Router wraps the entire app shell so AppSidebar Links work correctly */}
+      <Router hook={useHashLocation}>
+        <AppShell />
+      </Router>
       <Toaster />
     </QueryClientProvider>
   );
