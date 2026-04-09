@@ -6,20 +6,88 @@ You can run agents individually or let the Test Manager orchestrator decompose a
 
 ---
 
-## Documentation
+## Table of Contents
+
+### Core Documentation (`docs/`)
 
 | Document | Description |
 |----------|-------------|
 | [Architecture](docs/ARCHITECTURE.md) | System overview, project structure, provider behavior, Python API, extending the ecosystem |
 | [Agents](docs/AGENTS.md) | All 21 agents: purpose, skills, tool sets, v2.1 improvements |
-| [Workflow Guide](docs/WORKFLOW_GUIDE.md) | How to run workflows from the terminal — input methods, flags, all 16 workflows with examples |
-| [Workflow Reference](docs/WORKFLOWS.md) | 21 orchestration workflows with CLI commands and prompt templates |
-| [Models](docs/MODELS.md) | Provider configuration, model profiles, role mapping, environment variables |
-| [CLI](docs/CLI.md) | All subcommands: discovery, execution, orchestration, workflows, Playwright |
-| [Skills](docs/SKILLS.md) | Shared skills system: how it works, available skills, adding new ones |
-| [Prompt Library](docs/PROMPT_LIBRARY.md) | Copy-paste prompts for all 21 agents |
+| [CLI Reference](docs/CLI.md) | All subcommands: discovery, execution, orchestration, workflows, Playwright |
+| [Models](docs/MODELS.md) | Provider configuration, model profiles (incl. `copilot-claude-haiku`), role mapping, environment variables |
+| [Workflow Guide](docs/WORKFLOW_GUIDE.md) | How to run workflows from the terminal -- input methods, flags, all 16 workflows with examples |
+| [Workflow Reference](docs/WORKFLOWS.md) | 21 orchestration workflows with CLI commands, prompt templates, and step-by-step breakdowns |
+| [Prompt Library](docs/PROMPT_LIBRARY.md) | 105 copy-paste prompts for all 21 agents (5 per agent) |
+| [Skills](docs/SKILLS.md) | Shared prompt skills system: how it works, available skills, adding new ones |
 | [Playwright Conventions](docs/QA_CONTEXT.md) | Selector strategy, wait patterns, POM, test isolation, CI integration |
 | [Troubleshooting](docs/TROUBLESHOOTING.md) | Common errors and fixes |
+
+### Guides (root)
+
+| Document | Description |
+|----------|-------------|
+| [User Guide](GUIDE.md) | Comprehensive user guide -- installation, configuration, running agents, orchestration |
+| [GitHub Copilot Guide](COPILOT_GUIDE.md) | Step-by-step setup and usage with GitHub Copilot as the AI provider |
+| [Quick Reference](QUICK_REFERENCE.md) | One-page reference card for Playwright test execution results |
+| [Playwright Suite](README_PLAYWRIGHT.md) | Playwright automation suite overview -- 35 exploratory test cases converted to automated tests |
+
+### Input Templates (`inputs/`)
+
+Ready-to-fill requirement files. Copy a template, fill in the bracketed placeholders, and pass it to `qa-agent workflow`.
+
+| Template | Workflow Key | Description |
+|----------|--------------|-------------|
+| [Input Templates README](inputs/README.md) | -- | Overview and usage instructions for all input templates |
+| [feature-testing.md](inputs/feature-testing.md) | `feature-testing` | New feature PBI / user story |
+| [bug-analysis.md](inputs/bug-analysis.md) | `bug-prevention` | Bug reports and defect history |
+| [regression.md](inputs/regression.md) | -- | Sprint scope and existing test suite |
+| [playwright-gen.md](inputs/playwright-gen.md) | `playwright-gen` | App URL and pages to automate |
+| [flaky-tests.md](inputs/flaky-tests.md) | `flake-investigation` | Flaky test files and CI logs |
+| [mockup-comparison.md](inputs/mockup-comparison.md) | -- | Mockup image/file and app URL |
+| [api-coverage.md](inputs/api-coverage.md) | `api-coverage` | OpenAPI spec or endpoint list |
+| [security-audit.md](inputs/security-audit.md) | `security-audit` | Codebase path and scope |
+| [data-bootstrap.md](inputs/data-bootstrap.md) | -- | PBIs and data requirements |
+| [health-audit.md](inputs/health-audit.md) | `test-debt` | Test directory and recent results |
+| [release-signoff.md](inputs/release-signoff.md) | `release-signoff` | Release version and test scope |
+| [pr-gate.md](inputs/pr-gate.md) | -- | PR diff and test files |
+| [smoke-verification.md](inputs/smoke-verification.md) | `post-deploy-smoke` | App URL and environment |
+| [single-agent.md](inputs/single-agent.md) | -- | Generic single-agent input |
+| [pbi-to-report.md](inputs/pbi-to-report.md) | `pbi-to-report` | Full PBI-to-Report pipeline input |
+
+### Showcase Examples (`showcase/`)
+
+Complete, ready-to-run input files with no placeholders -- copy the command and run.
+
+| Example | Description |
+|---------|-------------|
+| [Showcase README](showcase/README.md) | Overview and instructions for all showcase examples |
+| [PBI Shopping Cart](showcase/pbi-shopping-cart.md) | End-to-end shopping cart feature testing |
+| [Playwright DemoQA](showcase/playwright-demoqa.md) | Playwright test generation for demoqa.com |
+| [UI Checkout Flow](showcase/ui-checkout-flow.md) | UI test design for a checkout flow |
+| [API Bookstore](showcase/api-bookstore.md) | API coverage planning for a bookstore API |
+| [Flaky Checkout Tests](showcase/flaky-checkout-tests.md) | Diagnosing and fixing flaky checkout tests |
+| [Security Audit](showcase/security-audit-playwright.md) | Security audit on Playwright test suite |
+| [Health Audit E-commerce](showcase/health-audit-ecommerce.md) | Full test health audit for an e-commerce app |
+| [Release Sign-off v3](showcase/release-signoff-v3.md) | Release sign-off checklist for v3.0 |
+
+### Examples (`examples/`)
+
+| File | Description |
+|------|-------------|
+| [sample_pbi.md](examples/sample_pbi.md) | Sample PBI / user story for testing agents |
+| [workflow_requirements_to_report.md](examples/workflow_requirements_to_report.md) | Example: full requirements-to-report workflow |
+| [run_single_agent.py](examples/run_single_agent.py) | Python script: run a single agent programmatically |
+| [run_orchestrator.py](examples/run_orchestrator.py) | Python script: run the Test Manager orchestrator |
+
+### Test Reports (root)
+
+| Report | Description |
+|--------|-------------|
+| [Execution Report](EXECUTION_REPORT.md) | Detailed Playwright test execution report for demoqa.com |
+| [Test Case Mapping](TEST_CASE_MAPPING.md) | Comprehensive test case traceability table (35 test cases) |
+| [Test Case Traceability](TEST_CASE_TRACEABILITY.md) | Test case to implementation mapping matrix |
+| [Traceability Map](TRACEABILITY_MAP.md) | Playwright automation test case traceability overview |
 
 ---
 
