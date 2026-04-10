@@ -1,7 +1,7 @@
 import { db } from "./db";
-import { runs, settings } from "@shared/schema";
+import { runs, settings, users } from "@shared/schema";
 import { eq, desc } from "drizzle-orm";
-import type { Run, InsertRun, Setting } from "@shared/schema";
+import type { Run, InsertRun, Setting, User, InsertUser } from "@shared/schema";
 
 export interface IStorage {
   // Runs
@@ -13,6 +13,15 @@ export interface IStorage {
   getSetting(key: string): string | undefined;
   setSetting(key: string, value: string): void;
   getAllSettings(): Setting[];
+  // Users
+  getUserCount(): number;
+  getUserById(id: number): User | undefined;
+  getUserByUsername(username: string): User | undefined;
+  getUserByEmail(email: string): User | undefined;
+  getAllUsers(): User[];
+  createUser(user: InsertUser): User;
+  updateUser(id: number, partial: Partial<User>): User | undefined;
+  deleteUser(id: number): void;
 }
 
 export class Storage implements IStorage {
@@ -47,6 +56,40 @@ export class Storage implements IStorage {
 
   getAllSettings(): Setting[] {
     return db.select().from(settings).all();
+  }
+
+  // Users ------------------------------------------------------------------
+  getUserCount(): number {
+    const rows = db.select().from(users).all();
+    return rows.length;
+  }
+
+  getUserById(id: number): User | undefined {
+    return db.select().from(users).where(eq(users.id, id)).get();
+  }
+
+  getUserByUsername(username: string): User | undefined {
+    return db.select().from(users).where(eq(users.username, username)).get();
+  }
+
+  getUserByEmail(email: string): User | undefined {
+    return db.select().from(users).where(eq(users.email, email)).get();
+  }
+
+  getAllUsers(): User[] {
+    return db.select().from(users).orderBy(users.id).all();
+  }
+
+  createUser(user: InsertUser): User {
+    return db.insert(users).values(user).returning().get();
+  }
+
+  updateUser(id: number, partial: Partial<User>): User | undefined {
+    return db.update(users).set(partial).where(eq(users.id, id)).returning().get();
+  }
+
+  deleteUser(id: number): void {
+    db.delete(users).where(eq(users.id, id)).run();
   }
 }
 

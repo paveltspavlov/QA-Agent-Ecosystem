@@ -1,6 +1,11 @@
 import type { Express, Request, Response } from "express";
 import type { Server } from "http";
 import { storage } from "./storage";
+import {
+  initJwtSecret, requireAuth, requireAdmin, signToken,
+  setAuthCookie, clearAuthCookie, hashPassword, verifyPassword, safeUser,
+  type AuthRequest,
+} from "./auth";
 import { spawn, ChildProcess } from "child_process";
 import fs from "fs";
 import path from "path";
@@ -279,6 +284,161 @@ function listReports(): { agent: string; files: ReportFile[] }[] {
 // Route registration
 // ---------------------------------------------------------------------------
 export function registerRoutes(httpServer: Server, app: Express): void {
+
+  // ── JWT Secret ──────────────────────────────────────────────────────────
+  // Store JWT secret in DB so it survives restarts without losing sessions
+  let jwtSecret = storage.getSetting("jwtSecret");
+  if (!jwtSecret) {
+    jwtSecret = require("crypto").randomBytes(48).toString("hex");
+    storage.setSetting("jwtSecret", jwtSecret);
+  }
+  initJwtSecret(jwtSecret);
+
+  // ── Auth Routes (PUBLIC — no token required) ─────────────────────────────
+
+  /** GET /api/auth/setup-status — tells the client whether first-run setup is needed */
+  app.get("/api/auth/setup-status", (_req, res) => {
+    const needsSetup = storage.getUserCount() === 0;
+    res.json({ needsSetup });
+  });
+
+  /** POST /api/auth/setup — first-run admin creation (only allowed when 0 users exist) */
+  app.post("/api/auth/setup", async (req, res) => {
+    if (storage.getUserCount() > 0) {
+      return res.status(409).json({ error: "Setup already completed" });
+    }
+    const { username, email, password } = req.body;
+    if (!username || !email || !password) {
+      return res.status(400).json({ error: "username, email, and password are required" });
+    }
+    if (password.length < 8) {
+      return res.status(400).json({ error: "Password must be at least 8 characters" });
+    }
+    const passwordHash = await hashPassword(password);
+    const user = storage.createUser({
+      username,
+      email,
+      passwordHash,
+      role: "admin",
+      isActive: true,
+      createdAt: new Date().toISOString(),
+      lastLoginAt: null,
+    });
+    const token = signToken({ userId: user.id, username: user.username, role: user.role });
+    setAuthCookie(res, token);
+    res.json({ user: safeUser(user), token });
+  });
+
+  /** POST /api/auth/login */
+  app.post("/api/auth/login", async (req, res) => {
+    const { username, password } = req.body;
+    if (!username || !password) {
+      return res.status(400).json({ error: "username and password are required" });
+    }
+    const user = storage.getUserByUsername(username)
+      ?? storage.getUserByEmail(username); // allow login with email too
+    if (!user || !user.isActive) {
+      return res.status(401).json({ error: "Invalid credentials" });
+    }
+    const ok = await verifyPassword(password, user.passwordHash);
+    if (!ok) {
+      return res.status(401).json({ error: "Invalid credentials" });
+    }
+    storage.updateUser(user.id, { lastLoginAt: new Date().toISOString() });
+    const token = signToken({ userId: user.id, username: user.username, role: user.role });
+    setAuthCookie(res, token);
+    res.json({ user: safeUser(user), token });
+  });
+
+  /** POST /api/auth/logout */
+  app.post("/api/auth/logout", (req, res) => {
+    clearAuthCookie(res);
+    res.json({ ok: true });
+  });
+
+  /** GET /api/auth/me — returns current user from token */
+  app.get("/api/auth/me", requireAuth, (req: AuthRequest, res) => {
+    const user = storage.getUserById(req.user!.userId);
+    if (!user || !user.isActive) {
+      clearAuthCookie(res);
+      return res.status(401).json({ error: "User not found or deactivated" });
+    }
+    res.json(safeUser(user));
+  });
+
+  // ── User Management (admin only) ──────────────────────────────────────────
+
+  app.get("/api/users", requireAdmin, (_req, res) => {
+    res.json(storage.getAllUsers().map(safeUser));
+  });
+
+  app.post("/api/users", requireAdmin, async (req: AuthRequest, res) => {
+    const { username, email, password, role } = req.body;
+    if (!username || !email || !password) {
+      return res.status(400).json({ error: "username, email, and password are required" });
+    }
+    if (password.length < 8) {
+      return res.status(400).json({ error: "Password must be at least 8 characters" });
+    }
+    if (storage.getUserByUsername(username)) {
+      return res.status(409).json({ error: "Username already taken" });
+    }
+    if (storage.getUserByEmail(email)) {
+      return res.status(409).json({ error: "Email already registered" });
+    }
+    const allowedRoles = ["admin", "operator", "viewer"];
+    const assignedRole = allowedRoles.includes(role) ? role : "viewer";
+    const passwordHash = await hashPassword(password);
+    const user = storage.createUser({
+      username,
+      email,
+      passwordHash,
+      role: assignedRole,
+      isActive: true,
+      createdAt: new Date().toISOString(),
+      lastLoginAt: null,
+    });
+    res.status(201).json(safeUser(user));
+  });
+
+  app.patch("/api/users/:id", requireAdmin, async (req: AuthRequest, res) => {
+    const targetId = Number(req.params.id);
+    const target = storage.getUserById(targetId);
+    if (!target) return res.status(404).json({ error: "User not found" });
+
+    // Prevent admin from demoting or deactivating themselves
+    if (targetId === req.user!.userId) {
+      if (req.body.role && req.body.role !== "admin") {
+        return res.status(400).json({ error: "Cannot change your own role" });
+      }
+      if (req.body.isActive === false) {
+        return res.status(400).json({ error: "Cannot deactivate your own account" });
+      }
+    }
+
+    const updates: any = {};
+    if (req.body.email !== undefined) updates.email = req.body.email;
+    if (req.body.role !== undefined) updates.role = req.body.role;
+    if (req.body.isActive !== undefined) updates.isActive = req.body.isActive;
+    if (req.body.password) updates.passwordHash = await hashPassword(req.body.password);
+
+    const updated = storage.updateUser(targetId, updates);
+    res.json(safeUser(updated!));
+  });
+
+  app.delete("/api/users/:id", requireAdmin, (req: AuthRequest, res) => {
+    const targetId = Number(req.params.id);
+    if (targetId === req.user!.userId) {
+      return res.status(400).json({ error: "Cannot delete your own account" });
+    }
+    const target = storage.getUserById(targetId);
+    if (!target) return res.status(404).json({ error: "User not found" });
+    storage.deleteUser(targetId);
+    res.json({ ok: true });
+  });
+
+  // ── All routes below require authentication ────────────────────────────────
+  app.use("/api/", requireAuth);
 
   // Seed default settings
   if (!storage.getSetting("ecosystemPath")) {

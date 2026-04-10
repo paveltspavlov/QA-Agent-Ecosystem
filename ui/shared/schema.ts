@@ -2,6 +2,27 @@ import { sqliteTable, text, integer } from "drizzle-orm/sqlite-core";
 import { createInsertSchema } from "drizzle-zod";
 import { z } from "zod";
 
+// ---------------------------------------------------------------------------
+// Users & auth
+// ---------------------------------------------------------------------------
+export const users = sqliteTable("users", {
+  id: integer("id").primaryKey({ autoIncrement: true }),
+  username: text("username").notNull().unique(),
+  email: text("email").notNull().unique(),
+  passwordHash: text("password_hash").notNull(),
+  role: text("role").notNull().default("viewer"), // 'admin' | 'operator' | 'viewer'
+  isActive: integer("is_active", { mode: "boolean" }).notNull().default(true),
+  createdAt: text("created_at").notNull(),
+  lastLoginAt: text("last_login_at"),
+});
+
+export const insertUserSchema = createInsertSchema(users).omit({ id: true });
+export type User = typeof users.$inferSelect;
+export type InsertUser = z.infer<typeof insertUserSchema>;
+
+// Public-safe user (no passwordHash)
+export type SafeUser = Omit<User, "passwordHash">;
+
 export const runs = sqliteTable("runs", {
   id: integer("id").primaryKey({ autoIncrement: true }),
   type: text("type").notNull(), // 'agent' | 'workflow'

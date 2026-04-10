@@ -18,10 +18,12 @@ import {
   FileText,
   Settings,
   Activity,
+  Users,
 } from "lucide-react";
 import { useQuery } from "@tanstack/react-query";
 import { apiRequest } from "@/lib/queryClient";
 import { cn } from "@/lib/utils";
+import { useAuth } from "@/context/AuthContext";
 
 const navItems = [
   { href: "/", label: "Dashboard", icon: LayoutDashboard },
@@ -32,6 +34,7 @@ const navItems = [
 
 export function AppSidebar() {
   const [location] = useLocation();
+  const { user } = useAuth();
   const { data: health } = useQuery<any>({
     queryKey: ["/api/health"],
     queryFn: () => apiRequest("GET", "/api/health").then((r) => r.json()),
@@ -87,6 +90,16 @@ export function AppSidebar() {
           <SidebarGroupLabel>System</SidebarGroupLabel>
           <SidebarGroupContent>
             <SidebarMenu>
+              {user?.role === "admin" && (
+                <SidebarMenuItem>
+                  <SidebarMenuButton asChild isActive={location === "/users"}>
+                    <Link href="/users">
+                      <Users className="h-4 w-4" />
+                      <span>Users</span>
+                    </Link>
+                  </SidebarMenuButton>
+                </SidebarMenuItem>
+              )}
               <SidebarMenuItem>
                 <SidebarMenuButton asChild isActive={location === "/settings"}>
                   <Link href="/settings">
