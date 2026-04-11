@@ -294,40 +294,22 @@ export function registerRoutes(httpServer: Server, app: Express): void {
   }
   initJwtSecret(jwtSecret);
 
-  // ── Auth Routes (PUBLIC — no token required) ─────────────────────────────
-
-  /** GET /api/auth/setup-status — tells the client whether first-run setup is needed */
-  app.get("/api/auth/setup-status", (_req, res) => {
-    const needsSetup = storage.getUserCount() === 0;
-    res.json({ needsSetup });
-  });
-
-  /** POST /api/auth/setup — first-run admin creation (only allowed when 0 users exist) */
-  app.post("/api/auth/setup", async (req, res) => {
-    if (storage.getUserCount() > 0) {
-      return res.status(409).json({ error: "Setup already completed" });
-    }
-    const { username, email, password } = req.body;
-    if (!username || !email || !password) {
-      return res.status(400).json({ error: "username, email, and password are required" });
-    }
-    if (password.length < 8) {
-      return res.status(400).json({ error: "Password must be at least 8 characters" });
-    }
-    const passwordHash = await hashPassword(password);
-    const user = storage.createUser({
-      username,
-      email,
-      passwordHash,
-      role: "admin",
-      isActive: true,
-      createdAt: new Date().toISOString(),
-      lastLoginAt: null,
+  // ── Seed master admin account on first start ──────────────────────────────
+  if (storage.getUserCount() === 0) {
+    hashPassword("admin").then((hash) => {
+      storage.createUser({
+        username: "admin",
+        passwordHash: hash,
+        role: "admin",
+        isActive: true,
+        mustChangePassword: true,
+        createdAt: new Date().toISOString(),
+        lastLoginAt: null,
+      });
     });
-    const token = signToken({ userId: user.id, username: user.username, role: user.role });
-    setAuthCookie(res, token);
-    res.json({ user: safeUser(user), token });
-  });
+  }
+
+  // ── Auth Routes (PUBLIC — no token required) ─────────────────────────────
 
   /** POST /api/auth/login */
   app.post("/api/auth/login", async (req, res) => {
@@ -335,8 +317,7 @@ export function registerRoutes(httpServer: Server, app: Express): void {
     if (!username || !password) {
       return res.status(400).json({ error: "username and password are required" });
     }
-    const user = storage.getUserByUsername(username)
-      ?? storage.getUserByEmail(username); // allow login with email too
+    const user = storage.getUserByUsername(username);
     if (!user || !user.isActive) {
       return res.status(401).json({ error: "Invalid credentials" });
     }
@@ -366,6 +347,25 @@ export function registerRoutes(httpServer: Server, app: Express): void {
     res.json(safeUser(user));
   });
 
+  /** POST /api/auth/change-password — allowed even when mustChangePassword=true */
+  app.post("/api/auth/change-password", requireAuth, async (req: AuthRequest, res) => {
+    const { newPassword } = req.body;
+    if (!newPassword || newPassword.length < 6) {
+      return res.status(400).json({ error: "New password must be at least 6 characters" });
+    }
+    const user = storage.getUserById(req.user!.userId);
+    if (!user) return res.status(404).json({ error: "User not found" });
+    // Prevent reusing the default password (username as password)
+    const isSameAsUsername = await verifyPassword(newPassword, await hashPassword(user.username)
+      .then(() => "").catch(() => "")) || newPassword === user.username;
+    if (isSameAsUsername) {
+      return res.status(400).json({ error: "New password cannot be the same as your username" });
+    }
+    const passwordHash = await hashPassword(newPassword);
+    const updated = storage.updateUser(user.id, { passwordHash, mustChangePassword: false });
+    res.json(safeUser(updated!));
+  });
+
   // ── User Management (admin only) ──────────────────────────────────────────
 
   app.get("/api/users", requireAdmin, (_req, res) => {
@@ -373,28 +373,25 @@ export function registerRoutes(httpServer: Server, app: Express): void {
   });
 
   app.post("/api/users", requireAdmin, async (req: AuthRequest, res) => {
-    const { username, email, password, role } = req.body;
-    if (!username || !email || !password) {
-      return res.status(400).json({ error: "username, email, and password are required" });
+    const { username, password, role } = req.body;
+    if (!username || !username.trim()) {
+      return res.status(400).json({ error: "username is required" });
     }
-    if (password.length < 8) {
-      return res.status(400).json({ error: "Password must be at least 8 characters" });
-    }
-    if (storage.getUserByUsername(username)) {
+    const trimmed = username.trim().toLowerCase();
+    if (storage.getUserByUsername(trimmed)) {
       return res.status(409).json({ error: "Username already taken" });
     }
-    if (storage.getUserByEmail(email)) {
-      return res.status(409).json({ error: "Email already registered" });
-    }
+    // Default password = username; admin may override
+    const initialPassword = (password && password.length >= 6) ? password : trimmed;
+    const passwordHash = await hashPassword(initialPassword);
     const allowedRoles = ["admin", "operator", "viewer"];
     const assignedRole = allowedRoles.includes(role) ? role : "viewer";
-    const passwordHash = await hashPassword(password);
     const user = storage.createUser({
-      username,
-      email,
+      username: trimmed,
       passwordHash,
       role: assignedRole,
       isActive: true,
+      mustChangePassword: true,  // always force change on first login
       createdAt: new Date().toISOString(),
       lastLoginAt: null,
     });
@@ -417,10 +414,12 @@ export function registerRoutes(httpServer: Server, app: Express): void {
     }
 
     const updates: any = {};
-    if (req.body.email !== undefined) updates.email = req.body.email;
     if (req.body.role !== undefined) updates.role = req.body.role;
     if (req.body.isActive !== undefined) updates.isActive = req.body.isActive;
-    if (req.body.password) updates.passwordHash = await hashPassword(req.body.password);
+    if (req.body.password && req.body.password.length >= 6) {
+      updates.passwordHash = await hashPassword(req.body.password);
+      updates.mustChangePassword = true; // admin-reset password → user must change again
+    }
 
     const updated = storage.updateUser(targetId, updates);
     res.json(safeUser(updated!));

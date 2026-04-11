@@ -17,14 +17,12 @@ import Reports from "./pages/Reports";
 import Settings from "./pages/Settings";
 import UsersPage from "./pages/UsersPage";
 import LoginPage from "./pages/LoginPage";
-import SetupPage from "./pages/SetupPage";
+import ChangePasswordPage from "./pages/ChangePasswordPage";
 import NotFound from "./pages/not-found";
 import { AuthProvider, useAuth } from "./context/AuthContext";
-import { LogOut, User, Users } from "lucide-react";
+import { LogOut, Users } from "lucide-react";
 import { Link } from "wouter";
 
-// Router MUST wrap AppSidebar so that Link and useLocation in the sidebar
-// share the same hash-location router context as the Switch routes.
 function AppShell() {
   const { user, logout } = useAuth();
 
@@ -35,7 +33,6 @@ function AppShell() {
         <header className="flex h-12 shrink-0 items-center gap-2 border-b border-border px-4">
           <SidebarTrigger className="-ml-1" />
           <div className="flex-1" />
-          {/* User menu */}
           <DropdownMenu>
             <DropdownMenuTrigger asChild>
               <button
@@ -90,7 +87,7 @@ function AppShell() {
 }
 
 function AuthGate() {
-  const { user, loading, needsSetup } = useAuth();
+  const { user, loading } = useAuth();
 
   if (loading) {
     return (
@@ -103,9 +100,13 @@ function AuthGate() {
     );
   }
 
-  if (needsSetup) return <SetupPage />;
+  // Not logged in → show login
   if (!user) return <LoginPage />;
 
+  // Logged in but must change password first
+  if (user.mustChangePassword) return <ChangePasswordPage />;
+
+  // Fully authenticated → show the app
   return (
     <Router hook={useHashLocation}>
       <AppShell />

@@ -8,10 +8,10 @@ import { z } from "zod";
 export const users = sqliteTable("users", {
   id: integer("id").primaryKey({ autoIncrement: true }),
   username: text("username").notNull().unique(),
-  email: text("email").notNull().unique(),
   passwordHash: text("password_hash").notNull(),
   role: text("role").notNull().default("viewer"), // 'admin' | 'operator' | 'viewer'
   isActive: integer("is_active", { mode: "boolean" }).notNull().default(true),
+  mustChangePassword: integer("must_change_password", { mode: "boolean" }).notNull().default(true),
   createdAt: text("created_at").notNull(),
   lastLoginAt: text("last_login_at"),
 });
@@ -23,6 +23,9 @@ export type InsertUser = z.infer<typeof insertUserSchema>;
 // Public-safe user (no passwordHash)
 export type SafeUser = Omit<User, "passwordHash">;
 
+// ---------------------------------------------------------------------------
+// Runs
+// ---------------------------------------------------------------------------
 export const runs = sqliteTable("runs", {
   id: integer("id").primaryKey({ autoIncrement: true }),
   type: text("type").notNull(), // 'agent' | 'workflow'
@@ -37,6 +40,9 @@ export const runs = sqliteTable("runs", {
   errorMessage: text("error_message"),
 });
 
+// ---------------------------------------------------------------------------
+// Settings
+// ---------------------------------------------------------------------------
 export const settings = sqliteTable("settings", {
   id: integer("id").primaryKey({ autoIncrement: true }),
   key: text("key").notNull().unique(),

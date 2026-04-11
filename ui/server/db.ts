@@ -13,15 +13,17 @@ sqlite.exec("PRAGMA journal_mode = WAL;");
 
 export const db = drizzle(sqlite, { schema });
 
-// Initialize tables
+// ---------------------------------------------------------------------------
+// Schema bootstrap (CREATE IF NOT EXISTS)
+// ---------------------------------------------------------------------------
 sqlite.exec(`
   CREATE TABLE IF NOT EXISTS users (
     id INTEGER PRIMARY KEY AUTOINCREMENT,
     username TEXT NOT NULL UNIQUE,
-    email TEXT NOT NULL UNIQUE,
     password_hash TEXT NOT NULL,
     role TEXT NOT NULL DEFAULT 'viewer',
     is_active INTEGER NOT NULL DEFAULT 1,
+    must_change_password INTEGER NOT NULL DEFAULT 1,
     created_at TEXT NOT NULL,
     last_login_at TEXT
   );
@@ -44,3 +46,15 @@ sqlite.exec(`
     value TEXT NOT NULL
   );
 `);
+
+// ---------------------------------------------------------------------------
+// Migrations for existing databases
+// ---------------------------------------------------------------------------
+// Add must_change_password if the DB was created before this column existed
+try {
+  sqlite.exec(`ALTER TABLE users ADD COLUMN must_change_password INTEGER NOT NULL DEFAULT 1;`);
+} catch (_) {
+  // Column already exists — safe to ignore
+}
+// Drop old email column constraints if present (SQLite can't drop columns before v3.35,
+// so we just leave email data in place; our code no longer reads/writes it).

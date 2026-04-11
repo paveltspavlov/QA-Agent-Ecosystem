@@ -17,7 +17,6 @@ export interface IStorage {
   getUserCount(): number;
   getUserById(id: number): User | undefined;
   getUserByUsername(username: string): User | undefined;
-  getUserByEmail(email: string): User | undefined;
   getAllUsers(): User[];
   createUser(user: InsertUser): User;
   updateUser(id: number, partial: Partial<User>): User | undefined;
@@ -60,8 +59,7 @@ export class Storage implements IStorage {
 
   // Users ------------------------------------------------------------------
   getUserCount(): number {
-    const rows = db.select().from(users).all();
-    return rows.length;
+    return db.select().from(users).all().length;
   }
 
   getUserById(id: number): User | undefined {
@@ -70,10 +68,6 @@ export class Storage implements IStorage {
 
   getUserByUsername(username: string): User | undefined {
     return db.select().from(users).where(eq(users.username, username)).get();
-  }
-
-  getUserByEmail(email: string): User | undefined {
-    return db.select().from(users).where(eq(users.email, email)).get();
   }
 
   getAllUsers(): User[] {

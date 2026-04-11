@@ -5,39 +5,31 @@ import type { SafeUser } from "@shared/schema";
 interface AuthState {
   user: SafeUser | null;
   loading: boolean;
-  needsSetup: boolean;
 }
 
 interface AuthContextValue extends AuthState {
   login: (username: string, password: string) => Promise<void>;
   logout: () => Promise<void>;
-  setup: (username: string, email: string, password: string) => Promise<void>;
+  changePassword: (newPassword: string) => Promise<void>;
   refresh: () => Promise<void>;
 }
 
 const AuthContext = createContext<AuthContextValue | null>(null);
 
 export function AuthProvider({ children }: { children: ReactNode }) {
-  const [state, setState] = useState<AuthState>({ user: null, loading: true, needsSetup: false });
+  const [state, setState] = useState<AuthState>({ user: null, loading: true });
 
   const refresh = useCallback(async () => {
     try {
-      // First check if setup is needed
-      const setupRes = await apiRequest("GET", "/api/auth/setup-status").then((r) => r.json());
-      if (setupRes.needsSetup) {
-        setState({ user: null, loading: false, needsSetup: true });
-        return;
-      }
-      // Try to restore session from cookie
       const meRes = await apiRequest("GET", "/api/auth/me");
       if (meRes.ok) {
-        const user = await meRes.json();
-        setState({ user, loading: false, needsSetup: false });
+        const user: SafeUser = await meRes.json();
+        setState({ user, loading: false });
       } else {
-        setState({ user: null, loading: false, needsSetup: false });
+        setState({ user: null, loading: false });
       }
     } catch {
-      setState({ user: null, loading: false, needsSetup: false });
+      setState({ user: null, loading: false });
     }
   }, []);
 
@@ -49,27 +41,27 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       const { error } = await res.json();
       throw new Error(error || "Login failed");
     }
-    const { user } = await res.json();
-    setState((s) => ({ ...s, user, needsSetup: false }));
+    const { user }: { user: SafeUser } = await res.json();
+    setState({ user, loading: false });
   };
 
   const logout = async () => {
     await apiRequest("POST", "/api/auth/logout");
-    setState((s) => ({ ...s, user: null }));
+    setState({ user: null, loading: false });
   };
 
-  const setup = async (username: string, email: string, password: string) => {
-    const res = await apiRequest("POST", "/api/auth/setup", { username, email, password });
+  const changePassword = async (newPassword: string) => {
+    const res = await apiRequest("POST", "/api/auth/change-password", { newPassword });
     if (!res.ok) {
       const { error } = await res.json();
-      throw new Error(error || "Setup failed");
+      throw new Error(error || "Password change failed");
     }
-    const { user } = await res.json();
-    setState({ user, loading: false, needsSetup: false });
+    const updated: SafeUser = await res.json();
+    setState((s) => ({ ...s, user: updated }));
   };
 
   return (
-    <AuthContext.Provider value={{ ...state, login, logout, setup, refresh }}>
+    <AuthContext.Provider value={{ ...state, login, logout, changePassword, refresh }}>
       {children}
     </AuthContext.Provider>
   );
