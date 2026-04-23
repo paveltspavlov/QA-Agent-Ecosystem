@@ -1,0 +1,311 @@
+"""Playwright-related commands: gen, run, copilot, report, analyze."""
+
+from __future__ import annotations
+
+import argparse
+import subprocess
+import sys
+from pathlib import Path
+
+from qa_ecosystem.config import PLAYWRIGHT_AGENT_NAMES
+
+from ._shared import add_model_arg, console, validate_url
+
+
+def cmd_playwright_gen(args: argparse.Namespace) -> None:
+    """Generate Playwright tests for a URL using a Playwright agent."""
+    from qa_ecosystem.runner import run_single_agent, run_sync
+
+    validate_url(args.url)
+
+    agent = args.agent or "playwright-test-generator"
+    output_dir = args.output_dir or "playwright/tests"
+
+    prompt = (
+        f"Generate Playwright TypeScript test files for the following target:\n\n"
+        f"URL: {args.url}\n"
+        f"Output directory: {output_dir}\n"
+    )
+    if args.template != "default":
+        from qa_ecosystem.templates import fill_template
+        try:
+            prompt = fill_template(agent, args.template, target_url=args.url, output_dir=output_dir)
+        except (KeyError, FileNotFoundError):
+            pass
+
+    run_sync(run_single_agent(
+        agent_name=agent,
+        prompt=prompt,
+        cwd=args.cwd,
+        model_override=args.model,
+    ))
+
+
+def cmd_playwright_run(args: argparse.Namespace) -> None:
+    """Execute Playwright tests and optionally analyze results."""
+    import shutil
+    npx = shutil.which("npx") or "npx"
+    pw_cmd = [npx, "playwright", "test"]
+
+    if args.project:
+        pw_cmd += ["--project", args.project]
+    if args.grep:
+        pw_cmd += ["--grep", args.grep]
+    pw_cmd += ["--reporter", args.reporter]
+
+    console.print(f"[bold]Running:[/bold] {' '.join(pw_cmd)}\n")
+
+    result = subprocess.run(pw_cmd, cwd=args.cwd, capture_output=True, text=True)
+
+    console.print(result.stdout)
+    if result.stderr:
+        console.print(f"[red]{result.stderr}[/red]")
+    if result.returncode != 0:
+        console.print(f"\n[yellow]Tests exited with code {result.returncode}[/yellow]")
+
+    if args.analyze and result.stdout:
+        console.print("\n[bold]Analyzing results with test-results-analyst...[/bold]\n")
+        from qa_ecosystem.runner import run_single_agent, run_sync
+        analysis_prompt = (
+            f"Analyze the following Playwright test execution output:\n\n"
+            f"```\n{result.stdout}\n```\n\n"
+            f"Exit code: {result.returncode}\n"
+            f"Identify failures, flaky patterns, and recommendations."
+        )
+        run_sync(run_single_agent(
+            agent_name="test-results-analyst",
+            prompt=analysis_prompt,
+            cwd=args.cwd,
+            model_override=args.model,
+        ))
+
+
+def cmd_playwright_copilot(args: argparse.Namespace) -> None:
+    """Invoke Playwright's Copilot agent mode (plan/generate/heal) with LLM selection."""
+    from qa_ecosystem.runner import run_single_agent, run_sync
+    from qa_ecosystem.models import resolve_model
+
+    action = args.action
+    profile = resolve_model(cli_override=args.model, agent_role="playwright-copilot")
+
+    parts: list[str] = [f"Action: {action}\n", f"Model: {profile.model_id} (via {profile.provider})\n"]
+
+    if action == "plan":
+        if not args.url:
+            console.print("[red]--url is required for the 'plan' action[/red]")
+            return
+        validate_url(args.url)
+        parts.append(f"TARGET URL: {args.url}\n")
+        parts.append(
+            "Plan comprehensive test scenarios by exploring the target application. "
+            "Discover all pages, forms, and interactive elements, then write a "
+            "structured test plan to playwright/specs/plan.md."
+        )
+    elif action == "generate":
+        parts.append(
+            "Generate Playwright test files from the existing test plan. "
+            "Read playwright/specs/plan.md and create test files in "
+            "playwright/tests/generated/ with page objects in playwright/pages/."
+        )
+        if args.url:
+            parts.append(f"\nTARGET URL: {args.url}")
+    elif action == "heal":
+        test_dir = getattr(args, "test_dir", None) or "playwright/tests"
+        parts.append(
+            f"Debug and fix failing Playwright tests in {test_dir}. "
+            "Run the test suite, identify failures, diagnose root causes, "
+            "and apply fixes. Use test.fixme() for unfixable tests."
+        )
+        if args.url:
+            parts.append(f"\nTARGET URL: {args.url}")
+
+    prompt = "\n".join(parts)
+
+    run_sync(run_single_agent(
+        agent_name="playwright-copilot",
+        prompt=prompt,
+        cwd=args.cwd,
+        model_override=args.model,
+    ))
+
+
+def cmd_playwright_report(args: argparse.Namespace) -> None:
+    """Generate test execution reports from Playwright results."""
+    report_format = getattr(args, "format", "both") or "both"
+    use_fast = getattr(args, "fast", False)
+
+    if use_fast:
+        from qa_ecosystem.report_generator import (
+            from_playwright_json,
+            TestExecutionReport,
+            discover_generated_files,
+        )
+        from qa_ecosystem.session import get_session_dir, init_session, sub_dir
+
+        json_input = getattr(args, "input", None)
+        bugs_input = getattr(args, "bugs", None)
+
+        report: TestExecutionReport | None = None
+        if json_input and Path(json_input).is_file():
+            report = from_playwright_json(Path(json_input))
+        else:
+            default_json = Path(args.cwd) / "test-results.json"
+            if default_json.is_file():
+                report = from_playwright_json(default_json)
+            else:
+                console.print(
+                    "[yellow]No test-results.json found. Use --input to specify the path, "
+                    "or run tests with JSON reporter first.[/yellow]"
+                )
+                return
+
+        if bugs_input and Path(bugs_input).is_file():
+            import json as _json
+            bug_data = _json.loads(Path(bugs_input).read_text(encoding="utf-8"))
+            report.bugs = bug_data.get("bugs", [])
+        else:
+            init_session("playwright-report")
+            default_bugs = get_session_dir() / "bugs" / "bugs.json"
+            if default_bugs.is_file():
+                import json as _json
+                bug_data = _json.loads(default_bugs.read_text(encoding="utf-8"))
+                report.bugs = bug_data.get("bugs", [])
+
+        project_root = Path(args.cwd)
+        report.generated_files = discover_generated_files(project_root)
+
+        output_dir = sub_dir("reports")
+        paths = report.save(output_dir)
+        for fmt, path in paths.items():
+            console.print(f"[green]Report saved: {path}[/green]")
+    else:
+        from qa_ecosystem.runner import run_single_agent, run_sync
+
+        parts: list[str] = ["Generate a comprehensive test execution report.\n"]
+        json_input = getattr(args, "input", None)
+        if json_input:
+            parts.append(f"Playwright JSON results file: {json_input}")
+        bugs_input = getattr(args, "bugs", None)
+        if bugs_input:
+            parts.append(f"Bug log file: {bugs_input}")
+        parts.append(f"\nOutput format: {report_format}")
+        parts.append("Save reports to {reports_dir}/ (placeholder is replaced with the active session dir).")
+
+        prompt = "\n".join(parts)
+
+        run_sync(run_single_agent(
+            agent_name="report-creator",
+            prompt=prompt,
+            cwd=args.cwd,
+            model_override=args.model,
+        ))
+
+
+def cmd_playwright_analyze(args: argparse.Namespace) -> None:
+    """Run an analysis agent on Playwright test code."""
+    from qa_ecosystem.runner import run_single_agent, run_sync
+
+    agent = args.agent or "pr-hygiene-checker"
+    input_path = Path(args.input)
+
+    if input_path.is_file():
+        content = input_path.read_text(encoding="utf-8")
+        prompt = (
+            f"Analyze the following test file ({input_path.name}):\n\n"
+            f"```typescript\n{content}\n```"
+        )
+    elif input_path.is_dir():
+        files = list(input_path.rglob("*.spec.ts")) + list(input_path.rglob("*.test.ts"))
+        if not files:
+            files = list(input_path.rglob("*.ts"))
+        if not files:
+            console.print(f"[red]No TypeScript test files found in {input_path}[/red]")
+            sys.exit(1)
+
+        file_listing = "\n".join(f"- {f.relative_to(input_path)}" for f in files[:50])
+        prompt = (
+            f"Analyze the Playwright test code in the directory: {input_path}\n\n"
+            f"Files found ({len(files)}):\n{file_listing}\n\n"
+            f"Read the files using the Read tool and perform your analysis."
+        )
+    else:
+        prompt = args.input
+
+    if args.template != "default":
+        from qa_ecosystem.templates import fill_template
+        try:
+            prompt = fill_template(agent, args.template, file_paths=str(input_path))
+        except (KeyError, FileNotFoundError):
+            pass
+
+    run_sync(run_single_agent(
+        agent_name=agent,
+        prompt=prompt,
+        cwd=args.cwd,
+        model_override=args.model,
+    ))
+
+
+def register(sub) -> None:
+    pw_gen = sub.add_parser("playwright-gen", help="Generate Playwright tests for a URL")
+    pw_gen.add_argument("--url", required=True, help="Target URL to generate tests for")
+    pw_gen.add_argument("--agent", choices=PLAYWRIGHT_AGENT_NAMES,
+                        default="playwright-test-generator",
+                        help="Agent to use (default: playwright-test-generator)")
+    pw_gen.add_argument("--template", "-t", default="default", help="Prompt template name")
+    pw_gen.add_argument("--output-dir", default="playwright/tests",
+                        help="Output directory for generated tests")
+    pw_gen.add_argument("--cwd", default=".", help="Working directory")
+    add_model_arg(pw_gen)
+
+    pw_run = sub.add_parser("playwright-run", help="Execute Playwright tests and analyze results")
+    pw_run.add_argument("--project", default=None, help="Playwright project name (e.g. chromium, firefox)")
+    pw_run.add_argument("--grep", default=None, help="Filter tests by title pattern")
+    pw_run.add_argument("--reporter", default="list", help="Playwright reporter (default: list)")
+    pw_run.add_argument("--analyze", action="store_true",
+                        help="Analyze results with test-results-analyst after run")
+    pw_run.add_argument("--cwd", default="playwright", help="Working directory (default: playwright/)")
+    add_model_arg(pw_run)
+
+    pw_copilot = sub.add_parser("playwright-copilot",
+                                help="Invoke Playwright Copilot agent mode (plan/generate/heal)")
+    pw_copilot.add_argument("--action", "-a", required=True,
+                            choices=["plan", "generate", "heal"],
+                            help="Action to perform: plan, generate, or heal")
+    pw_copilot.add_argument("--url", default=None,
+                            help="Target URL (required for plan, optional for generate/heal)")
+    pw_copilot.add_argument("--test-dir", default=None,
+                            help="Test directory for heal action (default: playwright/tests)")
+    pw_copilot.add_argument("--cwd", default=".", help="Working directory")
+    add_model_arg(pw_copilot)
+
+    pw_report = sub.add_parser("playwright-report",
+                               help="Generate test execution reports from Playwright results")
+    pw_report.add_argument("--input", "-i", default=None,
+                           help="Path to Playwright JSON results file (test-results.json)")
+    pw_report.add_argument("--bugs", default=None, help="Path to bug log JSON file (bugs.json)")
+    pw_report.add_argument("--format", "-f", default="both", choices=["html", "markdown", "both"],
+                           help="Report format (default: both)")
+    pw_report.add_argument("--fast", action="store_true",
+                           help="Fast mode — generate report without LLM (deterministic)")
+    pw_report.add_argument("--cwd", default="playwright", help="Working directory (default: playwright/)")
+    add_model_arg(pw_report)
+
+    pw_analyze = sub.add_parser("playwright-analyze",
+                                help="Run analysis agents on Playwright test code")
+    pw_analyze.add_argument("--agent", choices=PLAYWRIGHT_AGENT_NAMES,
+                            default="pr-hygiene-checker",
+                            help="Analysis agent to use (default: pr-hygiene-checker)")
+    pw_analyze.add_argument("--input", "-i", required=True, help="Test file or directory to analyze")
+    pw_analyze.add_argument("--template", "-t", default="default", help="Prompt template name")
+    pw_analyze.add_argument("--cwd", default=".", help="Working directory")
+    add_model_arg(pw_analyze)
+
+
+COMMANDS = {
+    "playwright-gen": cmd_playwright_gen,
+    "playwright-run": cmd_playwright_run,
+    "playwright-copilot": cmd_playwright_copilot,
+    "playwright-report": cmd_playwright_report,
+    "playwright-analyze": cmd_playwright_analyze,
+}

@@ -25,10 +25,45 @@ from rich.panel import Panel
 from qa_ecosystem.config import MAX_TURNS_ORCHESTRATED, MAX_TURNS_SINGLE
 from qa_ecosystem.metrics import record_agent
 from qa_ecosystem.models import ModelProfile, resolve_model
+from qa_ecosystem.session import (
+    OUTPUTS_ROOT,
+    get_session_dir,
+    init_session,
+    sub_dir,
+)
 
 console = Console()
 
-OUTPUTS_DIR = Path(__file__).resolve().parent.parent / "outputs"
+OUTPUTS_DIR = OUTPUTS_ROOT
+
+
+def _inject_session_paths(prompt: str) -> str:
+    """Replace ``{session_dir}`` and related placeholders with absolute paths.
+
+    Done before sending the prompt to the LLM so agents that hardcoded
+    ``outputs/bugs`` or ``outputs/reports`` paths still write under the
+    current session.
+    """
+    session_dir = get_session_dir()
+    posix = session_dir.as_posix()
+    bugs_dir = (session_dir / "bugs").as_posix()
+    reports_dir = (session_dir / "reports").as_posix()
+
+    return (
+        prompt
+        .replace("{session_dir}", posix)
+        .replace("{bugs_dir}", bugs_dir)
+        .replace("{reports_dir}", reports_dir)
+        # Back-compat: legacy hardcoded paths in agent prompts
+        .replace("outputs/bugs", bugs_dir)
+        .replace("outputs/reports", reports_dir)
+    )
+
+
+def _agent_with_session_paths(agent_def):
+    """Return a copy of the agent definition with session paths injected."""
+    from dataclasses import replace as _dc_replace
+    return _dc_replace(agent_def, prompt=_inject_session_paths(agent_def.prompt))
 
 # ---------------------------------------------------------------------------
 # Module-level runtime flags (set by CLI via --verbose / --log-file)
@@ -38,11 +73,19 @@ LOG_FILE: Path | None = None
 
 
 def _log(event: str, **kwargs) -> None:
-    """Write a structured JSON log entry if LOG_FILE is configured."""
-    if LOG_FILE is None:
+    """Write a structured JSON log entry to the active session (or LOG_FILE override)."""
+    target = LOG_FILE
+    if target is None:
+        try:
+            from qa_ecosystem import session as _session
+            if _session._session_dir is not None:
+                target = _session.get_session_dir() / "run.log"
+        except Exception:
+            target = None
+    if target is None:
         return
     entry = {"timestamp": datetime.now().isoformat(), "event": event, **kwargs}
-    with LOG_FILE.open("a", encoding="utf-8") as fh:
+    with target.open("a", encoding="utf-8") as fh:
         fh.write(json.dumps(entry) + "\n")
 
 
@@ -52,27 +95,28 @@ def _save_agent_result(
     output_format: str = "markdown",
     prompt: str = "",
 ) -> Path:
-    """Save an agent result to outputs/{agent_name}/{timestamp}.md or .json.
+    """Save an agent result under the active session dir.
 
-    For playwright-test-generator the result is parsed into structured output
-    with separate test files, a concise summary, and the full raw output —
-    all stored under ``outputs/{app-name}/{timestamp}/``.
+    All artifacts for one CLI invocation land in
+    ``outputs/{app_name}/{timestamp}/`` so each test execution is isolated
+    and easy to archive.
     """
     import json as _json
-    timestamp = datetime.now().strftime("%Y-%m-%d_%H-%M-%S")
 
     # ── Playwright agents get structured output ─────────────────────────
     if agent_name == "playwright-test-generator":
+        timestamp = datetime.now().strftime("%Y-%m-%d_%H-%M-%S")
         return _save_playwright_result(result, prompt, timestamp)
 
-    agent_dir = OUTPUTS_DIR / agent_name
+    session_dir = get_session_dir()
+    agent_dir = session_dir / "agents" / agent_name
     agent_dir.mkdir(parents=True, exist_ok=True)
     if output_format == "json":
-        out_file = agent_dir / f"{timestamp}.json"
-        payload = {"agent": agent_name, "timestamp": timestamp, "result": result}
+        out_file = agent_dir / "result.json"
+        payload = {"agent": agent_name, "result": result}
         out_file.write_text(_json.dumps(payload, indent=2), encoding="utf-8")
     else:
-        out_file = agent_dir / f"{timestamp}.md"
+        out_file = agent_dir / "result.md"
         out_file.write_text(result, encoding="utf-8")
     console.print(f"[dim]Result saved → {out_file}[/dim]\n")
     return out_file
@@ -92,11 +136,14 @@ def _save_playwright_result(result: str, prompt: str, timestamp: str) -> Path:
     """
     from qa_ecosystem.output_parser import save_playwright_session, parse_playwright_output
 
+    # Reuse the active session dir so playwright artifacts land alongside
+    # the rest of the run (bug reports, manager instructions, etc.).
+    active = get_session_dir()
     session_dir, saved_files = save_playwright_session(
         raw_output=result,
         prompt=prompt,
-        output_dir=OUTPUTS_DIR,
-        timestamp=timestamp,
+        output_dir=active.parent.parent,   # outputs/
+        timestamp=active.name,             # reuse current timestamp folder
     )
 
     # ── Print a concise session recap to the console ────────────────────
@@ -151,11 +198,11 @@ def _save_playwright_result(result: str, prompt: str, timestamp: str) -> Path:
 
 
 def _save_manager_instructions(instructions: str) -> Path:
-    """Append the test manager's delegation instructions to outputs/manager_instructions.md."""
-    OUTPUTS_DIR.mkdir(parents=True, exist_ok=True)
-    out_file = OUTPUTS_DIR / "manager_instructions.md"
+    """Save the test manager's delegation instructions inside the session dir."""
+    session_dir = get_session_dir()
+    out_file = session_dir / "manager_instructions.md"
     timestamp = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
-    separator = f"\n\n---\n## Session: {timestamp}\n\n"
+    separator = f"\n\n---\n## Run: {timestamp}\n\n"
     with out_file.open("a", encoding="utf-8") as f:
         f.write(separator + instructions)
     console.print(f"[dim]Manager instructions saved → {out_file}[/dim]\n")
@@ -163,10 +210,9 @@ def _save_manager_instructions(instructions: str) -> Path:
 
 
 def _save_workflow_context(steps: list[dict]) -> Path:
-    """Save all delegation steps from an orchestration run to a JSON context file."""
-    OUTPUTS_DIR.mkdir(parents=True, exist_ok=True)
-    timestamp = datetime.now().strftime("%Y-%m-%d_%H-%M-%S")
-    ctx_file = OUTPUTS_DIR / f"workflow_context_{timestamp}.json"
+    """Save all delegation steps from an orchestration run inside the session dir."""
+    session_dir = get_session_dir()
+    ctx_file = session_dir / "workflow_context.json"
     ctx_file.write_text(json.dumps({"steps": steps}, indent=2), encoding="utf-8")
     console.print(f"[dim]Workflow context → {ctx_file}[/dim]\n")
     return ctx_file
@@ -230,7 +276,12 @@ async def run_single_agent(
     agent_def = get_agent(agent_name)
     profile = resolve_model(cli_override=model_override, agent_role="default")
 
+    init_session(prompt)
+    prompt = _inject_session_paths(prompt)
+    agent_def = _agent_with_session_paths(agent_def)
+
     _print_model_banner(profile, agent_name)
+    console.print(f"[dim]Session dir → {get_session_dir()}[/dim]\n")
 
     if VERBOSE:
         console.print(f"[dim]--- VERBOSE: Full prompt for {agent_name} ---[/dim]")
@@ -301,7 +352,12 @@ async def run_orchestrator(
     manager = get_agent("test-manager")
     profile = resolve_model(cli_override=model_override, agent_role="orchestrator")
 
+    init_session(prompt)
+    prompt = _inject_session_paths(prompt)
+    manager = _agent_with_session_paths(manager)
+
     _print_model_banner(profile, "test-manager (orchestrator)")
+    console.print(f"[dim]Session dir → {get_session_dir()}[/dim]\n")
 
     t0 = time.monotonic()
 

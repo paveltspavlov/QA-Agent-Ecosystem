@@ -12,18 +12,35 @@ def register_agent(name: str, definition: AgentDefinition) -> None:
     AGENT_REGISTRY[name] = definition
 
 
+def _with_session(definition: AgentDefinition) -> AgentDefinition:
+    """Inject the active session paths into a fresh copy of the definition.
+
+    No-op if no session has been initialized yet — callers that haven't gone
+    through the runner (e.g. tests, lookups) get the raw template.
+    """
+    from dataclasses import replace as _dc_replace
+    try:
+        from qa_ecosystem import session as _session
+        if _session._session_dir is None:
+            return definition
+        from qa_ecosystem.runner import _inject_session_paths
+    except Exception:
+        return definition
+    return _dc_replace(definition, prompt=_inject_session_paths(definition.prompt))
+
+
 def get_agent(name: str) -> AgentDefinition:
-    """Look up a single agent by name."""
+    """Look up a single agent by name with session paths injected."""
     _ensure_loaded()
     if name not in AGENT_REGISTRY:
         raise KeyError(f"Unknown agent: {name!r}. Available: {list(AGENT_REGISTRY)}")
-    return AGENT_REGISTRY[name]
+    return _with_session(AGENT_REGISTRY[name])
 
 
 def get_all_agents() -> dict[str, AgentDefinition]:
     """Return all agents except the orchestrator (for use as subagents)."""
     _ensure_loaded()
-    return {k: v for k, v in AGENT_REGISTRY.items() if k != "test-manager"}
+    return {k: _with_session(v) for k, v in AGENT_REGISTRY.items() if k != "test-manager"}
 
 
 def list_agents() -> dict[str, AgentDefinition]:

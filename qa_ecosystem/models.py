@@ -84,6 +84,24 @@ class ModelProfile:
 _config: dict[str, Any] | None = None
 _profiles: dict[str, ModelProfile] = {}
 _roles: dict[str, str] = {}
+_role_overrides: dict[str, str] = {}
+
+
+def set_role_overrides(overrides: dict[str, str]) -> None:
+    """Override role→profile mappings at runtime (e.g. from CLI ``--role``)."""
+    _ensure_loaded()
+    for role, profile_name in overrides.items():
+        if profile_name not in _profiles:
+            available = ", ".join(sorted(_profiles))
+            raise KeyError(
+                f"--role {role}={profile_name!r}: unknown profile. "
+                f"Available: {available}"
+            )
+    _role_overrides.update(overrides)
+
+
+def clear_role_overrides() -> None:
+    _role_overrides.clear()
 
 
 def _config_path() -> Path:
@@ -150,11 +168,14 @@ def get_profile(name: str) -> ModelProfile:
 
 
 def get_role_profile(role: str) -> ModelProfile:
-    """Resolve a logical role ('default', 'orchestrator') to a ModelProfile."""
+    """Resolve a logical role ('default', 'orchestrator') to a ModelProfile.
+
+    Runtime ``--role`` overrides take precedence over the YAML mapping.
+    """
     _ensure_loaded()
-    profile_name = _roles.get(role)
+    profile_name = _role_overrides.get(role) or _roles.get(role)
     if not profile_name:
-        profile_name = _roles.get("default", "claude-sonnet")
+        profile_name = _role_overrides.get("default") or _roles.get("default", "claude-sonnet")
     return get_profile(profile_name)
 
 

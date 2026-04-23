@@ -183,7 +183,7 @@ Save the file. No restart or environment variable is needed — the configuratio
 
 ## 6. Choosing the Right Copilot Model
 
-Four Copilot model profiles are available. Choose based on the task:
+Five Copilot model profiles are available. Choose based on the task:
 
 | Profile | Model | Best For |
 |---------|-------|----------|
@@ -191,6 +191,7 @@ Four Copilot model profiles are available. Choose based on the task:
 | `copilot-o3-mini` | o3-mini | Deep analysis, requirements review, traceability audits, logical coverage checks |
 | `copilot-gemini` | Gemini 2.5 Pro | Multimodal tasks — mockup comparison, UI analysis with images |
 | `copilot-claude-haiku` | Claude Haiku 4.5 | Fast, lightweight tasks — simple test generation, quick summaries |
+| `copilot-claude-sonnet` | Claude Sonnet 4.5 | Higher-quality planning and generation — comprehensive test design, orchestration |
 
 **Recommended model per workflow category:**
 
@@ -647,7 +648,7 @@ Requirements:
 For each deviation found, create a bug report following QA best practices
 (Bug ID, Title, Severity, Priority, Environment, Steps to Reproduce,
 Expected per mockup, Actual in implementation, Suggested Fix).
-Save all bug reports to outputs/bugs/.
+Save all bug reports to `{bugs_dir}/` (resolves to the active session's bug folder, e.g. `outputs/{app}/{timestamp}/bugs/`).
 ```
 
 **Example bug report output** (`outputs/testware-creator/`):

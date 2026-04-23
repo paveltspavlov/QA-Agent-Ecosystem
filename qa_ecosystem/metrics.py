@@ -103,6 +103,29 @@ class RunMetrics:
     def wall_clock_ms(self) -> float:
         return (time.monotonic() - self._start_time) * 1000
 
+    def to_dict(self) -> dict:
+        """Serialize the run metrics to a JSON-friendly dict."""
+        return {
+            "wall_clock_ms": self.wall_clock_ms,
+            "total_latency_ms": self.total_latency_ms,
+            "total_input_tokens": self.total_input_tokens,
+            "total_output_tokens": self.total_output_tokens,
+            "total_cost_usd": round(self.total_cost_usd, 6),
+            "agents": [
+                {
+                    "agent": a.agent_name,
+                    "model": a.model_id,
+                    "provider": a.provider,
+                    "input_tokens": a.input_tokens,
+                    "output_tokens": a.output_tokens,
+                    "latency_ms": a.latency_ms,
+                    "estimated_cost_usd": round(a.estimated_cost_usd, 6),
+                    "is_estimated": a.is_estimated,
+                }
+                for a in self.agents
+            ],
+        }
+
     def print_summary(self) -> None:
         """Print a formatted summary table to the console."""
         if not self.agents:
@@ -188,8 +211,35 @@ def record_agent(
 
 
 def finish_run() -> None:
-    """Print summary and reset the current run."""
+    """Print summary, persist to the session dir, and reset the current run."""
     global _current_run
-    if _current_run is not None:
-        _current_run.print_summary()
-        _current_run = None
+    if _current_run is None:
+        return
+
+    _current_run.print_summary()
+
+    # Persist per-session metrics + append to global rollup
+    try:
+        import json as _json
+        from qa_ecosystem import session as _session
+        if _session._session_dir is not None:
+            data = _current_run.to_dict()
+            (_session.get_session_dir() / "metrics.json").write_text(
+                _json.dumps(data, indent=2), encoding="utf-8"
+            )
+            rollup = _session.OUTPUTS_ROOT / "runs.jsonl"
+            rollup.parent.mkdir(parents=True, exist_ok=True)
+            entry = {
+                "app": _session.get_app_name(),
+                "timestamp": _session.get_timestamp(),
+                "session_dir": str(_session.get_session_dir()),
+                **{k: v for k, v in data.items() if k != "agents"},
+                "agent_count": len(data["agents"]),
+            }
+            with rollup.open("a", encoding="utf-8") as fh:
+                fh.write(_json.dumps(entry) + "\n")
+            _session.write_manifest()
+    except Exception:
+        pass
+
+    _current_run = None

@@ -1,22 +1,5 @@
-"""Agent: Report Creator — generates comprehensive HTML/markdown test execution reports."""
+# Report Creator Workflow
 
-from qa_ecosystem.sdk_adapter import AgentDefinition
-from qa_ecosystem.agents import register_agent
-from qa_ecosystem.config import DEFAULT_MODEL, TOOL_SETS
-from qa_ecosystem.skill_loader import build_prompt
-
-AGENT_NAME = "report-creator"
-
-DESCRIPTION = (
-    "Consumes Playwright test execution data (JSON reporter output, execution "
-    "logs, bug data) and produces comprehensive HTML and markdown test execution "
-    "reports with executive summaries, pass/fail tables, bug lists, and "
-    "recommendations."
-)
-
-_BASE_PROMPT = ""  # full workflow lives in skills/report_creator_workflow.md
-
-_LEGACY_PROMPT = """\
 You are a Test Reporting Specialist. You consume test execution data and produce
 comprehensive, professional test execution reports in both HTML and markdown formats.
 
@@ -33,21 +16,21 @@ Read all available data sources:
 
 2. Check for bug log data:
    ```bash
-   ls outputs/bugs/bugs.json 2>/dev/null && echo "Bug log found" || echo "No bug log"
+   ls {bugs_dir}/bugs.json 2>/dev/null && echo "Bug log found" || echo "No bug log"
    ```
 
 3. Parse the previous agent's output (execution report markdown) from the input.
 
 4. Scan for all generated artifacts (test specs, page objects, fixtures, results, bug reports):
    ```bash
-   find outputs/ playwright/tests/ -type f 2>/dev/null | head -100
+   find {session_dir}/ playwright/tests/ -type f 2>/dev/null | head -100
    ls -la playwright/test-results.json 2>/dev/null
    ```
 
 Read whichever files exist:
 ```bash
 cat playwright/test-results.json 2>/dev/null | head -500
-cat outputs/bugs/bugs.json 2>/dev/null
+cat {bugs_dir}/bugs.json 2>/dev/null
 ```
 
 ## Step 2: Parse and aggregate results
@@ -62,7 +45,7 @@ From the gathered data, compile:
 
 ## Step 3: Generate markdown report
 
-Write the report to `outputs/reports/report.md` using the Write tool:
+Write the report to `{reports_dir}/report.md` using the Write tool:
 
 ```markdown
 # Test Execution Report: [Project Name]
@@ -123,7 +106,7 @@ For each failed test, provide:
 
 ## Step 4: Generate HTML report
 
-Write a self-contained HTML report to `outputs/reports/report.html`.
+Write a self-contained HTML report to `{reports_dir}/report.html`.
 
 The HTML should include:
 - Inline CSS (no external dependencies)
@@ -162,14 +145,14 @@ Use this HTML structure:
 
 Verify the output files exist:
 ```bash
-mkdir -p outputs/reports
-ls -la outputs/reports/
+mkdir -p {reports_dir}
+ls -la {reports_dir}/
 ```
 
 ## Step 6: Output summary
 
 Provide a brief summary:
-- Report location: `outputs/reports/report.html` and `outputs/reports/report.md`
+- Report location: `{reports_dir}/report.html` and `{reports_dir}/report.md`
 - Key metrics: pass rate, total bugs, critical issues
 - Top 3 recommendations
 
@@ -181,24 +164,3 @@ RULES:
 - Reports must be professional and suitable for stakeholder review
 - Include a "Generated Files" section listing ALL artifacts produced by the pipeline (test specs, page objects, fixtures, test results, bug reports) with file path, category, and size
 - Use the Write tool to save files — do not just output to the conversation
-"""
-
-del _LEGACY_PROMPT  # keep for reference in git history; not loaded at runtime
-
-SKILLS = [
-    "report_creator_workflow",
-    "output_format_guidelines",
-    "bug_report_format",
-]
-
-SYSTEM_PROMPT = build_prompt(_BASE_PROMPT, skills=SKILLS)
-
-definition = AgentDefinition(
-    description=DESCRIPTION,
-    prompt=SYSTEM_PROMPT,
-    tools=TOOL_SETS["full"],
-    model=DEFAULT_MODEL,
-    category="execution",
-)
-
-register_agent(AGENT_NAME, definition)

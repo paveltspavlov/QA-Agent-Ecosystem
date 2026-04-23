@@ -28,4 +28,4 @@ Run Workflow 6 — UI Mockup vs Implementation Comparison.
 For each deviation found, create a bug report following QA best practices
 (Bug ID, Title, Severity, Priority, Environment, Steps to Reproduce,
 Expected per mockup, Actual in implementation, Suggested Fix).
-Save all bug reports to outputs/bugs/.
+Save all bug reports to `{bugs_dir}/` (resolves to the active session's bug folder at run time).

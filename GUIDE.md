@@ -70,7 +70,24 @@ qa-agent list-workflows
 # Manage checkpoints
 qa-agent list-checkpoints
 qa-agent clean-checkpoints --keep 10
+
+# Browse session output directories (new in v2.2)
+qa-agent list-sessions                                  # app | timestamp | mtime | path
+qa-agent show-session latest                            # manifest + metrics for most recent run
+qa-agent show-session demoqa-com/2026-04-23_10-15-00    # specific session
 ```
+
+### Root-level `--role` override (new in v2.2)
+
+Override the role -> profile mapping from `models.yaml` for a single invocation. Repeatable.
+
+```bash
+# Use copilot-claude-sonnet for all default-role agents and claude-opus-api for the orchestrator
+qa-agent --role default=copilot-claude-sonnet --role orchestrator=claude-opus-api \
+  orchestrate -w feature-testing -i requirements.md
+```
+
+This is equivalent to calling `set_role_overrides({...})` from the Python API and only applies for this run.
 
 ### 2. Run a Single Agent
 

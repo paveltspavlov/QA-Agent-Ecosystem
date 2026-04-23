@@ -45,6 +45,25 @@
 
 ---
 
+## 🧪 qa-agent CLI Cheatsheet
+
+```bash
+# Models -- copilot Claude options
+qa-agent run test-case-generator -i pbi.md -m copilot-claude-haiku    # fast, cheap
+qa-agent run test-case-generator -i pbi.md -m copilot-claude-sonnet   # higher quality
+
+# Override role -> profile mapping for a single run (repeatable)
+qa-agent --role default=copilot-claude-sonnet --role orchestrator=claude-opus-api \
+  orchestrate -w feature-testing -i requirements.md
+
+# Sessions (new in v2.2 -- artifacts live under outputs/{app}/{timestamp}/)
+qa-agent list-sessions                                  # all sessions: app | timestamp | mtime | path
+qa-agent show-session latest                            # manifest + metrics for the most recent session
+qa-agent show-session demoqa-com/2026-04-23_10-15-00    # explicit app/timestamp
+```
+
+---
+
 ## 🚀 Quick Commands
 
 ```bash

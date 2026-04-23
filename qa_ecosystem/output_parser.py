@@ -94,58 +94,63 @@ def _try_extract_structured_json(raw: str) -> ParsedTestOutput | None:
         re.DOTALL,
     )
 
+    from qa_ecosystem.schemas import (
+        SchemaValidationError,
+        validate_playwright_output,
+    )
+
     for match in json_block_pattern.finditer(raw):
         try:
             data = json.loads(match.group(1))
         except (json.JSONDecodeError, ValueError):
             continue
 
-        # Check if this JSON matches our structured output schema
+        # Quick discriminator before paying the validation cost
         if not isinstance(data, dict) or "files" not in data:
+            continue
+
+        try:
+            validated = validate_playwright_output(data)
+        except SchemaValidationError as exc:
+            # Surface the first few errors for debuggability, then fall
+            # back to the regex parser by skipping this block.
+            import sys as _sys
+            preview = "; ".join(
+                f"{'.'.join(str(p) for p in e['loc'])}: {e['msg']}"
+                for e in exc.errors[:3]
+            )
+            print(
+                f"[output_parser] structured JSON failed schema validation — "
+                f"falling back to regex. {preview}",
+                file=_sys.stderr,
+            )
             continue
 
         result = ParsedTestOutput(raw_output=raw)
 
-        # Extract files
-        for file_entry in data.get("files", []):
-            if not isinstance(file_entry, dict):
-                continue
-            path = file_entry.get("path", "")
-            content = file_entry.get("content", "")
-            file_type = file_entry.get("type", "")
-
-            if not path or not content:
-                continue
-
-            # Normalize filename
-            filename = path.replace('\\', '/').split('/')[-1]
-
-            if file_type in ("page", "component"):
-                result.page_objects[filename] = content.strip()
-            elif file_type == "fixture":
-                result.fixture_files[filename] = content.strip()
-            elif file_type == "helper":
-                result.helper_files[filename] = content.strip()
+        for file_entry in validated.files:
+            filename = file_entry.path.replace("\\", "/").split("/")[-1]
+            content = file_entry.content.strip()
+            if file_entry.type in ("page", "component"):
+                result.page_objects[filename] = content
+            elif file_entry.type == "fixture":
+                result.fixture_files[filename] = content
+            elif file_entry.type == "helper":
+                result.helper_files[filename] = content
             else:
-                result.test_files[filename] = content.strip()
+                result.test_files[filename] = content
 
-        # Extract test results
-        for tr in data.get("testResults", []):
-            if not isinstance(tr, dict):
-                continue
+        for tr in validated.testResults:
             result.test_results.append({
-                "name": tr.get("name", ""),
-                "status": tr.get("status", "unknown"),
-                "duration": tr.get("duration", ""),
+                "name": tr.name,
+                "status": tr.status,
+                "duration": tr.duration,
             })
 
-        # Extract app map
-        if "appMap" in data and isinstance(data["appMap"], dict):
-            result.app_map = data["appMap"]
+        if validated.appMap is not None:
+            result.app_map = validated.appMap.model_dump(exclude_none=True)
 
-        # Extract summary
         result.summary = _build_summary(result)
-
         return result
 
     return None

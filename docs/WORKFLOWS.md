@@ -219,7 +219,7 @@ Requirements:
 - [Acceptance criteria]
 
 For each deviation found, create a bug report following QA best practices.
-Save all bug reports to outputs/bugs/.
+Save all bug reports to `{bugs_dir}/` (resolves to the active session's bug folder, e.g. `outputs/{app}/{timestamp}/bugs/`).
 ```
 
 ---

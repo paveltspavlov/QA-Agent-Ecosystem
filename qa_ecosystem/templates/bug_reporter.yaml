@@ -8,7 +8,7 @@ templates:
 
       {results_data}
 
-      Save the bug report to outputs/bugs/bugs.json and outputs/bugs/bug-report.md.
+      Save the bug report to {bugs_dir}/bugs.json and {bugs_dir}/bug-report.md.
 
   - name: "with-github-issues"
     description: "Extract bugs and create GitHub issues for Critical/High severity"
@@ -18,7 +18,7 @@ templates:
 
       {results_data}
 
-      Save the bug report to outputs/bugs/bugs.json and outputs/bugs/bug-report.md.
+      Save the bug report to {bugs_dir}/bugs.json and {bugs_dir}/bug-report.md.
 
       IMPORTANT: Also create GitHub issues for all bugs with Critical or High severity.
       Use `gh issue create` with the --label "bug,automated-qa" flag.
@@ -32,4 +32,4 @@ templates:
       File: {file_path}
 
       Read the file using the Read tool, then analyze failures and produce
-      bug entries. Save to outputs/bugs/bugs.json and outputs/bugs/bug-report.md.
+      bug entries. Save to {bugs_dir}/bugs.json and {bugs_dir}/bug-report.md.

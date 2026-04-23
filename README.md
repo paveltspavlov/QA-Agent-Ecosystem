@@ -15,7 +15,7 @@ You can run agents individually or let the Test Manager orchestrator decompose a
 | [Architecture](docs/ARCHITECTURE.md) | System overview, project structure, provider behavior, Python API, extending the ecosystem |
 | [Agents](docs/AGENTS.md) | All 21 agents: purpose, skills, tool sets, v2.1 improvements |
 | [CLI Reference](docs/CLI.md) | All subcommands: discovery, execution, orchestration, workflows, Playwright |
-| [Models](docs/MODELS.md) | Provider configuration, model profiles (incl. `copilot-claude-haiku`), role mapping, environment variables |
+| [Models](docs/MODELS.md) | Provider configuration, model profiles (incl. `copilot-claude-haiku`, `copilot-claude-sonnet`), role mapping, `--role` overrides, environment variables |
 | [Workflow Guide](docs/WORKFLOW_GUIDE.md) | How to run workflows from the terminal -- input methods, flags, all 16 workflows with examples |
 | [Workflow Reference](docs/WORKFLOWS.md) | 21 orchestration workflows with CLI commands, prompt templates, and step-by-step breakdowns |
 | [Prompt Library](docs/PROMPT_LIBRARY.md) | 105 copy-paste prompts for all 21 agents (5 per agent) |
@@ -90,6 +90,16 @@ Complete, ready-to-run input files with no placeholders -- copy the command and 
 | [Traceability Map](TRACEABILITY_MAP.md) | Playwright automation test case traceability overview |
 
 ---
+
+## What's New in v2.2
+
+- **Session-based output layout** — all artifacts now save under `outputs/{app_name}/{timestamp}/` (one folder per test target / app, one timestamped subfolder per execution). Each session contains `agents/<agent>/result.{md,json}`, `bugs/`, `reports/`, `metrics.json`, `manifest.json` (sha1 + size for every artifact), and `run.log`. A rolling index is appended to `outputs/runs.jsonl` after every run. App name is derived from the URL hostname or prompt (sha1 hash fallback). See `qa_ecosystem/session.py`.
+- **New `copilot-claude-sonnet` model profile** — Claude Sonnet 4.5 via GitHub Copilot (temp 0.4, max_tokens 16384), the higher-quality companion to `copilot-claude-haiku`.
+- **New CLI commands** — `qa-agent list-sessions` and `qa-agent show-session <app/timestamp>|latest` to browse and inspect sessions.
+- **Root-level `--role ROLE=PROFILE` flag (repeatable)** — override the role -> profile mapping from `models.yaml` for a single run.
+- **Pydantic v2 schema validation** of structured agent outputs (`qa_ecosystem/schemas.py` + `output_parser.py`); validation errors are logged to stderr and trigger a graceful fallback to the regex parser.
+- **Skill-based bug-reporter / report-creator workflows** — long workflow prompts extracted into `qa_ecosystem/skills/bug_reporter_workflow.md` and `report_creator_workflow.md`, composed via the SKILLS list and using `{session_dir}`, `{bugs_dir}`, `{reports_dir}` placeholders.
+- **CLI restructure** — `qa_ecosystem/cli.py` is now parser+dispatch wiring; per-command logic lives in `qa_ecosystem/commands/` (`info`, `setup`, `run`, `orchestrate`, `chain`, `playwright`, `sessions`, `checkpoints`, `_shared`).
 
 ## What's New in v2.0
 
@@ -204,6 +214,18 @@ qa-agent workflow pbi-to-report -i inputs/pbi-to-report.md
 
 # Use the fast, cost-efficient copilot-claude-haiku model
 qa-agent workflow feature-testing -i requirements.md -m copilot-claude-haiku
+
+# Or the higher-quality copilot-claude-sonnet model
+qa-agent workflow feature-testing -i requirements.md -m copilot-claude-sonnet
+
+# Override role -> profile mapping just for this run (repeatable)
+qa-agent --role default=copilot-claude-sonnet --role orchestrator=claude-opus-api \
+  orchestrate -w feature-testing -i requirements.md
+
+# List all sessions saved under outputs/ and inspect a specific one
+qa-agent list-sessions
+qa-agent show-session latest
+qa-agent show-session demoqa-com/2026-04-23_10-15-00
 
 # Preview execution plan without running (dry run)
 qa-agent workflow playwright-gen -i "https://myapp.com" --dry-run

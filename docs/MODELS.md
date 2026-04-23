@@ -38,6 +38,7 @@ roles:
 | `copilot-o3-mini` | GitHub Copilot | o3-mini | |
 | `copilot-gemini` | GitHub Copilot | Gemini 2.5 Pro | |
 | `copilot-claude-haiku` | GitHub Copilot | Claude Haiku 4.5 | Fast & cost-efficient via Copilot |
+| `copilot-claude-sonnet` | GitHub Copilot | Claude Sonnet 4.5 | Higher-quality Claude via Copilot (temp 0.4, 16k max tokens) |
 | `claude-sonnet-api` | Anthropic API | claude-sonnet-4-5 | **Default** -- no CLI needed |
 | `claude-opus-api` | Anthropic API | claude-opus-4-5 | **Default orchestrator** |
 | `claude-haiku-api` | Anthropic API | claude-haiku-4-5 | Fastest/cheapest Claude |
@@ -71,6 +72,25 @@ You can also override the config file location:
 ```bash
 export QA_MODELS_CONFIG=/path/to/custom/models.yaml
 ```
+
+---
+
+## Overriding Role Mappings at Runtime
+
+The `--role ROLE=PROFILE` root-level flag (repeatable) overrides the `models.yaml`
+role→profile mapping for a single run. This is higher priority than `models.yaml`
+but lower priority than `--model` / `-m` (which forces one profile for the whole run).
+
+```bash
+# Route the orchestrator to Opus and everything else to Copilot Sonnet for one run
+qa-agent --role default=copilot-claude-sonnet --role orchestrator=claude-opus-api \
+  orchestrate -w feature-testing -i requirements.md
+```
+
+Visible in `qa-agent list-models` — overridden rows are tagged with `--role override`
+in the Source column.
+
+Programmatic equivalent: `qa_ecosystem.models.set_role_overrides({"default": "copilot-claude-sonnet"})`.
 
 ---
 

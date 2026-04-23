@@ -5,7 +5,13 @@ The `qa-agent` CLI provides subcommands covering discovery, execution, orchestra
 **Common flags:**
 - `--input / -i` -- path to a file OR inline text (required for `run`, `orchestrate`, `workflow`)
 - `--template / -t` -- template name (default: `default`)
-- `--model / -m` -- model profile from `models.yaml` (e.g. `copilot-claude-haiku`, `copilot-gpt4o`)
+- `--model / -m` -- model profile from `models.yaml` (e.g. `copilot-claude-haiku`, `copilot-claude-sonnet`, `copilot-gpt4o`)
+
+**Root-level flags** (placed BEFORE the subcommand):
+- `--verbose / -v` -- full prompts, responses, and profile details
+- `--log-file PATH` -- write structured JSON log entries to this file (default: `<session>/run.log`)
+- `--role ROLE=PROFILE` -- override a role→profile mapping for this run (repeatable).
+  Example: `qa-agent --role default=copilot-claude-sonnet --role orchestrator=claude-opus-api orchestrate -w feature-testing -i pbi.md`
 
 ---
 
@@ -134,6 +140,24 @@ qa-agent clean-checkpoints --keep 10
 
 # Chain agents linearly (no DAG, simple pipe)
 qa-agent chain requirements-analyst test-case-generator testware-creator -i requirements.md
+```
+
+---
+
+## Sessions
+
+All agent/workflow artifacts save under `outputs/{app_name}/{timestamp}/`. Each
+session contains `agents/<agent>/result.{md,json}`, `bugs/`, `reports/`,
+`metrics.json`, `manifest.json`, and `run.log`. A rollup line is appended to
+`outputs/runs.jsonl` after every run.
+
+```bash
+# List all sessions under outputs/
+qa-agent list-sessions
+
+# Show artifacts (from manifest.json) and metrics for one session
+qa-agent show-session latest
+qa-agent show-session demoqa-com/2026-04-23_10-15-00
 ```
 
 ---

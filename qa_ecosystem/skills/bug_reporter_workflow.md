@@ -1,21 +1,5 @@
-"""Agent: Bug Reporter — extracts structured bugs from test failures and optionally creates GitHub issues."""
+# Bug Reporter Workflow
 
-from qa_ecosystem.sdk_adapter import AgentDefinition
-from qa_ecosystem.agents import register_agent
-from qa_ecosystem.config import DEFAULT_MODEL, TOOL_SETS
-from qa_ecosystem.skill_loader import build_prompt
-
-AGENT_NAME = "bug-reporter"
-
-DESCRIPTION = (
-    "Takes test execution results from the playwright-executor agent, extracts "
-    "structured bug entries for each failure, saves them as JSON and markdown "
-    "bug reports, and optionally creates GitHub issues for Critical/High bugs."
-)
-
-_BASE_PROMPT = ""  # full workflow lives in skills/bug_reporter_workflow.md
-
-_LEGACY_PROMPT = """\
 You are a Bug Reporting Specialist. You receive test execution results and produce
 structured, actionable bug reports from test failures.
 
@@ -68,7 +52,7 @@ Priority Mapping: Critical→P1, High→P2, Medium→P3, Low→P4
 
 Save the bug data as JSON and markdown using the Write tool:
 
-**JSON file:** `outputs/bugs/bugs.json`
+**JSON file:** `{bugs_dir}/bugs.json`
 ```json
 {
   "timestamp": "YYYY-MM-DDTHH:MM:SS",
@@ -91,7 +75,7 @@ Save the bug data as JSON and markdown using the Write tool:
 }
 ```
 
-**Markdown file:** `outputs/bugs/bug-report.md`
+**Markdown file:** `{bugs_dir}/bug-report.md`
 Write all bug entries in the format from Step 2, followed by a summary table:
 
 | Bug ID | Title | Severity | Priority | Category | Status |
@@ -103,8 +87,8 @@ If the user's prompt contains "create issues", "github issues", or "file bugs",
 create a GitHub issue for each Critical or High severity bug:
 
 ```bash
-gh issue create \\
-  --title "[BUG-001] Bug title here" \\
+gh issue create \
+  --title "[BUG-001] Bug title here" \
   --body "**Severity:** High
 **Test Case:** TC-001
 **Category:** Assertion
@@ -115,7 +99,7 @@ gh issue create \\
 
 **Expected:** Expected result
 **Actual:** Actual result
-**Error:** \`error message\`" \\
+**Error:** \`error message\`" \
   --label "bug,automated-qa"
 ```
 
@@ -126,7 +110,7 @@ Skip this step if not explicitly requested.
 End your response with a structured summary:
 - Total bugs found: N
 - By severity: Critical: N, High: N, Medium: N, Low: N
-- Files saved: outputs/bugs/bugs.json, outputs/bugs/bug-report.md
+- Files saved: {bugs_dir}/bugs.json, {bugs_dir}/bug-report.md
 - GitHub issues created: N (if applicable)
 
 RULES:
@@ -135,66 +119,3 @@ RULES:
 - Include the exact error message from the test output
 - Steps to reproduce must be specific enough to reproduce the issue
 - Never invent bugs for passing tests
-"""
-
-del _LEGACY_PROMPT  # keep for reference in git history; not loaded at runtime
-
-SKILLS = [
-    "bug_reporter_workflow",
-    "bug_report_format",
-    "severity_classification",
-    "priority_ranking",
-]
-
-SYSTEM_PROMPT = build_prompt(_BASE_PROMPT, skills=SKILLS)
-
-OUTPUT_SCHEMA = {
-    "type": "object",
-    "properties": {
-        "bugs": {
-            "type": "array",
-            "description": "Structured bug entries",
-            "items": {
-                "type": "object",
-                "properties": {
-                    "bug_id": {"type": "string"},
-                    "title": {"type": "string"},
-                    "severity": {"type": "string", "enum": ["Critical", "High", "Medium", "Low"]},
-                    "priority": {"type": "string", "enum": ["P1", "P2", "P3", "P4"]},
-                    "test_case_id": {"type": "string"},
-                    "steps_to_reproduce": {"type": "array", "items": {"type": "string"}},
-                    "expected_result": {"type": "string"},
-                    "actual_result": {"type": "string"},
-                    "error_message": {"type": "string"},
-                    "category": {"type": "string"},
-                    "status": {"type": "string"},
-                },
-                "required": ["bug_id", "title", "severity", "test_case_id"],
-            },
-        },
-        "githubIssues": {
-            "type": "array",
-            "description": "GitHub issues created (if requested)",
-            "items": {
-                "type": "object",
-                "properties": {
-                    "bug_id": {"type": "string"},
-                    "issue_url": {"type": "string"},
-                },
-            },
-        },
-        "summary": {"type": "string", "description": "Summary of bugs found"},
-    },
-    "required": ["bugs", "summary"],
-}
-
-definition = AgentDefinition(
-    description=DESCRIPTION,
-    prompt=SYSTEM_PROMPT,
-    tools=TOOL_SETS["full"],
-    model=DEFAULT_MODEL,
-    category="execution",
-    output_schema=OUTPUT_SCHEMA,
-)
-
-register_agent(AGENT_NAME, definition)

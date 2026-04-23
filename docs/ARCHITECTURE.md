@@ -53,7 +53,12 @@ qa_ecosystem/
 ├── models.py             # Model profile abstraction and resolver
 ├── models.yaml           # Model configuration (all providers)
 ├── config.py             # Tool sets, agent registry, constants
-├── cli.py                # CLI entry point with 13 subcommands
+├── cli.py                # CLI entry point — parser + dispatch wiring only
+├── commands/             # Per-command modules (info, setup, run, orchestrate,
+│                         # chain, playwright, sessions, checkpoints, _shared)
+├── session.py            # Session-scoped output paths; manifest + rollup index
+├── schemas.py            # Pydantic v2 schemas for structured agent output
+├── output_parser.py      # Parses agent output; uses schemas with regex fallback
 └── __init__.py
 tests/                    # 175 pytest tests
 ├── test_agents.py        # Agent registry and definition tests
@@ -81,10 +86,17 @@ docs/
 ├── WORKFLOWS.md          # Workflow definitions
 ├── MODELS.md             # Model configuration
 └── CLI.md                # CLI reference
-outputs/              # Auto-created on first run
-├── manager_instructions.md   # Test Manager delegation plans
-└── {agent-name}/             # One folder per agent
-    └── YYYY-MM-DD_HH-MM-SS.md  # Timestamped result files
+outputs/                            # Auto-created on first run
+├── runs.jsonl                      # Rollup index — one line per finished run
+└── {app_name}/                     # One folder per target app
+    └── {timestamp}/                # One folder per execution
+        ├── agents/{agent}/result.{md,json}
+        ├── bugs/                   # Bug reports
+        ├── reports/                # Generated reports
+        ├── manager_instructions.md # Test Manager delegation plans (if orchestrating)
+        ├── metrics.json            # Token counts, cost, wall-clock
+        ├── manifest.json           # sha1 + size for every artifact
+        └── run.log                 # Structured JSON log (default location)
 ```
 
 ---
@@ -143,21 +155,33 @@ The `AgentDefinition` dataclass provides a provider-agnostic agent contract:
 
 ## Output & Result Saving
 
-Every agent run automatically saves its result to the `outputs/` folder.
+Every agent run belongs to a **session**. Sessions are scoped by target app and
+timestamp: `outputs/{app_name}/{timestamp}/`. The app name is derived from the
+target URL hostname or from the prompt; when neither is available, a sha1 hash
+fallback is used. Each execution gets its own timestamped subfolder so runs never
+overwrite each other.
 
-```
-outputs/
-├── manager_instructions.md        <- all Test Manager delegation plans (appended per session)
-├── test-manager/
-│   └── 2026-03-17_14-30-00.md
-├── test-case-generator/
-│   └── 2026-03-17_14-32-10.md
-└── ...
-```
+Each session contains:
 
-- Each agent gets its own subfolder under `outputs/`.
-- Files are named by timestamp (`YYYY-MM-DD_HH-MM-SS.md`) so runs never overwrite each other.
-- When running the orchestrator, the Test Manager's delegation plan is also appended to `outputs/manager_instructions.md`.
+- `agents/{agent}/result.{md,json}` — per-agent outputs (`--output-format` controls extension)
+- `bugs/` — bug reports (referenced by agent prompts via the `{bugs_dir}` placeholder)
+- `reports/` — generated test-execution reports (`{reports_dir}` placeholder)
+- `manager_instructions.md` — appended Test Manager delegation plans (orchestrator only)
+- `metrics.json` — per-session token counts, cost, wall-clock, per-agent breakdown
+- `manifest.json` — sha1 hash + size for every artifact in the session
+- `run.log` — JSON-NDJSON structured log (default when no `--log-file` is passed)
+
+A rollup line (`{app, timestamp, metrics}`) is appended to `outputs/runs.jsonl`
+after every `finish_run()` to enable cross-session reporting.
+
+Agent prompts can reference the active session via the placeholders
+`{session_dir}`, `{bugs_dir}`, and `{reports_dir}`; these are substituted at run
+time by `qa_ecosystem.runner._inject_session_paths`. For back-compat, literal
+`outputs/bugs` and `outputs/reports` substrings in legacy prompts are rewritten
+to the session-scoped paths.
+
+Browse sessions via `qa-agent list-sessions` / `qa-agent show-session
+<app/timestamp>|latest`.
 
 ---
 
