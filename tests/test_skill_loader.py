@@ -8,6 +8,7 @@ from qa_ecosystem.skill_loader import load_skill, build_prompt, list_skills
 EXPECTED_SKILLS = [
     "auth_state_caching",
     "bug_report_format",
+    "bug_reporter_workflow",
     "istqb_techniques",
     "output_format_guidelines",
     "page_object_model",
@@ -15,6 +16,7 @@ EXPECTED_SKILLS = [
     "playwright_selector_strategy",
     "playwright_waiting_strategy",
     "priority_ranking",
+    "report_creator_workflow",
     "severity_classification",
     "test_data_factory",
 ]
@@ -22,7 +24,7 @@ EXPECTED_SKILLS = [
 
 def test_list_skills_returns_all():
     skills = list_skills()
-    assert len(skills) == 11
+    assert len(skills) == len(EXPECTED_SKILLS)
     for expected in EXPECTED_SKILLS:
         assert expected in skills, f"Skill '{expected}' not found in list_skills()"
 
