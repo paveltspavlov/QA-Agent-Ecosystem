@@ -29,7 +29,6 @@ from qa_ecosystem.session import (
     OUTPUTS_ROOT,
     get_session_dir,
     init_session,
-    sub_dir,
 )
 
 console = Console()
