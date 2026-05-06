@@ -122,8 +122,11 @@ def _ensure_loaded() -> None:
     if not path.exists():
         # Sensible defaults when no config file is present
         _config = {}
-        _roles = {"default": "claude-sonnet", "orchestrator": "claude-opus"}
+        _roles = {"default": "copilot-claude-haiku", "orchestrator": "claude-opus"}
         _profiles = {
+            "copilot-claude-haiku": ModelProfile(
+                name="copilot-claude-haiku", provider="copilot", model_id="claude-haiku-4.5",
+            ),
             "claude-sonnet": ModelProfile(
                 name="claude-sonnet", provider="claude", model_id="sonnet",
             ),
@@ -136,7 +139,7 @@ def _ensure_loaded() -> None:
     with open(path, encoding="utf-8") as f:
         _config = yaml.safe_load(f) or {}
 
-    _roles = _config.get("roles", {"default": "claude-sonnet", "orchestrator": "claude-opus"})
+    _roles = _config.get("roles", {"default": "copilot-claude-haiku", "orchestrator": "claude-opus"})
 
     for name, raw in _config.get("profiles", {}).items():
         _profiles[name] = ModelProfile(
@@ -175,7 +178,7 @@ def get_role_profile(role: str) -> ModelProfile:
     _ensure_loaded()
     profile_name = _role_overrides.get(role) or _roles.get(role)
     if not profile_name:
-        profile_name = _role_overrides.get("default") or _roles.get("default", "claude-sonnet")
+        profile_name = _role_overrides.get("default") or _roles.get("default", "copilot-claude-haiku")
     return get_profile(profile_name)
 
 

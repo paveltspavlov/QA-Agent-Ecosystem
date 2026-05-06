@@ -16,6 +16,8 @@ You can run agents individually or let the Test Manager orchestrator decompose a
 | [Agents](docs/AGENTS.md) | All 21 agents: purpose, skills, tool sets, v2.1 improvements |
 | [CLI Reference](docs/CLI.md) | All subcommands: discovery, execution, orchestration, workflows, Playwright |
 | [Models](docs/MODELS.md) | Provider configuration, model profiles (incl. `copilot-claude-haiku`, `copilot-claude-sonnet`), role mapping, `--role` overrides, environment variables |
+| [Config Precedence](docs/CONFIG_PRECEDENCE.md) | How `-m`, `--role`, `models.yaml`, and env vars combine (highest → lowest priority) |
+| [ADR-001](docs/adr/ADR-001-setup-ux-and-playwright-output-layout.md) | Setup-UX simplification and per-session Playwright output layout |
 | [Workflow Guide](docs/WORKFLOW_GUIDE.md) | How to run workflows from the terminal -- input methods, flags, all 16 workflows with examples |
 | [Workflow Reference](docs/WORKFLOWS.md) | 21 orchestration workflows with CLI commands, prompt templates, and step-by-step breakdowns |
 | [Prompt Library](docs/PROMPT_LIBRARY.md) | 105 copy-paste prompts for all 21 agents (5 per agent) |
@@ -152,10 +154,20 @@ source .venv/bin/activate          # Linux/macOS
 .venv\Scripts\activate             # Windows CMD
 .venv\Scripts\Activate.ps1         # Windows PowerShell
 
-# Install base dependencies
+# Install the base CLI
 pip install setuptools
 pip install -e .
 
+# One-shot interactive bootstrap — picks a provider, installs the right Python
+# extras, configures `.env`, runs `gh auth login`, installs Playwright, and
+# finishes with `qa-agent doctor` so you know everything is wired up.
+qa-agent setup
+```
+
+<details>
+<summary>Manual install (advanced)</summary>
+
+```bash
 # For GitHub Copilot (recommended)
 pip install -e ".[copilot]"
 gh auth login
@@ -176,6 +188,8 @@ pip install -e ".[all]"
 # Set up Playwright (optional)
 cd playwright && npm install && npx playwright install --with-deps
 ```
+
+</details>
 
 ### Set your API key
 
@@ -238,6 +252,37 @@ qa-agent orchestrate -w feature-testing -i requirements.md -m copilot-claude-hai
 ```
 
 See the full [CLI Reference](docs/CLI.md), [Workflow Guide](docs/WORKFLOW_GUIDE.md), and [Workflow Reference](docs/WORKFLOWS.md) for all commands and templates.
+
+### Playwright test generation & re-runs
+
+Generated Playwright tests are written into the active session, alongside the
+reports and bugs for the same run, and never tracked in git (`outputs/` is
+gitignored):
+
+```
+outputs/
+└── demoqa-com/
+    └── 2026-05-06_14-30-00/
+        ├── playwright-tests/        ← generated *.spec.ts + per-session playwright.config.ts
+        ├── reports/
+        ├── bugs/
+        └── manifest.json
+```
+
+```bash
+# Generate tests for a target — output dir is auto-resolved to the session
+qa-agent playwright-gen --url https://demoqa.com
+
+# Re-run the latest session for that target
+qa-agent playwright-run --app demoqa-com
+
+# Or pin a specific session
+qa-agent playwright-run --app demoqa-com --session 2026-05-06_14-30-00
+```
+
+The committed `playwright/` folder holds the shared scaffold (`playwright.config.ts`,
+`fixtures/`, `helpers/`, `pages/`, `auth/`). Each session auto-generates its own
+`playwright.config.ts` that extends the scaffold and pins `testDir` to the session.
 
 ---
 
