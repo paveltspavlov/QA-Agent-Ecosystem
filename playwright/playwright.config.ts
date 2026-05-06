@@ -8,6 +8,9 @@ const BASE_URL = process.env.BASE_URL || 'https://demoqa.com';
 const CI = !!process.env.CI;
 
 export default defineConfig({
+  // Scaffold-only default. `qa-agent playwright-gen` writes a per-session
+  // playwright.config.ts under outputs/{app}/{timestamp}/playwright-tests/
+  // that overrides testDir. Run with `qa-agent playwright-run --app <name>`.
   testDir: './tests',
   testMatch: '**/*.spec.ts',
   // Global setup and teardown for shared resources (disable for accessibility audit)

@@ -217,6 +217,34 @@ def _save_workflow_context(steps: list[dict]) -> Path:
     return ctx_file
 
 
+def _check_credentials_or_exit(profile: ModelProfile) -> None:
+    """Print an actionable hint and exit if the profile's credentials are missing.
+
+    Copilot and Claude (CLI) profiles bring their own auth. Anthropic-API,
+    OpenAI, and OpenAI-compatible profiles need an env-var key — fail fast
+    with a fix instead of letting the provider raise a stack trace.
+    """
+    if profile.is_copilot or profile.is_claude:
+        return
+    if profile.resolve_api_key():
+        return
+
+    env_var = profile.api_key_env or (
+        "ANTHROPIC_API_KEY" if profile.is_anthropic_api else "OPENAI_API_KEY"
+    )
+    console.print()
+    console.print(Panel(
+        f"[bold red]No API key for profile [/bold red][bold]{profile.name}[/bold] "
+        f"[bold red](provider: {profile.provider}).[/bold red]\n\n"
+        f"Set [bold]{env_var}[/bold] in your environment or in a [bold].env[/bold] file, then re-run.\n\n"
+        f"Quickest fix: [bold cyan]qa-agent setup[/bold cyan] — interactive bootstrap.\n"
+        f"Or pick a different profile, e.g.:\n"
+        f"  [bold]qa-agent ... -m copilot-claude-haiku[/bold]   (uses GitHub Copilot, no API key needed)",
+        title="Missing credentials", border_style="red", expand=False,
+    ))
+    sys.exit(2)
+
+
 def _print_model_banner(profile: ModelProfile, agent_label: str) -> None:
     """Print a short banner showing which model will be used."""
     provider_tag = {
@@ -274,6 +302,7 @@ async def run_single_agent(
 
     agent_def = get_agent(agent_name)
     profile = resolve_model(cli_override=model_override, agent_role="default")
+    _check_credentials_or_exit(profile)
 
     init_session(prompt)
     prompt = _inject_session_paths(prompt)
@@ -350,6 +379,7 @@ async def run_orchestrator(
 
     manager = get_agent("test-manager")
     profile = resolve_model(cli_override=model_override, agent_role="orchestrator")
+    _check_credentials_or_exit(profile)
 
     init_session(prompt)
     prompt = _inject_session_paths(prompt)

@@ -23,7 +23,7 @@
 # Map logical roles to profile names.  Every agent uses "default" unless the
 # role mapping or a CLI flag overrides it.
 roles:
-  default: claude-sonnet-api        # planning subagents (direct API)
+  default: copilot-claude-haiku     # planning subagents (Copilot — cost-efficient)
   orchestrator: claude-opus-api     # test-manager (direct API)
   playwright: copilot-gpt4o        # Playwright execution agents
   playwright-copilot: copilot-gpt4o # Playwright Copilot agent mode (plan/generate/heal)
