@@ -20,7 +20,7 @@ qa-agent list-workflows
 qa-agent workflow feature-testing -i requirements.md -m copilot-claude-haiku
 
 # 5. Run with inline text input
-qa-agent workflow playwright-gen -i "https://demoqa.com" -m copilot-claude-haiku
+qa-agent workflow playwright-gen -i "https://example.com" -m copilot-claude-haiku
 ```
 
 ---
@@ -77,7 +77,7 @@ qa-agent workflow feature-testing -i "Test the login page with email/password au
 
 ### 3. URL (auto-detected for web-focused workflows)
 ```bash
-qa-agent workflow playwright-gen -i "https://demoqa.com"
+qa-agent workflow playwright-gen -i "https://example.com"
 qa-agent workflow exploratory-testing -i "https://staging.myapp.com"
 ```
 
@@ -91,7 +91,7 @@ Acceptance criteria:
 - Link expires after 24 hours
 - New password must be 8+ chars with uppercase, lowercase, and number
 
-App URL: https://demoqa.com
+App URL: https://example.com
 Playwright project path: playwright/
 EOF
 ```
@@ -184,7 +184,7 @@ accessibility-auditor (parallel) → performance-profiler (parallel)
 
 **Run:**
 ```bash
-qa-agent workflow playwright-gen -i "https://demoqa.com"
+qa-agent workflow playwright-gen -i "https://example.com"
 # or with a file:
 qa-agent workflow playwright-gen -i playwright_task.md
 ```
@@ -426,12 +426,12 @@ bug-reporter → report-creator
 
 **Run:**
 ```bash
-qa-agent workflow exploratory-testing -i "https://demoqa.com"
+qa-agent workflow exploratory-testing -i "https://example.com"
 ```
 
 **Input template:**
 ```
-App URL: https://demoqa.com
+App URL: https://example.com
 Focus areas: All pages, forms, and interactive elements
 Auth: test@example.com / Test1234
 Risk areas: Form validation, navigation, data submission
@@ -452,7 +452,7 @@ playwright-executor → bug-reporter → report-creator
 
 **Run:**
 ```bash
-qa-agent workflow playwright-copilot-flow -i "https://demoqa.com"
+qa-agent workflow playwright-copilot-flow -i "https://example.com"
 ```
 
 ---
@@ -510,7 +510,7 @@ Acceptance criteria:
 2. Reset link expires after 24 hours
 3. New password must be 8+ chars with uppercase, lowercase, and number
 
-App URL: https://demoqa.com
+App URL: https://example.com
 Playwright project path: playwright/
 Test credentials: test@example.com / Test1234
 Priority flows: Happy path, invalid email, expired link

@@ -74,7 +74,7 @@ qa-agent clean-checkpoints --keep 10
 # Browse session output directories (new in v2.2)
 qa-agent list-sessions                                  # app | timestamp | mtime | path
 qa-agent show-session latest                            # manifest + metrics for most recent run
-qa-agent show-session demoqa-com/2026-04-23_10-15-00    # specific session
+qa-agent show-session example-com/2026-04-23_10-15-00    # specific session
 ```
 
 ### Root-level `--role` override (new in v2.2)

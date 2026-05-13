@@ -69,7 +69,7 @@ The `workflow` command is a shorthand for `orchestrate --workflow`. It runs a pr
 qa-agent workflow feature-testing -i requirements.md
 
 # Run with a URL (auto-detected for web-focused workflows)
-qa-agent workflow exploratory-testing -i "https://demoqa.com"
+qa-agent workflow exploratory-testing -i "https://example.com"
 
 # Use copilot-claude-haiku for fast, cost-efficient execution
 qa-agent workflow pbi-to-report -i inputs/pbi-to-report.md -m copilot-claude-haiku
@@ -92,7 +92,7 @@ PBI: As a registered user, I want to reset my password via email link.
 Acceptance criteria:
 - Reset email sent within 30 seconds
 - Link expires after 24 hours
-App URL: https://demoqa.com
+App URL: https://example.com
 EOF
 ```
 
@@ -157,7 +157,7 @@ qa-agent list-sessions
 
 # Show artifacts (from manifest.json) and metrics for one session
 qa-agent show-session latest
-qa-agent show-session demoqa-com/2026-04-23_10-15-00
+qa-agent show-session example-com/2026-04-23_10-15-00
 ```
 
 ---
