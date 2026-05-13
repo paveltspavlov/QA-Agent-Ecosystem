@@ -106,7 +106,7 @@ qa-agent run ui-test-designer --input spec.md --model copilot-gpt4o
 # Workflow with model override (all agents in the workflow use this model)
 qa-agent workflow feature-testing -i requirements.md -m copilot-claude-haiku
 qa-agent workflow pbi-to-report -i pbi.md -m copilot-gpt4o
-qa-agent workflow exploratory-testing -i "https://demoqa.com" -m copilot-claude-haiku
+qa-agent workflow exploratory-testing -i "https://example.com" -m copilot-claude-haiku
 ```
 
 ---

@@ -157,8 +157,8 @@ Table: Feature | Test Cases | Priority Distribution | Automation Candidate (Yes/
 If you cannot run Bash commands (no tool access, headless environment, or commands fail),
 you MUST still produce test cases. Use your knowledge of common web application patterns:
 
-1. Analyze the URL structure (e.g., demoqa.com likely has demo QA features)
-2. Infer common pages: homepage, forms, alerts, frames, widgets, interactions, book store
+1. Analyze the URL structure to infer the app's domain and likely feature surface
+2. Infer common pages: homepage, sign-in/sign-up, search, forms, navigation, settings
 3. Generate test cases based on typical web app testing patterns
 4. Mark all test cases with a note: "Generated from URL analysis — verify against live app"
 

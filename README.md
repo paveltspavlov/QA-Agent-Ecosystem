@@ -31,8 +31,6 @@ You can run agents individually or let the Test Manager orchestrator decompose a
 |----------|-------------|
 | [User Guide](GUIDE.md) | Comprehensive user guide -- installation, configuration, running agents, orchestration |
 | [GitHub Copilot Guide](COPILOT_GUIDE.md) | Step-by-step setup and usage with GitHub Copilot as the AI provider |
-| [Quick Reference](QUICK_REFERENCE.md) | One-page reference card for Playwright test execution results |
-| [Playwright Suite](README_PLAYWRIGHT.md) | Playwright automation suite overview -- 35 exploratory test cases converted to automated tests |
 
 ### Input Templates (`inputs/`)
 
@@ -65,9 +63,7 @@ Complete, ready-to-run input files with no placeholders -- copy the command and 
 |---------|-------------|
 | [Showcase README](showcase/README.md) | Overview and instructions for all showcase examples |
 | [PBI Shopping Cart](showcase/pbi-shopping-cart.md) | End-to-end shopping cart feature testing |
-| [Playwright DemoQA](showcase/playwright-demoqa.md) | Playwright test generation for demoqa.com |
 | [UI Checkout Flow](showcase/ui-checkout-flow.md) | UI test design for a checkout flow |
-| [API Bookstore](showcase/api-bookstore.md) | API coverage planning for a bookstore API |
 | [Flaky Checkout Tests](showcase/flaky-checkout-tests.md) | Diagnosing and fixing flaky checkout tests |
 | [Security Audit](showcase/security-audit-playwright.md) | Security audit on Playwright test suite |
 | [Health Audit E-commerce](showcase/health-audit-ecommerce.md) | Full test health audit for an e-commerce app |
@@ -81,15 +77,6 @@ Complete, ready-to-run input files with no placeholders -- copy the command and 
 | [workflow_requirements_to_report.md](examples/workflow_requirements_to_report.md) | Example: full requirements-to-report workflow |
 | [run_single_agent.py](examples/run_single_agent.py) | Python script: run a single agent programmatically |
 | [run_orchestrator.py](examples/run_orchestrator.py) | Python script: run the Test Manager orchestrator |
-
-### Test Reports (root)
-
-| Report | Description |
-|--------|-------------|
-| [Execution Report](EXECUTION_REPORT.md) | Detailed Playwright test execution report for demoqa.com |
-| [Test Case Mapping](TEST_CASE_MAPPING.md) | Comprehensive test case traceability table (35 test cases) |
-| [Test Case Traceability](TEST_CASE_TRACEABILITY.md) | Test case to implementation mapping matrix |
-| [Traceability Map](TRACEABILITY_MAP.md) | Playwright automation test case traceability overview |
 
 ---
 
@@ -221,7 +208,7 @@ qa-agent list-workflows
 qa-agent workflow feature-testing -i requirements.md
 
 # Run with a URL input (auto-detected for web-focused workflows)
-qa-agent workflow exploratory-testing -i "https://demoqa.com"
+qa-agent workflow exploratory-testing -i "https://example.com"
 
 # Run the full PBI-to-Report pipeline
 qa-agent workflow pbi-to-report -i inputs/pbi-to-report.md
@@ -239,7 +226,7 @@ qa-agent --role default=copilot-claude-sonnet --role orchestrator=claude-opus-ap
 # List all sessions saved under outputs/ and inspect a specific one
 qa-agent list-sessions
 qa-agent show-session latest
-qa-agent show-session demoqa-com/2026-04-23_10-15-00
+qa-agent show-session example-com/2026-04-23_10-15-00
 
 # Preview execution plan without running (dry run)
 qa-agent workflow playwright-gen -i "https://myapp.com" --dry-run
@@ -261,7 +248,7 @@ gitignored):
 
 ```
 outputs/
-└── demoqa-com/
+└── example-com/
     └── 2026-05-06_14-30-00/
         ├── playwright-tests/        ← generated *.spec.ts + per-session playwright.config.ts
         ├── reports/
@@ -271,13 +258,13 @@ outputs/
 
 ```bash
 # Generate tests for a target — output dir is auto-resolved to the session
-qa-agent playwright-gen --url https://demoqa.com
+qa-agent playwright-gen --url https://example.com
 
 # Re-run the latest session for that target
-qa-agent playwright-run --app demoqa-com
+qa-agent playwright-run --app example-com
 
 # Or pin a specific session
-qa-agent playwright-run --app demoqa-com --session 2026-05-06_14-30-00
+qa-agent playwright-run --app example-com --session 2026-05-06_14-30-00
 ```
 
 The committed `playwright/` folder holds the shared scaffold (`playwright.config.ts`,

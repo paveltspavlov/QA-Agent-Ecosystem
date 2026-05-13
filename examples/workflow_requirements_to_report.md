@@ -62,7 +62,7 @@ As a new user, I want to register an account using my email address so that I ca
 7. Duplicate email addresses are rejected with a clear error message
 
 **Technical Notes:**
-- Target URL: https://demoqa.com (for Playwright test execution)
+- Target URL: https://example.com (for Playwright test execution)
 - Frontend: React
 - Backend: REST API
 - Database: PostgreSQL

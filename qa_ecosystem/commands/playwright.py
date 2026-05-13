@@ -378,7 +378,7 @@ def register(sub) -> None:
     pw_run.add_argument("--analyze", action="store_true",
                         help="Analyze results with test-results-analyst after run")
     pw_run.add_argument("--app", default=None,
-                        help="Run the latest session for this app (e.g. demoqa-com). "
+                        help="Run the latest session for this app (e.g. example-com). "
                              "Tests are loaded from outputs/{app}/{timestamp}/playwright-tests/.")
     pw_run.add_argument("--session", default=None,
                         help="Run a specific session timestamp (use with --app). "

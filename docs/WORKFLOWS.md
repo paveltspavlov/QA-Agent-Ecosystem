@@ -722,7 +722,7 @@ Acceptance criteria:
 2. Reset link expires after 24 hours
 3. New password must meet complexity requirements
 
-App URL: https://demoqa.com
+App URL: https://example.com
 Playwright project path: playwright/
 ```
 
@@ -773,7 +773,7 @@ The Test Manager (`test-manager` agent) can orchestrate this entire pipeline fro
 **Example orchestrator command:**
 ```bash
 qa-agent workflow pbi-to-report -m copilot-claude-haiku -i - <<'EOF'
-I have a PBI for password reset functionality on https://demoqa.com.
+I have a PBI for password reset functionality on https://example.com.
 Analyze the requirements, generate test cases, automate them with Playwright,
 execute the tests, log all bugs, and give me a final report with token usage.
 

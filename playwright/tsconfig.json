@@ -13,5 +13,5 @@
     "rootDir": "."
   },
   "include": ["**/*.ts"],
-  "exclude": ["node_modules", "dist", "test-results", "playwright-report", "explore-demoqa.ts", "exploration-results", "tests/exploratory/comprehensive.spec.ts"]
+  "exclude": ["node_modules", "dist", "test-results", "playwright-report"]
 }

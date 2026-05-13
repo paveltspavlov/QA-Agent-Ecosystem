@@ -1,4 +1,0 @@
-This is a sample test file for upload testing.
-It contains multiple lines of text to validate file upload functionality.
-Line 3: Testing file content validation.
-Line 4: Last line of sample data.

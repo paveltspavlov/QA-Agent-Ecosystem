@@ -4,7 +4,7 @@ import path from 'path';
 
 config();
 
-const BASE_URL = process.env.BASE_URL || 'https://demoqa.com';
+const BASE_URL = process.env.BASE_URL || 'https://example.com';
 const CI = !!process.env.CI;
 
 export default defineConfig({
@@ -70,5 +70,5 @@ export default defineConfig({
     },
   ],
 
-  // webServer not needed - testing external site (demoqa.com)
+  // webServer not configured by default — set it for tests that target a local app.
 });
