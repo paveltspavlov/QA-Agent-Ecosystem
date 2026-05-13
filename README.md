@@ -141,15 +141,27 @@ source .venv/bin/activate          # Linux/macOS
 .venv\Scripts\activate             # Windows CMD
 .venv\Scripts\Activate.ps1         # Windows PowerShell
 
-# Install the base CLI
-pip install setuptools
-pip install -e .
+# Install the base CLI — use the installer (recommended)
+# It creates .venv if missing, clears any stale prior install, and verifies
+# that `import qa_ecosystem` works before exiting. Pass -Extras / --extras to
+# install a provider in one shot, or -Force / --force to rebuild .venv.
+.\install.ps1                    # Windows PowerShell
+.\install.ps1 -Extras copilot
+.\install.ps1 -Force
+
+./install.sh                     # Linux / macOS
+./install.sh --extras copilot
+./install.sh --force
 
 # One-shot interactive bootstrap — picks a provider, installs the right Python
 # extras, configures `.env`, runs `gh auth login`, installs Playwright, and
 # finishes with `qa-agent doctor` so you know everything is wired up.
 qa-agent setup
 ```
+
+> If `qa-agent` fails with `ModuleNotFoundError: No module named 'qa_ecosystem'`,
+> see [docs/TROUBLESHOOTING.md](docs/TROUBLESHOOTING.md) section 0 — usually
+> fixed by re-running the installer with `-Force` / `--force`.
 
 <details>
 <summary>Manual install (advanced)</summary>

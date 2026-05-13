@@ -4,6 +4,41 @@ Common errors and fixes when using the QA Agent Ecosystem, especially with GitHu
 
 ---
 
+## 0. `ModuleNotFoundError: No module named 'qa_ecosystem'` after install
+
+**Error:** Running `qa-agent <anything>` raises `ModuleNotFoundError: No module named 'qa_ecosystem'` even though `pip install -e .` reported success.
+
+**Cause:** Editable installs (`pip install -e .`) bake an absolute path into a finder file in site-packages. Common triggers:
+
+- A previous install on the same machine left a stale finder in user-site or global site-packages.
+- `pip` was invoked from a non-venv Python (e.g., venv activation silently failed under PowerShell's execution policy).
+- The repo folder was moved or re-extracted after install.
+
+**Fix:** Re-run the installer with `-Force` (Windows) / `--force` (Linux/macOS). It recreates `.venv` and uninstalls any prior copy of the package before re-installing.
+
+```powershell
+# Windows
+.\install.ps1 -Force
+```
+
+```bash
+# Linux / macOS
+./install.sh --force
+```
+
+If you must fix manually, always invoke pip via the venv's python by absolute path so shell `PATH` cannot point at the wrong interpreter:
+
+```powershell
+# Windows — from the repo root
+.\.venv\Scripts\python.exe -m pip uninstall -y qa-agent-ecosystem
+.\.venv\Scripts\python.exe -m pip install -e .
+.\.venv\Scripts\python.exe -c "import qa_ecosystem; print(qa_ecosystem.__version__)"
+```
+
+The third command must print `2.0.0`. If it doesn't, your `pip` is not pointing at the venv's Python.
+
+---
+
 ## 1. `github-copilot-sdk not installed`
 
 **Error:** `ModuleNotFoundError: No module named 'copilot'` or `github-copilot-sdk is not installed`
