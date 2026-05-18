@@ -6,7 +6,7 @@ import argparse
 
 from rich.panel import Panel
 
-from ._shared import add_model_arg, console, read_input
+from ._shared import add_model_arg, console, read_input, read_task_input
 
 
 def _run_workflow_mode(args: argparse.Namespace, raw_input: str) -> None:
@@ -108,9 +108,15 @@ def cmd_orchestrate(args: argparse.Namespace) -> None:
     """Run the Test Manager orchestrator."""
     from qa_ecosystem.runner import run_orchestrator, run_sync
     from qa_ecosystem.metrics import start_run, finish_run
+    from qa_ecosystem.session import init_session
     from qa_ecosystem.templates import fill_template
 
-    raw_input = read_input(args.input)
+    raw_input, frontmatter_project = read_task_input(args.input)
+
+    # Precedence: CLI flag > markdown frontmatter > auto-detect from prompt.
+    project_name = getattr(args, "project_name", None) or frontmatter_project
+    session_dir = init_session(raw_input, project_name=project_name)
+    console.print(f"[dim]Session: {session_dir}[/dim]")
 
     workflow_name = getattr(args, "workflow", None)
     workflow_file = getattr(args, "workflow_file", None)
@@ -174,7 +180,11 @@ def cmd_workflow(args: argparse.Namespace) -> None:
 def register(sub) -> None:
     orch = sub.add_parser("orchestrate", help="Run the Test Manager orchestrator")
     orch.add_argument("--input", "-i", required=True,
-                      help="Input text or path to a file")
+                      help="Input text or path to a file (markdown supported; "
+                           "frontmatter `project_name:` overrides auto-detection)")
+    orch.add_argument("--project-name", default=None, metavar="NAME",
+                      help="Override the project slug used for outputs/<project>/<ts>/. "
+                           "Beats markdown frontmatter and URL auto-detection.")
     orch.add_argument("--template", "-t", default="default",
                       help="Prompt template name (default: 'default')")
     orch.add_argument("--cwd", default=".",

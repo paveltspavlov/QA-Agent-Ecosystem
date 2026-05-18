@@ -48,7 +48,7 @@ def _inject_session_paths(prompt: str) -> str:
     bugs_dir = (session_dir / "bugs").as_posix()
     reports_dir = (session_dir / "reports").as_posix()
 
-    return (
+    result = (
         prompt
         .replace("{session_dir}", posix)
         .replace("{bugs_dir}", bugs_dir)
@@ -57,6 +57,22 @@ def _inject_session_paths(prompt: str) -> str:
         .replace("outputs/bugs", bugs_dir)
         .replace("outputs/reports", reports_dir)
     )
+
+    # Lazy substitution for the orchestrator's agent catalogue. Doing this here
+    # (not at agent import time) avoids the circular import that would occur if
+    # test_manager.py tried to call list_agents() while the registry was still
+    # being populated.
+    if "{agent_catalogue}" in result:
+        from qa_ecosystem.agents import list_agents
+        lines = []
+        for name, defn in sorted(list_agents().items()):
+            if name == "test-manager":
+                continue
+            desc = (defn.description or "").strip().replace("\n", " ")
+            lines.append(f"- {name} — {desc}")
+        result = result.replace("{agent_catalogue}", "\n".join(lines))
+
+    return result
 
 
 def _agent_with_session_paths(agent_def):
