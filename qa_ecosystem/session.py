@@ -21,10 +21,18 @@ from __future__ import annotations
 
 import hashlib
 import json
+import os
+import re
 from datetime import datetime
 from pathlib import Path
 
 from qa_ecosystem.output_parser import extract_app_name
+
+
+def _slugify(name: str) -> str:
+    """Lowercase, replace non-alphanumeric runs with hyphens, trim."""
+    slug = re.sub(r"[^a-zA-Z0-9]+", "-", name.strip().lower()).strip("-")
+    return slug or "session"
 
 OUTPUTS_ROOT = Path(__file__).resolve().parent.parent / "outputs"
 
@@ -33,28 +41,44 @@ _app_name: str | None = None
 _timestamp: str | None = None
 
 
-def init_session(prompt: str = "", *, force: bool = False) -> Path:
+def init_session(
+    prompt: str = "",
+    *,
+    force: bool = False,
+    project_name: str | None = None,
+) -> Path:
     """Create and remember the session directory for this run.
 
-    Resolves ``outputs/{app_name}/{timestamp}/`` from the prompt. If a session
-    is already active and ``force`` is False, returns the existing one.
+    Resolves ``outputs/{app_name}/{timestamp}/``. ``project_name`` takes
+    precedence over auto-detection from the prompt; if omitted, the legacy
+    URL/word-based extraction runs. If a session is already active and
+    ``force`` is False, returns the existing one.
     """
     global _session_dir, _app_name, _timestamp
 
     if _session_dir is not None and not force:
         return _session_dir
 
-    name = extract_app_name(prompt) if prompt else "session"
-    if name in ("unnamed-app", "session") and prompt:
-        # Disambiguate fallback names with a short prompt-hash so concurrent
-        # runs without a URL don't clobber each other.
-        suffix = hashlib.sha1(prompt.encode("utf-8")).hexdigest()[:6]
-        name = f"{name}-{suffix}"
+    if project_name:
+        name = _slugify(project_name)
+    else:
+        name = extract_app_name(prompt) if prompt else "session"
+        if name in ("unnamed-app", "session") and prompt:
+            # Disambiguate fallback names with a short prompt-hash so concurrent
+            # runs without a URL don't clobber each other.
+            suffix = hashlib.sha1(prompt.encode("utf-8")).hexdigest()[:6]
+            name = f"{name}-{suffix}"
 
     _app_name = name
     _timestamp = datetime.now().strftime("%Y-%m-%d_%H-%M-%S")
     _session_dir = OUTPUTS_ROOT / _app_name / _timestamp
     _session_dir.mkdir(parents=True, exist_ok=True)
+
+    # Redirect any Playwright subprocess (npx playwright test, or a Bash tool
+    # spawned by an agent) into the per-session dir. The scaffold config in
+    # playwright/playwright.config.ts honors this env var.
+    os.environ["PW_OUTPUT_BASE"] = (_session_dir / "playwright").as_posix()
+
     return _session_dir
 
 
