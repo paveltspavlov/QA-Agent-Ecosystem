@@ -159,6 +159,13 @@ source .venv/bin/activate          # Linux/macOS
 qa-agent setup
 ```
 
+> [!CAUTION]
+> **If the app can't reach GitHub Copilot** (auth errors, 401s, "copilot scope missing"), your `gh` token has lost the `copilot` scope. Reauthenticate with:
+>
+> ```bash
+> gh auth refresh --scopes copilot
+> ```
+
 > If `qa-agent` fails with `ModuleNotFoundError: No module named 'qa_ecosystem'`,
 > see [docs/TROUBLESHOOTING.md](docs/TROUBLESHOOTING.md) section 0 — usually
 > fixed by re-running the installer with `-Force` / `--force`.
