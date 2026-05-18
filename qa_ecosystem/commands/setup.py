@@ -127,6 +127,12 @@ def cmd_setup(args: argparse.Namespace) -> None:
         else:
             console.print("[green]GitHub CLI is already authenticated.[/green]")
 
+        console.print(
+            "\n[bold red on white] !!! IF COPILOT STOPS WORKING !!! [/bold red on white]\n"
+            "[bold red]If the app can't reach GitHub Copilot, re-run:[/bold red]\n"
+            "[bold yellow]    gh auth refresh --scopes copilot[/bold yellow]\n"
+        )
+
     pw_dir = Path("playwright")
     if pw_dir.is_dir() and Confirm.ask("\nInstall Playwright (`npm install` + `npx playwright install --with-deps`)?", default=True):
         npm = shutil.which("npm") or "npm"
