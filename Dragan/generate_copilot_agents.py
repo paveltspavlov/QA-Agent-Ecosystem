@@ -1,11 +1,11 @@
-"""Generate GitHub Copilot custom agent files (.github/agents/*.agent.md)
+"""Generate GitHub Copilot custom agent files (Dragan/*.agent.md)
 from the Python agent definitions in qa_ecosystem/agents/.
 
 Run from the repo root:
-    python scripts/generate_copilot_agents.py
+    python Dragan/generate_copilot_agents.py
 
 The orchestrator (test-manager) is NOT generated here -- it is maintained by
-hand as .github/agents/qa-manager.agent.md because it carries the workflow
+hand as Dragan/qa-manager.agent.md because it carries the workflow
 catalog and the current-task protocol in full.
 """
 
@@ -17,7 +17,7 @@ from pathlib import Path
 
 REPO_ROOT = Path(__file__).resolve().parent.parent
 AGENTS_DIR = REPO_ROOT / "qa_ecosystem" / "agents"
-OUT_DIR = REPO_ROOT / ".github" / "agents"
+OUT_DIR = REPO_ROOT / "Dragan"
 
 # Modules that are not generated from Python sources
 SKIP_MODULES = {"__init__.py", "test_manager.py"}

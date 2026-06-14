@@ -3,29 +3,19 @@
   Install QA Agent Ecosystem Copilot agents into the user-level Copilot agents folder.
 
 .DESCRIPTION
-  Copies every *.agent.md file from .github/agents/ into %USERPROFILE%\.copilot\agents\
-  so the agents are available in all workspaces, then removes the copies from
-  .github/agents/ to prevent Copilot from loading duplicates (it loads agents from
-  both the workspace folder and the user folder).
-
-  Pass -KeepWorkspace to skip the cleanup of .github/agents/ (e.g. for CI/CD use
-  or if you want workspace-scoped agents to remain for other contributors).
+  Copies every *.agent.md file from Dragan/ into %USERPROFILE%\.copilot\agents\ so
+  the agents are available in all workspaces. Dragan/ is not auto-loaded by Copilot,
+  so there is no risk of duplicate agents in the picker.
 
 .PARAMETER Force
   Overwrite existing files in the user agents folder without prompting.
 
-.PARAMETER KeepWorkspace
-  Do NOT remove *.agent.md files from .github/agents/ after installing.
-  Use this only when you intentionally want agents in both locations.
-
 .EXAMPLE
-  .\install_copilot_agents.ps1
-  .\install_copilot_agents.ps1 -Force
-  .\install_copilot_agents.ps1 -KeepWorkspace
+  .\Dragan\install_copilot_agents.ps1
+  .\Dragan\install_copilot_agents.ps1 -Force
 #>
 param(
-    [switch]$Force,
-    [switch]$KeepWorkspace
+    [switch]$Force
 )
 
 $ErrorActionPreference = "Stop"
@@ -36,11 +26,11 @@ function Warn($msg)  { Write-Host "WARN $msg" -ForegroundColor Yellow }
 function Fail($msg)  { Write-Host ""; Write-Host "ERROR: $msg" -ForegroundColor Red; exit 1 }
 
 # ── Locate source ────────────────────────────────────────────────────────────
-$RepoRoot  = $PSScriptRoot
-$SourceDir = Join-Path $RepoRoot ".github\agents"
+$RepoRoot  = Split-Path $PSScriptRoot -Parent
+$SourceDir = Join-Path $RepoRoot "Dragan"
 
 if (-not (Test-Path $SourceDir)) {
-    Fail "Agent source folder not found: $SourceDir`nRun this script from the repo root."
+    Fail "Agent source folder not found: $SourceDir"
 }
 
 $AgentFiles = Get-ChildItem -Path $SourceDir -Filter "*.agent.md"
@@ -81,18 +71,6 @@ foreach ($file in $AgentFiles) {
     if ($exists) { $overwritten.Add($file.Name) } else { $installed.Add($file.Name) }
 }
 
-# ── Remove workspace-level copies to prevent Copilot from showing duplicates ─
-$cleaned = [System.Collections.Generic.List[string]]::new()
-
-if (-not $KeepWorkspace) {
-    foreach ($file in $AgentFiles) {
-        if ($skipped -notcontains $file.Name) {
-            Remove-Item -Path $file.FullName -Force
-            $cleaned.Add($file.Name)
-        }
-    }
-}
-
 # ── Report ───────────────────────────────────────────────────────────────────
 Write-Host ""
 if ($installed.Count -gt 0) {
@@ -106,13 +84,6 @@ if ($overwritten.Count -gt 0) {
 if ($skipped.Count -gt 0) {
     Warn "Skipped ($($skipped.Count)):"
     $skipped | ForEach-Object { Write-Host "    $_" }
-}
-if ($cleaned.Count -gt 0) {
-    Ok "Removed from .github/agents/ ($($cleaned.Count)) — no more duplicates:"
-    $cleaned | ForEach-Object { Write-Host "    $_" }
-    Write-Host ""
-    Warn "The .github/agents/ deletions are unstaged. Run:"
-    Write-Host "    git add -A .github/agents && git commit -m 'chore: move agents to user-level copilot folder'"
 }
 
 $total = $installed.Count + $overwritten.Count

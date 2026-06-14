@@ -1,14 +1,12 @@
 #!/usr/bin/env bash
 # Install QA Agent Ecosystem Copilot agents into the user-level Copilot agents folder.
 #
-# Copies every *.agent.md from .github/agents/ into ~/.copilot/agents/, then removes
-# the copies from .github/agents/ to prevent Copilot from loading duplicates (it loads
-# agents from both the workspace folder and the user folder).
+# Copies every *.agent.md from Dragan/ into ~/.copilot/agents/. Dragan/ is not
+# auto-loaded by Copilot, so there is no risk of duplicate agents in the picker.
 #
 # Usage:
-#   ./install_copilot_agents.sh                    # install + remove workspace copies
-#   ./install_copilot_agents.sh --force            # overwrite user-folder files without prompting
-#   ./install_copilot_agents.sh --keep-workspace   # skip cleanup of .github/agents/
+#   ./Dragan/install_copilot_agents.sh           # install agents
+#   ./Dragan/install_copilot_agents.sh --force   # overwrite without prompting
 
 set -euo pipefail
 
@@ -20,18 +18,17 @@ fail()  { printf '\n\033[0;31mERROR: %s\033[0m\n' "$*"; exit 1; }
 
 # ── Args ─────────────────────────────────────────────────────────────────────
 FORCE=0
-KEEP_WORKSPACE=0
 for arg in "$@"; do
     case "$arg" in
-        --force)          FORCE=1          ;;
-        --keep-workspace) KEEP_WORKSPACE=1 ;;
-        *) fail "Unknown argument: $arg"   ;;
+        --force) FORCE=1 ;;
+        *) fail "Unknown argument: $arg" ;;
     esac
 done
 
 # ── Locate source ─────────────────────────────────────────────────────────────
-REPO_ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
-SOURCE_DIR="$REPO_ROOT/.github/agents"
+SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+REPO_ROOT="$(dirname "$SCRIPT_DIR")"
+SOURCE_DIR="$REPO_ROOT/Dragan"
 
 [[ -d "$SOURCE_DIR" ]] || fail "Agent source folder not found: $SOURCE_DIR"
 
@@ -72,31 +69,11 @@ for filepath in "${AGENT_FILES[@]}"; do
     fi
 done
 
-# ── Remove workspace-level copies to prevent Copilot from showing duplicates ─
-cleaned=()
-
-if [[ $KEEP_WORKSPACE -eq 0 ]]; then
-    for filepath in "${AGENT_FILES[@]}"; do
-        filename="$(basename "$filepath")"
-        if [[ ! " ${skipped[*]} " =~ " $filename " ]]; then
-            rm -f "$filepath"
-            cleaned+=("$filename")
-        fi
-    done
-fi
-
 # ── Report ────────────────────────────────────────────────────────────────────
 echo ""
 [[ ${#installed[@]}   -gt 0 ]] && { ok "Installed (${#installed[@]}):";   printf '    %s\n' "${installed[@]}";   }
 [[ ${#overwritten[@]} -gt 0 ]] && { ok "Updated (${#overwritten[@]}):";   printf '    %s\n' "${overwritten[@]}"; }
 [[ ${#skipped[@]}     -gt 0 ]] && { warn "Skipped (${#skipped[@]}):";     printf '    %s\n' "${skipped[@]}";     }
-if [[ ${#cleaned[@]}  -gt 0 ]]; then
-    ok "Removed from .github/agents/ (${#cleaned[@]}) — no more duplicates:"
-    printf '    %s\n' "${cleaned[@]}"
-    echo ""
-    warn "The .github/agents/ deletions are unstaged. Run:"
-    printf '    git add -A .github/agents && git commit -m "chore: move agents to user-level copilot folder"\n'
-fi
 
 total=$(( ${#installed[@]} + ${#overwritten[@]} ))
 if [[ $total -eq 0 ]]; then
