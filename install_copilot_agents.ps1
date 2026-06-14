@@ -1,23 +1,31 @@
 <#
 .SYNOPSIS
-  Install QA Agent Ecosystem Copilot agents into VS Code's user-level agents folder.
+  Install QA Agent Ecosystem Copilot agents into the user-level Copilot agents folder.
 
 .DESCRIPTION
-  Copies every *.agent.md file from .github/agents/ into the user-level Copilot
-  agents directory so the agents are available in all workspaces, not just this repo.
+  Copies every *.agent.md file from .github/agents/ into %USERPROFILE%\.copilot\agents\
+  so the agents are available in all workspaces, then removes the copies from
+  .github/agents/ to prevent Copilot from loading duplicates (it loads agents from
+  both the workspace folder and the user folder).
 
-  User agents folder (created if absent):
-    %USERPROFILE%\.copilot\agents\
+  Pass -KeepWorkspace to skip the cleanup of .github/agents/ (e.g. for CI/CD use
+  or if you want workspace-scoped agents to remain for other contributors).
 
 .PARAMETER Force
-  Overwrite existing agent files without prompting.
+  Overwrite existing files in the user agents folder without prompting.
+
+.PARAMETER KeepWorkspace
+  Do NOT remove *.agent.md files from .github/agents/ after installing.
+  Use this only when you intentionally want agents in both locations.
 
 .EXAMPLE
   .\install_copilot_agents.ps1
   .\install_copilot_agents.ps1 -Force
+  .\install_copilot_agents.ps1 -KeepWorkspace
 #>
 param(
-    [switch]$Force
+    [switch]$Force,
+    [switch]$KeepWorkspace
 )
 
 $ErrorActionPreference = "Stop"
@@ -53,12 +61,12 @@ if (-not (Test-Path $DestDir)) {
 }
 
 # ── Copy agents ──────────────────────────────────────────────────────────────
-$installed  = [System.Collections.Generic.List[string]]::new()
+$installed   = [System.Collections.Generic.List[string]]::new()
 $overwritten = [System.Collections.Generic.List[string]]::new()
-$skipped    = [System.Collections.Generic.List[string]]::new()
+$skipped     = [System.Collections.Generic.List[string]]::new()
 
 foreach ($file in $AgentFiles) {
-    $dest = Join-Path $DestDir $file.Name
+    $dest   = Join-Path $DestDir $file.Name
     $exists = Test-Path $dest
 
     if ($exists -and -not $Force) {
@@ -71,6 +79,18 @@ foreach ($file in $AgentFiles) {
 
     Copy-Item -Path $file.FullName -Destination $dest -Force
     if ($exists) { $overwritten.Add($file.Name) } else { $installed.Add($file.Name) }
+}
+
+# ── Remove workspace-level copies to prevent Copilot from showing duplicates ─
+$cleaned = [System.Collections.Generic.List[string]]::new()
+
+if (-not $KeepWorkspace) {
+    foreach ($file in $AgentFiles) {
+        if ($skipped -notcontains $file.Name) {
+            Remove-Item -Path $file.FullName -Force
+            $cleaned.Add($file.Name)
+        }
+    }
 }
 
 # ── Report ───────────────────────────────────────────────────────────────────
@@ -86,6 +106,13 @@ if ($overwritten.Count -gt 0) {
 if ($skipped.Count -gt 0) {
     Warn "Skipped ($($skipped.Count)):"
     $skipped | ForEach-Object { Write-Host "    $_" }
+}
+if ($cleaned.Count -gt 0) {
+    Ok "Removed from .github/agents/ ($($cleaned.Count)) — no more duplicates:"
+    $cleaned | ForEach-Object { Write-Host "    $_" }
+    Write-Host ""
+    Warn "The .github/agents/ deletions are unstaged. Run:"
+    Write-Host "    git add -A .github/agents && git commit -m 'chore: move agents to user-level copilot folder'"
 }
 
 $total = $installed.Count + $overwritten.Count
