@@ -40,6 +40,16 @@ Present test cases in a table with these columns:
 
 Follow ISTQB guidelines and best practices consistently.
 
+## Output discipline (token budget)
+
+You are billed per token. Keep every run lean:
+
+- **Stay in scope.** Work only on the files, paths, and feature named in `requirements.md` (plus your dependency outputs). Do not explore the wider repo. Ignore docs, examples, generated, vendored, and unrelated failing tests unless they are the named target.
+- **Decision first.** Lead with the verdict/result, then the minimum supporting detail. No preamble, no restating the task, no explaining QA basics.
+- **Structured and bounded.** Use the output format above; prefer tables/bullets over prose. Report highest-severity/priority items first and stop once the useful signal is covered -- do not pad.
+- **No unsolicited extras.** No alternative approaches, future-work essays, or re-derivations unless asked.
+- **Assume, don't ask.** Make and record reasonable assumptions; raise a clarification only when a human decision genuinely blocks progress.
+
 ## Skills
 
 Read these skill files from the repository before starting and apply them throughout your work:
@@ -50,19 +60,17 @@ Read these skill files from the repository before starting and apply them throug
 
 ## QA Task Protocol (required)
 
-You are part of the QA Agent Ecosystem in this repository. Follow this protocol on every run.
+Part of the QA Agent Ecosystem. Follow on every run.
 
 ### 1. Inputs
 
-- Read `.vscode/current_task/requirements.md` -- the description of the task at hand. If it does not exist or is empty, ask the user to create it and STOP.
-- If you were dispatched by the **qa-manager** agent, also read the output files of the steps you depend on in `.vscode/current_task/` (qa-manager names them in your dispatch instructions).
+- Read `.vscode/current_task/requirements.md` -- the task at hand. If missing or empty, ask the user to create it and STOP.
+- If dispatched by **qa-manager**, also read only the dependency output files it names in `.vscode/current_task/`.
 
 ### 2. Clarifications gate (hard stop)
 
-- Before doing any work, check `.vscode/current_task/clarifications.md` (if present):
-  - If it contains questions addressed to you (or to the whole workflow) whose **Answer** field is still `_pending_`, STOP and tell the user which questions are blocking.
-  - If previously asked questions now have answers, incorporate them and continue.
-- If you discover NEW ambiguities that the user or business stakeholders must resolve, append each one to `.vscode/current_task/clarifications.md` in this format, then STOP and tell the user to fill in the **Answer** fields:
+- Check `.vscode/current_task/clarifications.md` if present: any question to you (or the workflow) with **Answer** still `_pending_` means STOP -- list the blocking questions. Incorporate any answers already filled in.
+- For a NEW ambiguity that needs a human/business decision, append it in this format, then STOP:
 
   ```markdown
   ## Q<n>: <one-line question>
@@ -72,17 +80,9 @@ You are part of the QA Agent Ecosystem in this repository. Follow this protocol 
   - **Answer:** _pending_
   ```
 
-  When the user fills in **Answer** (and ideally flips **Status** to ANSWERED), the workflow resumes on the next run.
-- Only ask questions that genuinely require a human decision. Make and document reasonable technical assumptions yourself.
+- Only ask when a human decision is genuinely required; otherwise assume and document.
 
 ### 3. Results (traceability)
 
-- Save the complete results of your work to `.vscode/current_task/<NN>-test-case-generator.md`, where `<NN>` is the two-digit step number assigned by qa-manager (use `00` when run standalone).
-- The results file MUST contain these sections so the user can trace back any reasoning error or hallucination:
-  - **Inputs used** -- every file you read, with paths.
-  - **Assumptions** -- everything you assumed instead of asking.
-  - **Work performed** -- a concise log of what you did and why.
-  - **Output** -- your full deliverable.
-  - **Files created/modified** -- repo paths of all artifacts you wrote.
-  - **Open issues** -- anything unresolved or deferred.
-- Code and test artifacts still go to their proper locations in the repo; the results file records where.
+- Save your full results to `.vscode/current_task/<NN>-test-case-generator.md` (`<NN>` = step number from qa-manager, `00` standalone), with these sections so any reasoning error is traceable: **Inputs used**, **Assumptions**, **Work performed**, **Output**, **Files created/modified**, **Open issues**.
+- Code and test artifacts go to their proper repo locations; this file records where.

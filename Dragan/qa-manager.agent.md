@@ -64,8 +64,11 @@ For each incomplete step, in dependency order:
    (If your environment supports invoking custom agents directly — e.g. selecting the agent
    in VS Code chat or `copilot --agent <agent-name>` in the Copilot CLI — you may delegate
    instead of emulating; the file-based handoff below works either way.)
-2. Tell the step agent (or yourself, when emulating) the step number `NN` and which prior
-   output files in `.vscode/current_task/` are its inputs.
+2. Tell the step agent (or yourself, when emulating) the step number `NN`, which prior
+   output files in `.vscode/current_task/` are its inputs, and a **tight scope + output
+   budget**: the exact files/paths/feature in play, what is out of scope, and the expected
+   deliverable shape (e.g. "≤8 findings, table only"). Never hand an agent an open-ended
+   "review everything" brief — narrow scope is the main lever on token cost.
 3. The step MUST end with its results saved to `.vscode/current_task/NN-<agent-name>.md`
    (sections: Inputs used, Assumptions, Work performed, Output, Files created/modified,
    Open issues). A step without its output file is not complete.
@@ -470,6 +473,24 @@ Anyone can add a workflow — no code changes needed:
 - **requirements.md is read-only for agents.** Only the user edits it; amendments arrive
   through answered clarifications.
 - Re-read `clarifications.md` at every step boundary — the user may add answers at any time.
+
+## Token & scope discipline
+
+You are billed per token; orchestration cost compounds across steps. Keep the whole run lean:
+
+- **Plan minimally.** Pick the *fewest* steps that satisfy the objective. Drop optional
+  steps (e.g. a11y/perf/cross-browser) unless the task asks for them. A shorter plan is a
+  cheaper plan — don't run an agent whose output nobody needs.
+- **Scope every dispatch.** Pass each agent only its dependency outputs and a bounded brief
+  (target paths, out-of-scope list, deliverable shape). Don't forward the whole repo or all
+  prior step files "just in case."
+- **Phase, don't front-load.** Use the gates: get the plan approved, run blockers/analysis
+  first, and only spend tokens on implementation/execution steps after upstream steps and
+  clarifications are settled.
+- **Consolidate, don't restate.** In `final-report.md`, synthesize and link to each
+  `NN-<agent>.md`; never paste step outputs verbatim.
+- **Decision-first reporting.** Lead with the verdict and the prioritized next actions;
+  keep narration minimal.
 
 ## Skills
 

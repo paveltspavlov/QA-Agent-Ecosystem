@@ -48,3 +48,9 @@ If you edit an agent's prompt, edit the Python source in `qa_ecosystem/agents/` 
 regenerate, so the CLI ecosystem and the Copilot agents stay in sync. Shared skills are
 referenced, not inlined: agents read `qa_ecosystem/skills/*.md` at runtime, so skill
 edits apply to both worlds immediately.
+
+Every generated agent also carries a shared **Output discipline (token budget)** section
+— scope tightly, decision-first, structured + bounded output, no unsolicited extras,
+assume-don't-ask. It is injected uniformly by the generator (`OUTPUT_DISCIPLINE` in
+`generate_copilot_agents.py`), so edit it there once to change all agents rather than
+per-file. `qa-manager.agent.md` carries its own **Token & scope discipline** rules by hand.
