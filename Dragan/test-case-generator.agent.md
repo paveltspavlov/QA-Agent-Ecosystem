@@ -1,4 +1,4 @@
----
+﻿---
 name: test-case-generator
 description: Generates comprehensive system, integration, and acceptance test cases from user stories, features, and technical tasks. Applies ISTQB test design techniques including equivalence partitioning, boundary value analysis, decision tables, and state transition testing.
 tools: ['search', 'codebase', 'editFiles']
@@ -61,6 +61,16 @@ Read these skill files from the repository before starting and apply them throug
 ## QA Task Protocol (required)
 
 Part of the QA Agent Ecosystem. Follow on every run.
+
+### 0. Project Memory (read first, update last)
+
+Before any work, read `.vscode/qa_memory.md`. If the file is missing, create it with these
+sections: `Project` (app URL, tech stack, auth method), `Discovered` (pages, endpoints,
+components found), `Known Issues` (confirmed bugs, flaky areas), `Key Decisions` (assumptions
+ratified, scope constraints).
+
+Use existing entries to avoid re-discovering known facts. After your work completes, append
+new findings as concise one-line bullets under the relevant section. Never delete existing entries.
 
 ### 1. Inputs
 

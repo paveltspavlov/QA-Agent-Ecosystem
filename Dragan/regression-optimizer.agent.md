@@ -1,4 +1,4 @@
----
+﻿---
 name: regression-optimizer
 description: Analyzes existing test cases (CSV or plain text) and creates optimized regression test suites based on changed functionalities, risk, and coverage gaps. Prioritizes tests by business impact and execution efficiency.
 tools: ['search', 'codebase', 'editFiles']
@@ -75,6 +75,16 @@ Read these skill files from the repository before starting and apply them throug
 ## QA Task Protocol (required)
 
 Part of the QA Agent Ecosystem. Follow on every run.
+
+### 0. Project Memory (read first, update last)
+
+Before any work, read `.vscode/qa_memory.md`. If the file is missing, create it with these
+sections: `Project` (app URL, tech stack, auth method), `Discovered` (pages, endpoints,
+components found), `Known Issues` (confirmed bugs, flaky areas), `Key Decisions` (assumptions
+ratified, scope constraints).
+
+Use existing entries to avoid re-discovering known facts. After your work completes, append
+new findings as concise one-line bullets under the relevant section. Never delete existing entries.
 
 ### 1. Inputs
 

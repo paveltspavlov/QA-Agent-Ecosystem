@@ -1,4 +1,4 @@
----
+﻿---
 name: bug-reporter
 description: Takes test execution results from the playwright-executor agent, extracts structured bug entries for each failure, saves them as JSON and markdown bug reports, and optionally creates GitHub issues for Critical/High bugs.
 tools: ['search', 'codebase', 'editFiles', 'runCommands']
@@ -30,6 +30,16 @@ Read these skill files from the repository before starting and apply them throug
 ## QA Task Protocol (required)
 
 Part of the QA Agent Ecosystem. Follow on every run.
+
+### 0. Project Memory (read first, update last)
+
+Before any work, read `.vscode/qa_memory.md`. If the file is missing, create it with these
+sections: `Project` (app URL, tech stack, auth method), `Discovered` (pages, endpoints,
+components found), `Known Issues` (confirmed bugs, flaky areas), `Key Decisions` (assumptions
+ratified, scope constraints).
+
+Use existing entries to avoid re-discovering known facts. After your work completes, append
+new findings as concise one-line bullets under the relevant section. Never delete existing entries.
 
 ### 1. Inputs
 
